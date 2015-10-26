@@ -1,0 +1,6 @@
+[submodule "lingo"]
+	path = lingo
+	url = https://github.com/asutton/lingo
+[submodule "llvm"]
+	path = llvm
+	url = https://github.com/csll/llvm
