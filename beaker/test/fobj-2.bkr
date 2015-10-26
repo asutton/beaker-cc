@@ -1,0 +1,12 @@
+
+
+def lt(a : int, b : int) -> bool { return a < b; }
+def gt(a : int, b : int) -> bool { return a > b; }
+
+def cmp(a : int, b : int, f : (int, int) -> bool) -> bool {
+  return f(a, b);
+}
+
+def main() -> bool {
+  return cmp(0, 1, lt);
+}

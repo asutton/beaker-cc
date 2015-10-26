@@ -1,0 +1,8 @@
+
+def main() -> bool 
+{
+  (;          // error: expected primary expression
+  (0;         // error: expected ')' but got ';'
+  var x = 0;  // error: expected ':' but got '=';
+  return true;
+}

@@ -1,0 +1,7 @@
+
+def f(x : int) -> int { return -x; }
+
+def main() -> bool
+{ 
+  return f(1 + 2 * 3) == -7;
+}
