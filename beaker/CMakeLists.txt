@@ -44,8 +44,11 @@ add_executable(beaker
   parser.cpp
   environment.cpp
   elaborator.cpp
-  evaluator.cpp)
+  evaluator.cpp
+  generator.cpp)
 
 target_link_libraries(beaker 
   ${Boost_SYSTEM_LIBRARIES}
-  ${Boost_FILESYSTEM_LIBRARIES})
+  ${Boost_FILESYSTEM_LIBRARIES}
+  lingo 
+  lingo-llvm)
