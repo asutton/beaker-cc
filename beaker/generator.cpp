@@ -13,6 +13,11 @@
 //
 // The type generator transforms a beaker type into
 // its correspondiong LLVM type.
+//
+// TODO: Should this be a part of generator? It's more
+// of a transformation and does not appear to rely on
+// basic context.
+
 
 ll::Type const*
 Generator::gen(Type const* t)
@@ -294,44 +299,63 @@ Generator::gen(Declaration_stmt const* s)
 // of sub-generators that refer to the top-level
 // generator.
 
-void
+ll::Decl*
 Generator::gen(Decl const* d)
 {
   struct Fn
   {
     Generator& g;
-    void operator()(Variable_decl const* d) { g.gen(d); }
-    void operator()(Function_decl const* d) { g.gen(d); }
-    void operator()(Parameter_decl const* d) { g.gen(d); }
-    void operator()(Module_decl const* d) { g.gen(d); }
+    ll::Decl* operator()(Variable_decl const* d) { return g.gen(d); }
+    ll::Decl* operator()(Function_decl const* d) { return g.gen(d); }
+    ll::Decl* operator()(Parameter_decl const* d) { return g.gen(d); }
+    ll::Decl* operator()(Module_decl const* d) { return g.gen(d); }
   };
   return apply(d, Fn{*this});
 }
 
 
-void
-Generator::gen(Variable_decl const*)
+ll::Decl*
+Generator::gen(Variable_decl const* d)
 {
-  throw std::runtime_error("not implemented");
+  // FIXME: This is hideous. Unify the symbol tables
+  // so I don't have to deal with this.
+  lingo::String const* n = ll::make_str(d->name()->spelling());
+  ll::Type const* t = gen(d->type());
+
+  // TODO: Determine if the initializer has a constant
+  // value or not. If the initializer is constant, then
+  // emit an appropriate value. Otherwise, zeroinit and
+  // defer until global initialization.
+  ll::Expr* e = ll::make_zeroinit();
+
+  return ll::make_global(n, t, e);
 }
 
 
-void
+ll::Decl*
 Generator::gen(Function_decl const*)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-void
+ll::Decl*
 Generator::gen(Parameter_decl const*)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-void
-Generator::gen(Module_decl const*)
+ll::Decl*
+Generator::gen(Module_decl const* d)
 {
-  throw std::runtime_error("not implemented");
+  // Generate all top-level declarations.
+  ll::Decl_seq ds;
+  for (Decl const* d1 : d->declarations())
+    ds.push_back(gen(d1));
+
+  // Generate the static init function, and then 
+  // add that to the global ctors.
+  return make_module(ds);
 }
+

@@ -50,5 +50,6 @@ add_executable(beaker
 target_link_libraries(beaker 
   ${Boost_SYSTEM_LIBRARIES}
   ${Boost_FILESYSTEM_LIBRARIES}
+  lingo-llvm
   lingo 
-  lingo-llvm)
+  )

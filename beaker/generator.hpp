@@ -7,11 +7,19 @@
 // The LLVM IR generator.
 
 #include "prelude.hpp"
+#include "environment.hpp"
 
 #include "llvm/prelude.hpp"
 
 
 namespace ll = lingo::llvm;
+
+
+// Used to maintain a mapping of Beaker declarations
+// to their corresponding LLVM declarations. This is
+// only used to track globals and functions. 
+using Symbol_env = Environment<Decl const*, ll::Decl*>;
+using Symbol_stack = Stack<Symbol_env>;
 
 
 struct Generator
@@ -49,11 +57,13 @@ struct Generator
   void gen(Expression_stmt const* s);
   void gen(Declaration_stmt const* s);
 
-  void gen(Decl const* d);
-  void gen(Variable_decl const*);
-  void gen(Function_decl const*);
-  void gen(Parameter_decl const*);
-  void gen(Module_decl const*);
+  ll::Decl* gen(Decl const* d);
+  ll::Decl* gen(Variable_decl const*);
+  ll::Decl* gen(Function_decl const*);
+  ll::Decl* gen(Parameter_decl const*);
+  ll::Decl* gen(Module_decl const*);
+
+  Symbol_stack syms_;
 };
 
 

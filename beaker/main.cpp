@@ -5,7 +5,10 @@
 #include "parser.hpp"
 #include "elaborator.hpp"
 #include "evaluator.hpp"
+#include "generator.hpp"
 #include "error.hpp"
+
+#include "llvm/llvm.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -20,6 +23,10 @@ void init_symbols(Symbol_table&);
 int 
 main(int argc, char* argv[])
 {
+  // FIXME: This is gross. Do one or the other, but
+  // never both.
+  bool evaluate = false;
+
   // Prepare the symbol table.
   Symbol_table syms;
   init_symbols(syms);
@@ -51,13 +58,26 @@ main(int argc, char* argv[])
     // Find an entry point for evaluation.
     //
     // TODO: Actually pass command line arguments.
-    if (elab.main) {
-      Evaluator ev;
-      Value v = ev.exec(elab.main);
-      std::cout << v.r.z << '\n';
-    } else {
-      std::cout << "no main\n";
+    if (evaluate) {
+      if (elab.main) {
+        Evaluator ev;
+        Value v = ev.exec(elab.main);
+        std::cout << v.r.z << '\n';
+      } else {
+        std::cout << "no main\n";
+      }
     }
+
+    // Otherwise, translate to LLVM.
+    else {
+      Generator gen;
+      ll::Decl* r = gen.gen(m);
+
+      using lingo::print;
+      print(r);
+    }
+
+
   } catch (Translation_error& err) {
     diagnose(err);
   } catch (std::runtime_error& err) {

@@ -7,6 +7,9 @@
 #include "cast.hpp"
 #include "symbol.hpp"
 
+#include "lingo/node.hpp"
+#include "lingo/print.hpp"
+
 #include <vector>
 #include <stdexcept>
 #include <type_traits>
