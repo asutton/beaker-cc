@@ -350,12 +350,11 @@ ll::Decl*
 Generator::gen(Module_decl const* d)
 {
   // Generate all top-level declarations.
-  ll::Decl_seq ds;
   for (Decl const* d1 : d->declarations())
-    ds.push_back(gen(d1));
+    gen(d1);
 
   // Generate the static init function, and then 
   // add that to the global ctors.
-  return make_module(ds);
+  throw std::runtime_error("not implemented");
 }
 

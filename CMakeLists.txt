@@ -3,7 +3,7 @@
 
 
 # Project configuration.
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.1)
 project(lingo CXX)
 enable_testing()
 
