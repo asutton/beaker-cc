@@ -8,10 +8,10 @@
 #include "generator.hpp"
 #include "error.hpp"
 
-#include "llvm/llvm.hpp"
-
 #include <iostream>
 #include <fstream>
+
+#include "llvm/IR/Module.h"
 
 
 using namespace std;
@@ -71,10 +71,8 @@ main(int argc, char* argv[])
     // Otherwise, translate to LLVM.
     else {
       Generator gen;
-      ll::Decl* r = gen.gen(m);
-
-      using lingo::print;
-      print(r);
+      llvm::Module* mod = gen(m);
+      mod->dump();
     }
 
 

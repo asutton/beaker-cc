@@ -5,7 +5,12 @@
 #include "stmt.hpp"
 #include "decl.hpp"
 
-#include "llvm/llvm.hpp"
+#include "llvm/IR/Type.h"
+#include "llvm/IR/GlobalVariable.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Module.h"
 
 
 // -------------------------------------------------------------------------- //
@@ -19,7 +24,7 @@
 // basic context.
 
 
-ll::Type const*
+#if 0
 Generator::gen(Type const* t)
 {
   struct Fn
@@ -53,6 +58,7 @@ Generator::gen(Function_type const*)
   // FIXME: Implement mem.
   throw std::runtime_error("not implemented");      
 }
+#endif
 
 
 // -------------------------------------------------------------------------- //
@@ -299,62 +305,73 @@ Generator::gen(Declaration_stmt const* s)
 // of sub-generators that refer to the top-level
 // generator.
 
-ll::Decl*
+void
 Generator::gen(Decl const* d)
 {
   struct Fn
   {
     Generator& g;
-    ll::Decl* operator()(Variable_decl const* d) { return g.gen(d); }
-    ll::Decl* operator()(Function_decl const* d) { return g.gen(d); }
-    ll::Decl* operator()(Parameter_decl const* d) { return g.gen(d); }
-    ll::Decl* operator()(Module_decl const* d) { return g.gen(d); }
+    void operator()(Variable_decl const* d) { return g.gen(d); }
+    void operator()(Function_decl const* d) { return g.gen(d); }
+    void operator()(Parameter_decl const* d) { return g.gen(d); }
+    void operator()(Module_decl const* d) { return g.gen(d); }
   };
   return apply(d, Fn{*this});
 }
 
 
-ll::Decl*
+void
 Generator::gen(Variable_decl const* d)
 {
-  // FIXME: This is hideous. Unify the symbol tables
-  // so I don't have to deal with this.
-  lingo::String const* n = ll::make_str(d->name()->spelling());
-  ll::Type const* t = gen(d->type());
+  String const&   name = d->name()->spelling();
+  llvm::Type*     type = build.getInt32Ty();
+  llvm::Constant* init = llvm::ConstantAggregateZero::get(type);
 
-  // TODO: Determine if the initializer has a constant
-  // value or not. If the initializer is constant, then
-  // emit an appropriate value. Otherwise, zeroinit and
-  // defer until global initialization.
-  ll::Expr* e = ll::make_zeroinit();
+  new llvm::GlobalVariable(
+    *mod,                                  // owning module
+    type,                                  // type
+    false,                                 // is constant
+    llvm::GlobalVariable::ExternalLinkage, // linkage,
+    init,                                  // initializer
+    name                                   // name
+  );
+} 
 
-  return ll::make_global(n, t, e);
-}
 
-
-ll::Decl*
+void
 Generator::gen(Function_decl const*)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-ll::Decl*
+void
 Generator::gen(Parameter_decl const*)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-ll::Decl*
+void
 Generator::gen(Module_decl const* d)
 {
+  // Initialize the module.
+  mod = new llvm::Module("b.out", cxt);
+
   // Generate all top-level declarations.
   for (Decl const* d1 : d->declarations())
     gen(d1);
 
-  // Generate the static init function, and then 
-  // add that to the global ctors.
-  throw std::runtime_error("not implemented");
+  // TODO: Make a second pass to generate global
+  // constructors for initializers.
+}
+
+
+llvm::Module* 
+Generator::operator()(Decl const* d)
+{
+  assert(is<Module_decl>(d));
+  gen(d);
+  return mod;
 }
 

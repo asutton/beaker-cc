@@ -64,9 +64,14 @@ add_executable(beaker
   evaluator.cpp
   generator.cpp)
 
+
+# Note that the order of libraries is established experimentally.
+# It really shouldn't matter, but apparently it does. Yeah.
 target_link_libraries(beaker 
   ${Boost_SYSTEM_LIBRARIES}
   ${Boost_FILESYSTEM_LIBRARIES}
   ${LLVM_LIBS}
-  lingo-llvm
+  dl        # FIXME: This is dumb
+  tinfo     # FIXME: Also dumb
+  ${CMAKE_THREAD_LIBS_INIT}
   lingo)

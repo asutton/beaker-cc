@@ -9,26 +9,24 @@
 #include "prelude.hpp"
 #include "environment.hpp"
 
-#include "llvm/prelude.hpp"
-
-
-namespace ll = lingo::llvm;
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/IRBuilder.h>
 
 
 // Used to maintain a mapping of Beaker declarations
 // to their corresponding LLVM declarations. This is
 // only used to track globals and functions. 
-using Symbol_env = Environment<Decl const*, ll::Decl*>;
-using Symbol_stack = Stack<Symbol_env>;
+//
+// using Symbol_env = Environment<Decl const*, ll::Decl*>;
+// using Symbol_stack = Stack<Symbol_env>;
 
 
 struct Generator
 {
-  ll::Type const* gen(Type const* t);
-  ll::Type const* gen(Boolean_type const* t);
-  ll::Type const* gen(Integer_type const* t);
-  ll::Type const* gen(Function_type const* t);
-  
+  Generator();
+
+  llvm::Module* operator()(Decl const*);
+
   void gen(Expr const* e);
   void gen(Literal_expr const* e);
   void gen(Id_expr const* e);
@@ -57,14 +55,24 @@ struct Generator
   void gen(Expression_stmt const* s);
   void gen(Declaration_stmt const* s);
 
-  ll::Decl* gen(Decl const* d);
-  ll::Decl* gen(Variable_decl const*);
-  ll::Decl* gen(Function_decl const*);
-  ll::Decl* gen(Parameter_decl const*);
-  ll::Decl* gen(Module_decl const*);
+  void gen(Decl const* d);
+  void gen(Variable_decl const*);
+  void gen(Function_decl const*);
+  void gen(Parameter_decl const*);
+  void gen(Module_decl const*);
 
-  Symbol_stack syms_;
+  llvm::LLVMContext cxt;
+  llvm::IRBuilder<> build;
+  llvm::Module*     mod;
+
+  // Symbol_stack syms_;
 };
+
+
+inline
+Generator::Generator()
+  : cxt(), build(cxt)
+{ }
 
 
 #endif

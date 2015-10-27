@@ -4,8 +4,12 @@
 
 # Project configuration.
 cmake_minimum_required(VERSION 3.1)
-project(lingo CXX)
+project(lingo C CXX)
 enable_testing()
+
+
+# Threading support (for LLVM)
+find_package(Threads REQUIRED)
 
 
 # Boost dependencies
