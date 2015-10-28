@@ -26,7 +26,7 @@ main(int argc, char* argv[])
 {
   // FIXME: This is gross. Do one or the other, but
   // never both.
-  bool evaluate = false;
+  bool evaluate = true;
 
   // Prepare the symbol table.
   Symbol_table syms;
@@ -121,11 +121,13 @@ init_symbols(Symbol_table& syms)
   syms.put<Symbol>("->", arrow_tok);
 
   // Keywords
-  syms.put<Symbol>("var", var_kw);
-  syms.put<Symbol>("def", def_kw);
   syms.put<Symbol>("bool", bool_kw);
+  syms.put<Symbol>("def", def_kw);
+  syms.put<Symbol>("else", else_kw);
+  syms.put<Symbol>("if", if_kw);
   syms.put<Symbol>("int", int_kw);
   syms.put<Symbol>("return", return_kw);
+  syms.put<Symbol>("var", var_kw);
   
   // Reserved names.
   syms.put<Boolean_sym>("true", boolean_tok, true);

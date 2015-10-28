@@ -6,6 +6,7 @@
 #include "expr.hpp"
 #include "decl.hpp"
 #include "stmt.hpp"
+#include "error.hpp"
 
 #include <iostream>
 
@@ -443,8 +444,7 @@ Elaborator::elaborate(Function_decl* d)
     elaborate(p);
 
   // Check the body of the function.
-  if (!elaborate(d->body()))
-    return nullptr;
+  elaborate(d->body());
 
   // TODO: Build a control flow graph and ensure that
   // every branch returns a value.
@@ -482,41 +482,38 @@ Elaborator::elaborate(Module_decl* m)
 
 // Elaborate a statement. This returns true if elaboration
 // succeeds and false otherwise.
-Type const*
+void
 Elaborator::elaborate(Stmt* s)
 {
   struct Fn
   {
     Elaborator& elab;
 
-    Type const* operator()(Empty_stmt* d) const { return elab.elaborate(d); }
-    Type const* operator()(Block_stmt* d) const { return elab.elaborate(d); }
-    Type const* operator()(Return_stmt* d) const { return elab.elaborate(d); }
-    Type const* operator()(Expression_stmt* d) const { return elab.elaborate(d); }
-    Type const* operator()(Declaration_stmt* d) const { return elab.elaborate(d); }
+    void operator()(Empty_stmt* d) const { elab.elaborate(d); }
+    void operator()(Block_stmt* d) const { elab.elaborate(d); }
+    void operator()(Return_stmt* d) const { elab.elaborate(d); }
+    void operator()(If_then_stmt* d) const { elab.elaborate(d); }
+    void operator()(If_else_stmt* d) const { elab.elaborate(d); }
+    void operator()(Expression_stmt* d) const { elab.elaborate(d); }
+    void operator()(Declaration_stmt* d) const { elab.elaborate(d); }
   };
 
   return apply(s, Fn{*this});
 }
 
 
-// FIXME: All of these functions should return the void type.
-
-
-Type const*
+void
 Elaborator::elaborate(Empty_stmt*)
 {
-  return get_boolean_type();
 }
 
 
-Type const*
+void
 Elaborator::elaborate(Block_stmt* s)
 {
   Scope_sentinel scope = *this;
   for (Stmt* s1 : s->statements())
     elaborate(s1);
-  return get_boolean_type();
 }
 
 
@@ -524,7 +521,7 @@ Elaborator::elaborate(Block_stmt* s)
 // return type of the enclosing function.
 //
 // TODO: Implement me.
-Type const*
+void
 Elaborator::elaborate(Return_stmt* s)
 {
   Function_decl* fn = stack.function();
@@ -536,20 +533,41 @@ Elaborator::elaborate(Return_stmt* s)
   Type const* t = elaborate(s->value());
   if (t != fn->return_type())
     throw std::runtime_error("return type mismatch");
-
-  return get_boolean_type();
 }
 
 
-Type const*
+// The condition must must be a boolean expression.
+void
+Elaborator::elaborate(If_then_stmt* s)
+{
+  Type const* t = elaborate(s->condition());
+  if (t != get_boolean_type())
+    throw Type_error({}, "condition does not have type 'bool'");
+  elaborate(s->body());
+}
+
+
+// The condition must must be a boolean expression.
+void
+Elaborator::elaborate(If_else_stmt* s)
+{
+  Type const* t = elaborate(s->condition());
+  if (t != get_boolean_type())
+    throw Type_error({}, "condition does not have type 'bool'");
+  elaborate(s->true_branch());
+  elaborate(s->false_branch());
+}
+
+
+void
 Elaborator::elaborate(Expression_stmt* s)
 {
-  return elaborate(s->expression());
+  elaborate(s->expression());
 }
 
 
-Type const*
+void
 Elaborator::elaborate(Declaration_stmt* s)
 {
-  return elaborate(s->declaration());
+  elaborate(s->declaration());
 }

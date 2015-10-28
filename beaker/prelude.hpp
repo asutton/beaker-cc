@@ -51,6 +51,8 @@ struct Stmt;
 struct Empty_stmt;
 struct Block_stmt;
 struct Return_stmt;
+struct If_then_stmt;
+struct If_else_stmt;
 struct Expression_stmt;
 struct Declaration_stmt;
 

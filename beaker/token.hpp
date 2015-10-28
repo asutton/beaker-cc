@@ -48,6 +48,8 @@ enum Token_kind
   // Keywords
   bool_kw,
   def_kw,
+  else_kw,
+  if_kw,
   int_kw,
   return_kw,
   var_kw,

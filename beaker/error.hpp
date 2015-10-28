@@ -46,6 +46,12 @@ struct Syntax_error : Translation_error
 };
 
 
+// Represents a type checking error.
+struct Type_error : Translation_error
+{
+  using Translation_error::Translation_error;
+};
+
 
 void diagnose(Translation_error&);
 

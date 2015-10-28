@@ -7,6 +7,15 @@
 #include "prelude.hpp"
 #include "environment.hpp"
 
+// The elaborator is responsible for a number of static
+// analyses. In particular, it resolves identifiers and
+// types expressions.
+//
+// FIXME: The type checking here is fundamentally broken.
+// Instead of throwing exceptions, we should be documenting
+// errors and continuing elaboration. There may be some
+// cases where elaboration must stop.
+
 #include <stack>
 #include <unordered_map>
 #include <vector>
@@ -83,12 +92,16 @@ public:
   Type const* elaborate(Parameter_decl*);
   Type const* elaborate(Module_decl*);
   
-  Type const* elaborate(Stmt*);
-  Type const* elaborate(Empty_stmt*);
-  Type const* elaborate(Block_stmt*);
-  Type const* elaborate(Return_stmt*);
-  Type const* elaborate(Expression_stmt*);
-  Type const* elaborate(Declaration_stmt*);
+  // FIXME: Is there any real reason that these return
+  // types? What is the type of an if statement?
+  void elaborate(Stmt*);
+  void elaborate(Empty_stmt*);
+  void elaborate(Block_stmt*);
+  void elaborate(Return_stmt*);
+  void elaborate(If_then_stmt*);
+  void elaborate(If_else_stmt*);
+  void elaborate(Expression_stmt*);
+  void elaborate(Declaration_stmt*);
 
 
   // Found symbols.

@@ -24,6 +24,8 @@ struct Stmt::Visitor
   virtual void visit(Empty_stmt const*) = 0;
   virtual void visit(Block_stmt const*) = 0;
   virtual void visit(Return_stmt const*) = 0;
+  virtual void visit(If_then_stmt const*) = 0;
+  virtual void visit(If_else_stmt const*) = 0;
   virtual void visit(Expression_stmt const*) = 0;
   virtual void visit(Declaration_stmt const*) = 0;
 };
@@ -35,6 +37,8 @@ struct Stmt::Mutator
   virtual void visit(Empty_stmt*) = 0;
   virtual void visit(Block_stmt*) = 0;
   virtual void visit(Return_stmt*) = 0;
+  virtual void visit(If_then_stmt*) = 0;
+  virtual void visit(If_else_stmt*) = 0;
   virtual void visit(Expression_stmt*) = 0;
   virtual void visit(Declaration_stmt*) = 0;
 };
@@ -75,10 +79,51 @@ struct Return_stmt : Stmt
   void accept(Visitor& v) const { return v.visit(this); }
   void accept(Mutator& v)       { return v.visit(this); }
 
-  Expr const* value() const { return first; }
-  Expr*       value()       { return first; }
+  Expr* value() const { return first; }
 
   Expr* first;
+};
+
+
+// A statement of the form:
+//
+//    if (e) s
+struct If_then_stmt : Stmt
+{
+  If_then_stmt(Expr* e, Stmt* s)
+    : first(e), second(s)
+  { }
+
+  void accept(Visitor& v) const { return v.visit(this); }
+  void accept(Mutator& v)       { return v.visit(this); }
+
+  Expr* condition() const { return first; }
+  Stmt* body() const { return second; }
+
+  Expr* first;
+  Stmt* second;
+};
+
+
+// A statement of the form:
+//
+//    if (e) s1 else s2
+struct If_else_stmt : Stmt
+{
+  If_else_stmt(Expr* e, Stmt* s1, Stmt* s2)
+    : first(e), second(s1), third(s2)
+  { }
+
+  void accept(Visitor& v) const { return v.visit(this); }
+  void accept(Mutator& v)       { return v.visit(this); }
+
+  Expr* condition() const    { return first; }
+  Stmt* true_branch() const  { return second; }
+  Stmt* false_branch() const { return third; }
+
+  Expr* first;
+  Stmt* second;
+  Stmt* third;
 };
 
 
@@ -92,8 +137,7 @@ struct Expression_stmt : Stmt
   void accept(Visitor& v) const { return v.visit(this); }
   void accept(Mutator& v)       { return v.visit(this); }
 
-  Expr const* expression() const { return first; }
-  Expr*       expression()       { return first; }
+  Expr* expression() const { return first; }
 
   Expr* first;
 };
@@ -109,145 +153,70 @@ struct Declaration_stmt : Stmt
   void accept(Visitor& v) const { return v.visit(this); }
   void accept(Mutator& v)       { return v.visit(this); }
 
-  Decl const* declaration() const { return first; }
-  Decl*       declaration()       { return first; }
+  Decl* declaration() const { return first; }
 
   Decl* first;
 };
 
 
 // -------------------------------------------------------------------------- //
-//                              Generic visitors
+// Generic visitors
 
-template<typename F, typename R>
-struct Generic_stmt_visitor : Stmt::Visitor
+template<typename F, typename T>
+struct Generic_stmt_visitor : Stmt::Visitor, lingo::Generic_visitor<F, T>
 {
   Generic_stmt_visitor(F fn)
-    : fn(fn)
+    : lingo::Generic_visitor<F, T>(fn)
   { }
   
-  void visit(Empty_stmt const* d) { r = fn(d); };
-  void visit(Block_stmt const* d) { r = fn(d); };
-  void visit(Return_stmt const* d) { r = fn(d); };
-  void visit(Expression_stmt const* d) { r = fn(d); };
-  void visit(Declaration_stmt const* d) { r = fn(d); };
-
-  F fn;
-  R r;
+  void visit(Empty_stmt const* d) { this->invoke(d); };
+  void visit(Block_stmt const* d) { this->invoke(d); };
+  void visit(Return_stmt const* d) { this->invoke(d); };
+  void visit(If_then_stmt const* d) { this->invoke(d); };
+  void visit(If_else_stmt const* d) { this->invoke(d); };
+  void visit(Expression_stmt const* d) { this->invoke(d); };
+  void visit(Declaration_stmt const* d) { this->invoke(d); };
 };
-
-
-// A specialization for functions returning void.
-template<typename F>
-struct Generic_stmt_visitor<F, void> : Stmt::Visitor
-{
-  Generic_stmt_visitor(F fn)
-    : fn(fn)
-  { }
-  
-  void visit(Empty_stmt const* d) { fn(d); };
-  void visit(Block_stmt const* d) { fn(d); };
-  void visit(Return_stmt const* d) { fn(d); };
-  void visit(Expression_stmt const* d) { fn(d); };
-  void visit(Declaration_stmt const* d) { fn(d); };
-
-  F fn;
-};
-
-
-// Dispatch visitor to a void visitor.
-template<typename F, typename R = typename std::result_of<F(Empty_stmt const*)>::type>
-inline typename std::enable_if<std::is_void<R>::value, void>::type
-dispatch(Stmt const* s, F fn)
-{
-  Generic_stmt_visitor<F, void> v(fn);
-  s->accept(v);
-}
-
-
-// Dispatch to a non-void visitor.
-template<typename F, typename R = typename std::result_of<F(Empty_stmt const*)>::type>
-inline typename std::enable_if<!std::is_void<R>::value, R>::type
-dispatch(Stmt const* s, F fn)
-{
-  Generic_stmt_visitor<F, R> v(fn);
-  s->accept(v);
-  return v.r;
-}
 
 
 // Apply fn to the propositoin p.
-template<typename F, typename R = typename std::result_of<F(Empty_stmt const*)>::type>
-inline R
+template<typename F, typename T = typename std::result_of<F(Empty_stmt const*)>::type>
+inline T
 apply(Stmt const* s, F fn)
 {
-  return dispatch(s, fn);
+  Generic_stmt_visitor<F, T> v(fn);
+  return lingo::accept(s, v);
 }
 
 
-template<typename F, typename R>
-struct Generic_stmt_mutator : Stmt::Mutator
+// -------------------------------------------------------------------------- //
+// Generic mutator
+
+
+template<typename F, typename T>
+struct Generic_stmt_mutator : Stmt::Mutator, lingo::Generic_mutator<F, T>
 {
   Generic_stmt_mutator(F fn)
-    : fn(fn)
+    : lingo::Generic_mutator<F, T>(fn)
   { }
   
-  void visit(Empty_stmt* d) { r = fn(d); };
-  void visit(Block_stmt* d) { r = fn(d); };
-  void visit(Return_stmt* d) { r = fn(d); };
-  void visit(Expression_stmt* d) { r = fn(d); };
-  void visit(Declaration_stmt* d) { r = fn(d); };
-
-  F fn;
-  R r;
+  void visit(Empty_stmt* d) { this->invoke(d); };
+  void visit(Block_stmt* d) { this->invoke(d); };
+  void visit(Return_stmt* d) { this->invoke(d); };
+  void visit(If_then_stmt* d) { this->invoke(d); };
+  void visit(If_else_stmt* d) { this->invoke(d); };
+  void visit(Expression_stmt* d) { this->invoke(d); };
+  void visit(Declaration_stmt* d) { this->invoke(d); };
 };
-
-
-// A specialization for functions returning void.
-template<typename F>
-struct Generic_stmt_mutator<F, void> : Stmt::Mutator
-{
-  Generic_stmt_mutator(F fn)
-    : fn(fn)
-  { }
-  
-  void visit(Empty_stmt* d) { fn(d); };
-  void visit(Block_stmt* d) { fn(d); };
-  void visit(Return_stmt* d) { fn(d); };
-  void visit(Expression_stmt* d) { fn(d); };
-  void visit(Declaration_stmt* d) { fn(d); };
-
-  F fn;
-};
-
-
-// Dispatch visitor to a void visitor.
-template<typename F, typename R = typename std::result_of<F(Empty_stmt*)>::type>
-inline typename std::enable_if<std::is_void<R>::value, void>::type
-dispatch(Stmt* s, F fn)
-{
-  Generic_stmt_mutator<F, void> v(fn);
-  s->accept(v);
-}
-
-
-// Dispatch to a non-void visitor.
-template<typename F, typename R = typename std::result_of<F(Empty_stmt*)>::type>
-inline typename std::enable_if<!std::is_void<R>::value, R>::type
-dispatch(Stmt* s, F fn)
-{
-  Generic_stmt_mutator<F, R> v(fn);
-  s->accept(v);
-  return v.r;
-}
 
 
 // Apply fn to the propositoin p.
-template<typename F, typename R = typename std::result_of<F(Empty_stmt*)>::type>
-inline R
+template<typename F, typename T = typename std::result_of<F(Empty_stmt*)>::type>
+inline T
 apply(Stmt* s, F fn)
 {
-  return dispatch(s, fn);
+  Generic_stmt_mutator<F, T> m(fn);
+  return lingo::accept(s, m);
 }
 
 

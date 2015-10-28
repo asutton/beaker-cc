@@ -351,6 +351,8 @@ Evaluator::eval(Stmt const* s, Value& r)
     Control operator()(Empty_stmt const* s) { return ev.eval(s, r); }
     Control operator()(Block_stmt const* s) { return ev.eval(s, r); }
     Control operator()(Return_stmt const* s) { return ev.eval(s, r); }
+    Control operator()(If_then_stmt const* s) { return ev.eval(s, r); }
+    Control operator()(If_else_stmt const* s) { return ev.eval(s, r); }
     Control operator()(Expression_stmt const* s) { return ev.eval(s, r); }
     Control operator()(Declaration_stmt const* s) { return ev.eval(s, r); }
   };
@@ -375,7 +377,7 @@ Evaluator::eval(Block_stmt const* s, Value& r)
     if (ctl == return_ctl)
       return ctl;
 
-    // TODO: Handle other control mechanisms.
+    // TODO: Handle other control flow mechanisms.
   }
   return next_ctl;
 }
@@ -386,6 +388,34 @@ Evaluator::eval(Return_stmt const* s, Value& r)
 {
   r = eval(s->value());
   return return_ctl;
+}
+
+
+// If the condition evaluates to true, then the body
+// is evaluated.
+Control
+Evaluator::eval(If_then_stmt const* s, Value& r)
+{
+  Value c = eval(s->condition());
+  if (c.r.z)
+    return eval(s->body(), r);
+  return next_ctl;
+}
+
+
+// If the condition evaluates to true, the true branch
+// is evaluated. Otherwise the false branch is evaluated.
+// Note that control stops if either branch returns, 
+// breaks, or continues. In all other cases, control 
+// flows to the next statement.
+Control
+Evaluator::eval(If_else_stmt const* s, Value& r)
+{
+  Value c = eval(s->condition());
+  if (c.r.z)
+    return eval(s->true_branch(), r);
+  else
+    return eval(s->false_branch(), r);
 }
 
 

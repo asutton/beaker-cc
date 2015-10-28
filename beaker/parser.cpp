@@ -456,6 +456,30 @@ Parser::return_stmt()
 }
 
 
+// Parse an if statement.
+//
+//    if-stmt -> 'if' '(' expr ')' stmt
+//             | 'if' '(' expr ')' stmt 'else' stmt
+//
+// Note that the first form is called an "if-then"
+// statement and the latter an "if-else" statement.
+Stmt*
+Parser::if_stmt()
+{
+  require(if_kw);
+  match(lparen_tok);
+  Expr* e = expr();
+  match(rparen_tok);
+  Stmt* b1 = stmt();
+  if (match_if(else_kw)) {
+    Stmt* b2 = stmt();
+    return on_if_else(e, b1, b2);
+  } else {
+    return on_if_then(e, b1);
+  }
+}
+
+
 // Parse a declaration statement.
 //
 //    declaration-stmt -> decl
@@ -497,6 +521,9 @@ Parser::stmt()
 
     case return_kw:
       return return_stmt();
+
+    case if_kw:
+      return if_stmt();
 
     case var_kw: 
     case def_kw:
@@ -815,6 +842,20 @@ Stmt*
 Parser::on_return_stmt(Expr* e)
 {
   return new Return_stmt(e);
+}
+
+
+Stmt*
+Parser::on_if_then(Expr* e, Stmt* s)
+{
+  return new If_then_stmt(e, s);
+}
+
+
+Stmt*
+Parser::on_if_else(Expr* e, Stmt* s1, Stmt* s2)
+{
+  return new If_else_stmt(e, s1, s2);
 }
 
 
