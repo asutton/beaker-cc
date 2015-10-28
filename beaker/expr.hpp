@@ -88,6 +88,10 @@ struct Expr::Mutator
 
 // A boolean or integer literal value. The kind
 // of literal is determined by the underlying symbol.
+//
+// TODO: Can we ever have a function literal? That
+// would basically be an unnamed function object
+// since functions can only ever be named.
 struct Literal_expr : Expr
 {
   Literal_expr(Symbol const* s)

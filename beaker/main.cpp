@@ -75,12 +75,16 @@ main(int argc, char* argv[])
       llvm::Module* mod = gen(m);
       llvm::outs() << *mod;
     }
+  } 
 
-
-  } catch (Translation_error& err) {
+  // Diagnose uncaught translation errors and exit
+  // gracefully. All other uncaught exceptions are
+  // ICEs and we want those to fail noisily. Note
+  // that re-throwing does not re-establish the
+  // origin of the error for the purpose of debugging.
+  catch (Translation_error& err) {
     diagnose(err);
-  } catch (std::runtime_error& err) {
-    std::cout << "internal compiler error:" << err.what() << '\n';
+    return -1;
   }
 
   // FIXME: Do something with the module.

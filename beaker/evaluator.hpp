@@ -83,6 +83,7 @@ private:
 };
 
 
+// A helper class for managing stack frames.
 struct Evaluator::Store_sentinel
 {
   Store_sentinel(Evaluator& e)
@@ -98,6 +99,15 @@ struct Evaluator::Store_sentinel
 
   Evaluator& eval;
 };
+
+
+// Evaluate the given expression.
+inline Value
+evaluate(Expr const* e)
+{
+  Evaluator ev;
+  return ev.eval(e);
+}
 
 
 #endif

@@ -4,6 +4,7 @@
 #include "expr.hpp"
 #include "stmt.hpp"
 #include "decl.hpp"
+#include "evaluator.hpp"
 
 #include "llvm/IR/Type.h"
 #include "llvm/IR/GlobalVariable.h"
@@ -71,164 +72,174 @@ Generator::get_type(Function_type const* t)
 // An expression is transformed into a sequence instructions whose
 // intermediate results are saved in registers.
 
-void
+llvm::Value*
 Generator::gen(Expr const* e)
 {
   struct Fn
   {
     Generator& g;
-    void operator()(Literal_expr const* e) const { g.gen(e); }
-    void operator()(Id_expr const* e) const { g.gen(e); }
-    void operator()(Add_expr const* e) const { g.gen(e); }
-    void operator()(Sub_expr const* e) const { g.gen(e); }
-    void operator()(Mul_expr const* e) const { g.gen(e); }
-    void operator()(Div_expr const* e) const { g.gen(e); }
-    void operator()(Rem_expr const* e) const { g.gen(e); }
-    void operator()(Neg_expr const* e) const { g.gen(e); }
-    void operator()(Pos_expr const* e) const { g.gen(e); }
-    void operator()(Eq_expr const* e) const { g.gen(e); }
-    void operator()(Ne_expr const* e) const { g.gen(e); }
-    void operator()(Lt_expr const* e) const { g.gen(e); }
-    void operator()(Gt_expr const* e) const { g.gen(e); }
-    void operator()(Le_expr const* e) const { g.gen(e); }
-    void operator()(Ge_expr const* e) const { g.gen(e); }
-    void operator()(And_expr const* e) const { g.gen(e); }
-    void operator()(Or_expr const* e) const { g.gen(e); }
-    void operator()(Not_expr const* e) const { g.gen(e); }
-    void operator()(Call_expr const* e) const { g.gen(e); }
+    llvm::Value* operator()(Literal_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Id_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Add_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Sub_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Mul_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Div_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Rem_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Neg_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Pos_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Eq_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Ne_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Lt_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Gt_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Le_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Ge_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(And_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Or_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Not_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Call_expr const* e) const { return g.gen(e); }
   };
 
   return apply(e, Fn{*this});
 }
 
 
-void 
+// Return the value corresponding to a literal expression.
+llvm::Value* 
 Generator::gen(Literal_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+  // TODO: Write better type queries.
+  //
+  // TODO: Write a better interface for values.
+  Value v = evaluate(e);
+  if (e->type() == get_boolean_type())
+    return build.getInt1(v.r.z);
+  if (e->type() == get_integer_type())
+    return build.getInt32(v.r.z);
+  else
+    throw std::runtime_error("cannot generate function literal");
 }
 
 
-void 
+llvm::Value* 
 Generator::gen(Id_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-void 
+llvm::Value* 
 Generator::gen(Add_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-void 
+llvm::Value* 
 Generator::gen(Sub_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-void 
+llvm::Value* 
 Generator::gen(Mul_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-void 
+llvm::Value* 
 Generator::gen(Div_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-void 
+llvm::Value* 
 Generator::gen(Rem_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-void 
+llvm::Value* 
 Generator::gen(Neg_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-void 
+llvm::Value* 
 Generator::gen(Pos_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-void 
+llvm::Value* 
 Generator::gen(Eq_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-void 
+llvm::Value* 
 Generator::gen(Ne_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-void 
+llvm::Value* 
 Generator::gen(Lt_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-void 
+llvm::Value* 
 Generator::gen(Gt_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-void 
+llvm::Value* 
 Generator::gen(Le_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-void 
+llvm::Value* 
 Generator::gen(Ge_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-void 
+llvm::Value* 
 Generator::gen(And_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-void 
+llvm::Value* 
 Generator::gen(Or_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-void 
+llvm::Value* 
 Generator::gen(Not_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-void 
+llvm::Value* 
 Generator::gen(Call_expr const* e)
 {
   throw std::runtime_error("not implemented");
@@ -264,17 +275,30 @@ Generator::gen(Empty_stmt const* s)
 }
 
 
+// Generate code for a sequence of statements.
+// Note that this does not correspond to a basic
+// block since we don't need any terminators
+// in the following program.
+//
+//    {
+//      { ; }
+//    }
+//
+// We only need new blocks for specific control
+// flow concepts.
 void
 Generator::gen(Block_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  for (Stmt const* s1 : s->statements())
+    gen(s1);
 }
 
 
 void
 Generator::gen(Return_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* v = gen(s->value());
+  build.CreateRet(v);
 }
 
 
@@ -406,9 +430,14 @@ Generator::gen(Function_decl const* d)
     }
   }
 
-  // TODO: Generate the basic blocks and body
-  // of the function.
-  (void)fn;
+  // Build the entry point for the function
+  // and make that the insertion point.
+  //
+  // TODO: We probably need a stack of blocks
+  // so that we know where we are.
+  llvm::BasicBlock* b = llvm::BasicBlock::Create(cxt, "b", fn);
+  build.SetInsertPoint(b);
+  gen(d->body());
 }
 
 

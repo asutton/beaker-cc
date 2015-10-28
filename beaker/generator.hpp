@@ -40,26 +40,26 @@ struct Generator
   llvm::Type* get_type(Integer_type const*);
   llvm::Type* get_type(Function_type const*);
 
-  void gen(Expr const*);
-  void gen(Literal_expr const*);
-  void gen(Id_expr const*);
-  void gen(Add_expr const*);
-  void gen(Sub_expr const*);
-  void gen(Mul_expr const*);
-  void gen(Div_expr const*);
-  void gen(Rem_expr const*);
-  void gen(Neg_expr const*);
-  void gen(Pos_expr const*);
-  void gen(Eq_expr const*);
-  void gen(Ne_expr const*);
-  void gen(Lt_expr const*);
-  void gen(Gt_expr const*);
-  void gen(Le_expr const*);
-  void gen(Ge_expr const*);
-  void gen(And_expr const*);
-  void gen(Or_expr const*);
-  void gen(Not_expr const*);
-  void gen(Call_expr const*);
+  llvm::Value* gen(Expr const*);
+  llvm::Value* gen(Literal_expr const*);
+  llvm::Value* gen(Id_expr const*);
+  llvm::Value* gen(Add_expr const*);
+  llvm::Value* gen(Sub_expr const*);
+  llvm::Value* gen(Mul_expr const*);
+  llvm::Value* gen(Div_expr const*);
+  llvm::Value* gen(Rem_expr const*);
+  llvm::Value* gen(Neg_expr const*);
+  llvm::Value* gen(Pos_expr const*);
+  llvm::Value* gen(Eq_expr const*);
+  llvm::Value* gen(Ne_expr const*);
+  llvm::Value* gen(Lt_expr const*);
+  llvm::Value* gen(Gt_expr const*);
+  llvm::Value* gen(Le_expr const*);
+  llvm::Value* gen(Ge_expr const*);
+  llvm::Value* gen(And_expr const*);
+  llvm::Value* gen(Or_expr const*);
+  llvm::Value* gen(Not_expr const*);
+  llvm::Value* gen(Call_expr const*);
   
   void gen(Stmt const*);
   void gen(Empty_stmt const*);
@@ -88,7 +88,7 @@ struct Generator
 
 inline
 Generator::Generator()
-  : cxt(), build(cxt)
+  : cxt(), build(cxt), mod(nullptr)
 { }
 
 
