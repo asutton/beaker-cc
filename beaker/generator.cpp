@@ -12,53 +12,57 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 
+#include <iostream>
+
 
 // -------------------------------------------------------------------------- //
 // Mapping of types
 //
 // The type generator transforms a beaker type into
 // its correspondiong LLVM type.
-//
-// TODO: Should this be a part of generator? It's more
-// of a transformation and does not appear to rely on
-// basic context.
 
 
-#if 0
-Generator::gen(Type const* t)
+llvm::Type*
+Generator::get_type(Type const* t)
 {
   struct Fn
   {
     Generator& g;
-    ll::Type const* operator()(Boolean_type const* t) const { return g.gen(t); }
-    ll::Type const* operator()(Integer_type const* t) const { return g.gen(t); }
-    ll::Type const* operator()(Function_type const* t) const { return g.gen(t); }
+    llvm::Type* operator()(Boolean_type const* t) const { return g.get_type(t); }
+    llvm::Type* operator()(Integer_type const* t) const { return g.get_type(t); }
+    llvm::Type* operator()(Function_type const* t) const { return g.get_type(t); }
   };
   return apply(t, Fn{*this});
 }
 
 
-ll::Type const*
-Generator::gen(Boolean_type const*)
+// Return the 1 bit integer type.
+llvm::Type*
+Generator::get_type(Boolean_type const*)
 {
-  return ll::get_boolean_type();
+  return build.getInt1Ty();
 }
 
 
-ll::Type const*
-Generator::gen(Integer_type const*)
+// Return the 32 bit integer type.
+llvm::Type*
+Generator::get_type(Integer_type const*)
 {
-  return ll::get_integer_type(32);
+  return build.getInt32Ty();
 }
 
 
-ll::Type const*
-Generator::gen(Function_type const*)
+// Return a function type.
+llvm::Type*
+Generator::get_type(Function_type const* t)
 {
-  // FIXME: Implement mem.
-  throw std::runtime_error("not implemented");      
+  std::vector<llvm::Type*> ts;
+  ts.reserve(t->parameter_types().size());
+  for (Type const* t1 : t->parameter_types())
+    ts.push_back(get_type(t1));
+  llvm::Type* r = get_type(t->return_type());
+  return llvm::FunctionType::get(r, ts, false);
 }
-#endif
 
 
 // -------------------------------------------------------------------------- //
@@ -321,13 +325,22 @@ Generator::gen(Decl const* d)
 
 
 void
-Generator::gen(Variable_decl const* d)
+Generator::gen_local(Variable_decl const* d)
+{
+  throw std::runtime_error("not implemented");
+}
+
+
+void
+Generator::gen_global(Variable_decl const* d)
 {
   String const&   name = d->name()->spelling();
   llvm::Type*     type = build.getInt32Ty();
   llvm::Constant* init = llvm::ConstantAggregateZero::get(type);
 
-  new llvm::GlobalVariable(
+  // Build the global variable, automatically adding
+  // it to the module.
+  llvm::GlobalVariable* var = new llvm::GlobalVariable(
     *mod,                                  // owning module
     type,                                  // type
     false,                                 // is constant
@@ -335,28 +348,93 @@ Generator::gen(Variable_decl const* d)
     init,                                  // initializer
     name                                   // name
   );
+
+  // Create a binding for the new variable.
+  stack.top().bind(d, var);
+}
+
+
+// Generate code for a variable declaration. Note that
+// code generation depends heavily on context. Globals
+// and locals are very different.
+//
+// TODO: If we add class/record types, then we also
+// need to handle member variables as well. Maybe.
+void
+Generator::gen(Variable_decl const* d)
+{
+  if (is_global_variable(d))
+    return gen_global(d);
+  else
+    return gen_local(d);
 } 
 
 
 void
-Generator::gen(Function_decl const*)
+Generator::gen(Function_decl const* d)
 {
-  throw std::runtime_error("not implemented");
+  String const& name = d->name()->spelling();
+  llvm::Type*   type = get_type(d->type());
+
+  // Build the function.
+  llvm::FunctionType* ftype = llvm::cast<llvm::FunctionType>(type);
+  llvm::Function* fn = llvm::Function::Create(
+    ftype,                           // function type
+    llvm::Function::ExternalLinkage, // linkage
+    name,                            // name
+    mod);                            // owning module
+
+  // Establish a new binding environment for declarations
+  // related to this function.
+  Symbol_sentinel scope(*this);
+  
+  // Set the names of function arguments and establish
+  // bindings for all of them.
+  {
+    auto ai = fn->arg_begin();
+    auto pi = d->parameters().begin();
+    while (ai != fn->arg_end()) {
+      Decl const* p = *pi;
+      llvm::Argument* a = &*ai;
+      a->setName(p->name()->spelling());
+
+      // Establish the symbol binding for the parameter.
+      stack.top().bind(p, a);
+
+      ++ai;
+      ++pi;
+    }
+  }
+
+  // TODO: Generate the basic blocks and body
+  // of the function.
+  (void)fn;
 }
 
 
 void
 Generator::gen(Parameter_decl const*)
 {
-  throw std::runtime_error("not implemented");
+  // NOTE: We don't visit parameters independently
+  // of function declarations, so we should never
+  // reach here.
+  throw std::runtime_error("unreachable");
 }
 
 
 void
 Generator::gen(Module_decl const* d)
 {
+  // Establish the global binding environment.
+  Symbol_sentinel scope(*this);
+
   // Initialize the module.
-  mod = new llvm::Module("b.out", cxt);
+  //
+  // TODO: Make the output name the ".ll" version of the
+  // the input name. Although this might also depend on
+  // whether we're generating IR or object code?
+  assert(!mod);
+  mod = new llvm::Module("a.ll", cxt);
 
   // Generate all top-level declarations.
   for (Decl const* d1 : d->declarations())

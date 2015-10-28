@@ -15,10 +15,18 @@
 
 // Used to maintain a mapping of Beaker declarations
 // to their corresponding LLVM declarations. This is
-// only used to track globals and functions. 
+// used to track the names of globals and parameters.
 //
-// using Symbol_env = Environment<Decl const*, ll::Decl*>;
-// using Symbol_stack = Stack<Symbol_env>;
+// TODO: If we support local variables, this will not be 
+// sufficient for code generation. We would need to bind 
+// local variable names to their adresses --- the results
+// returned by their alloca instructions. Of course,
+// alloca instructions are inherently values, so maybe
+// this isn't as bad as I think? We may have to downcast
+// to resolve the symbol kind (global, function, or
+// local).
+using Symbol_env = Environment<Decl const*, llvm::Value*>;
+using Symbol_stack = Stack<Symbol_env>;
 
 
 struct Generator
@@ -27,36 +35,43 @@ struct Generator
 
   llvm::Module* operator()(Decl const*);
 
-  void gen(Expr const* e);
-  void gen(Literal_expr const* e);
-  void gen(Id_expr const* e);
-  void gen(Add_expr const* e);
-  void gen(Sub_expr const* e);
-  void gen(Mul_expr const* e);
-  void gen(Div_expr const* e);
-  void gen(Rem_expr const* e);
-  void gen(Neg_expr const* e);
-  void gen(Pos_expr const* e);
-  void gen(Eq_expr const* e);
-  void gen(Ne_expr const* e);
-  void gen(Lt_expr const* e);
-  void gen(Gt_expr const* e);
-  void gen(Le_expr const* e);
-  void gen(Ge_expr const* e);
-  void gen(And_expr const* e);
-  void gen(Or_expr const* e);
-  void gen(Not_expr const* e);
-  void gen(Call_expr const* e);
-  
-  void gen(Stmt const* s);
-  void gen(Empty_stmt const* s);
-  void gen(Block_stmt const* s);
-  void gen(Return_stmt const* s);
-  void gen(Expression_stmt const* s);
-  void gen(Declaration_stmt const* s);
+  llvm::Type* get_type(Type const*);
+  llvm::Type* get_type(Boolean_type const*);
+  llvm::Type* get_type(Integer_type const*);
+  llvm::Type* get_type(Function_type const*);
 
-  void gen(Decl const* d);
+  void gen(Expr const*);
+  void gen(Literal_expr const*);
+  void gen(Id_expr const*);
+  void gen(Add_expr const*);
+  void gen(Sub_expr const*);
+  void gen(Mul_expr const*);
+  void gen(Div_expr const*);
+  void gen(Rem_expr const*);
+  void gen(Neg_expr const*);
+  void gen(Pos_expr const*);
+  void gen(Eq_expr const*);
+  void gen(Ne_expr const*);
+  void gen(Lt_expr const*);
+  void gen(Gt_expr const*);
+  void gen(Le_expr const*);
+  void gen(Ge_expr const*);
+  void gen(And_expr const*);
+  void gen(Or_expr const*);
+  void gen(Not_expr const*);
+  void gen(Call_expr const*);
+  
+  void gen(Stmt const*);
+  void gen(Empty_stmt const*);
+  void gen(Block_stmt const*);
+  void gen(Return_stmt const*);
+  void gen(Expression_stmt const*);
+  void gen(Declaration_stmt const*);
+
+  void gen(Decl const*);
   void gen(Variable_decl const*);
+  void gen_local(Variable_decl const*);
+  void gen_global(Variable_decl const*);
   void gen(Function_decl const*);
   void gen(Parameter_decl const*);
   void gen(Module_decl const*);
@@ -65,7 +80,9 @@ struct Generator
   llvm::IRBuilder<> build;
   llvm::Module*     mod;
 
-  // Symbol_stack syms_;
+  Symbol_stack      stack;
+
+  struct Symbol_sentinel;
 };
 
 
@@ -73,6 +90,25 @@ inline
 Generator::Generator()
   : cxt(), build(cxt)
 { }
+
+
+// An RAII class used to manage the registration and
+// removal of name-to-value bindings for code generation.
+struct Generator::Symbol_sentinel
+{
+  Symbol_sentinel(Generator& g)
+    : gen(g)
+  {
+    gen.stack.push();
+  }
+
+  ~Symbol_sentinel()
+  {
+    gen.stack.pop();
+  }
+
+  Generator& gen;
+};
 
 
 #endif

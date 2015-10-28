@@ -122,6 +122,30 @@ struct Module_decl : Decl
 };
 
 
+// -------------------------------------------------------------------------- //
+//                              Queries
+
+// Returns true if v is a global variable.
+inline bool
+is_global_variable(Variable_decl const* v)
+{
+  return is<Module_decl>(v->context());
+}
+
+
+// Returns true if v is a local variable.
+//
+// TODO: This actually depends more on storage properties
+// than on declaration context. For example, if the language
+// allowed static local variables (as in C++), then this
+// would also need to check for an appropriate declaration
+// specifier.
+inline bool
+is_local_variable(Variable_decl const* v)
+{
+  return is<Function_decl>(v->context());
+}
+
 
 // -------------------------------------------------------------------------- //
 //                              Generic visitors

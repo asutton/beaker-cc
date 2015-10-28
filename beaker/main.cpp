@@ -11,7 +11,8 @@
 #include <iostream>
 #include <fstream>
 
-#include "llvm/IR/Module.h"
+#include <llvm/IR/Module.h>
+#include <llvm/Support/raw_ostream.h>
 
 
 using namespace std;
@@ -72,7 +73,7 @@ main(int argc, char* argv[])
     else {
       Generator gen;
       llvm::Module* mod = gen(m);
-      mod->dump();
+      llvm::outs() << *mod;
     }
 
 
