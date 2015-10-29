@@ -46,14 +46,17 @@ main(int argc, char* argv[])
     if (!lex.lex(ts))
       return -1;
 
-    // Build and run the parser.
-    Parser parse(syms, ts);
+    // Build and run the parser. The location map
+    // is used to save source locations, which are
+    // used to diagnose elaboration errors.
+    Location_map locs;
+    Parser parse(syms, ts, locs);
     Decl* m = parse.module();
     if (!parse)
       return -1;
 
     // TODO: Implement a parse-only phase.
-    Elaborator elab;
+    Elaborator elab(locs);
     elab.elaborate(m);
     
     // Find an entry point for evaluation.

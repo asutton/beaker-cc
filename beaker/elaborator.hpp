@@ -5,6 +5,7 @@
 #define BEAKER_ELABORATOR_HPP
 
 #include "prelude.hpp"
+#include "location.hpp"
 #include "environment.hpp"
 
 // The elaborator is responsible for a number of static
@@ -65,6 +66,8 @@ class Elaborator
 {
   struct Scope_sentinel;
 public:
+  Elaborator(Location_map&);
+
   Type const* elaborate(Expr*);
   Type const* elaborate(Literal_expr*);
   Type const* elaborate(Id_expr*);
@@ -110,8 +113,15 @@ public:
   Function_decl* main = nullptr;
 
 private:
-  Scope_stack stack;
+  Location_map locs;
+  Scope_stack  stack;
 };
+
+
+inline
+Elaborator::Elaborator(Location_map& loc)
+  : locs(loc)
+{ }
 
 
 struct Elaborator::Scope_sentinel

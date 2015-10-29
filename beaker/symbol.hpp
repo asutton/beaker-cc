@@ -104,6 +104,10 @@ struct Identifier_sym : Symbol
 };
 
 
+// Streaming
+std::ostream& operator<<(std::ostream&, Symbol const&);
+
+
 // -------------------------------------------------------------------------- //
 //                           Symbol table
 

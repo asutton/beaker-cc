@@ -5,6 +5,7 @@
 #define BEAKER_LOCATION_HPP
 
 #include <iosfwd>
+#include <unordered_map>
 
 
 class File;
@@ -36,6 +37,33 @@ public:
 };
 
 
+// The location map associates terms of the
+// language with their location in source code.
+// Note that types do not have a source code
+// location since they are uniqued. 
+//
+// TODO: Use this to also determine the
+// end of a term.
+struct Location_map : std::unordered_map<void*, Location>
+{
+  using std::unordered_map<void*, Location>::unordered_map;
+
+  Location get(void*) const;
+};
+
+
+inline Location 
+Location_map::get(void* p) const
+{
+  auto iter = find(p);
+  if (iter != end())
+    return iter->second;
+  else
+    return {};
+}
+
+
+// Streaming
 std::ostream& operator<<(std::ostream&, Location const&);
 
 

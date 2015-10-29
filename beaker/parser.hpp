@@ -18,6 +18,7 @@ class Parser
 {
 public:
   Parser(Symbol_table&, Token_stream&);
+  Parser(Symbol_table&, Token_stream&, Location_map&);
 
   // Expression parsers
   Expr* primary_expr();
@@ -112,9 +113,13 @@ private:
   [[noreturn]] void error(char const*);
   [[noreturn]] void error(String const&);
 
+  template<typename T, typename... Args>
+  T* init(Location, Args&&...);
+
 private:
   Symbol_table& syms_;
   Token_stream& ts_;
+  Location_map* locs_;
 
   int errs_;        // Error count
 
@@ -125,7 +130,13 @@ private:
 
 inline
 Parser::Parser(Symbol_table& s, Token_stream& t)
-  : syms_(s), ts_(t), errs_(0), term_()
+  : syms_(s), ts_(t), locs_(nullptr), errs_(0), term_()
+{ }
+
+
+inline
+Parser::Parser(Symbol_table& s, Token_stream& t, Location_map& l)
+  : syms_(s), ts_(t), locs_(&l), errs_(0), term_()
 { }
 
 
@@ -134,6 +145,20 @@ inline Token_kind
 Parser::lookahead() const
 {
   return Token_kind(ts_.peek().kind());
+}
+
+
+// A helper function to create nodes and record their
+// source location.
+//
+// TODO: Put this in the .cpp file? It is private.
+template<typename T, typename... Args>
+inline T* 
+Parser::init(Location loc, Args&&... args)
+{
+  T* t = new T(std::forward<Args>(args)...);
+  locs_->emplace(t, loc);
+  return t;
 }
 
 

@@ -684,14 +684,14 @@ Parser::error(String const& msg)
 Expr*
 Parser::on_id(Token tok)
 {
-  return new Id_expr(tok.symbol());
+  return init<Id_expr>(tok.location(), tok.symbol());
 }
 
 
 Expr*
 Parser::on_bool(Token tok)
 {
-  return new Literal_expr(tok.symbol());
+  return init<Literal_expr>(tok.location(), tok.symbol());
 }
 
 

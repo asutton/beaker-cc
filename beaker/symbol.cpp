@@ -2,3 +2,10 @@
 // All rights reserved
 
 #include "symbol.hpp"
+
+
+std::ostream& 
+operator<<(std::ostream& os, Symbol const& sym)
+{
+  return os << sym.spelling();
+}

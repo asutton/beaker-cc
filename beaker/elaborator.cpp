@@ -232,8 +232,11 @@ Type const*
 Elaborator::elaborate(Id_expr* e)
 {
   Scope::Binding const* b = stack.lookup(e->symbol());
-  if (!b)
-    throw std::runtime_error("lookup error");
+  if (!b) {
+    std::stringstream ss;
+    ss << "no matching declaration for '" << *e->symbol() << '\'';
+    throw Lookup_error(locs.get(e), ss.str());
+  }
   return b->second->type();
 }
 
