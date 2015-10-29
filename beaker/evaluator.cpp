@@ -5,6 +5,7 @@
 #include "expr.hpp"
 #include "decl.hpp"
 #include "stmt.hpp"
+#include "error.hpp"
 
 #include <iostream>
 
@@ -56,7 +57,7 @@ Evaluator::eval(Literal_expr const* e)
 Value
 Evaluator::eval(Id_expr const* e)
 {
-  return stack.lookup(e->symbol())->second;
+  return &stack.lookup(e->symbol())->second;
 }
 
 
@@ -66,7 +67,7 @@ Evaluator::eval(Add_expr const* e)
 {
   Value v1 = eval(e->left());
   Value v2 = eval(e->right());
-  return v1.r.z + v2.r.z;
+  return v1.get_integer() + v2.get_integer();
 }
 
 
@@ -76,7 +77,7 @@ Evaluator::eval(Sub_expr const* e)
 {
   Value v1 = eval(e->left());
   Value v2 = eval(e->right());
-  return v1.r.z - v2.r.z;
+  return v1.get_integer() - v2.get_integer();
 }
 
 
@@ -86,7 +87,7 @@ Evaluator::eval(Mul_expr const* e)
 {
   Value v1 = eval(e->left());
   Value v2 = eval(e->right());
-  return v1.r.z * v2.r.z;
+  return v1.get_integer() * v2.get_integer();
 }
 
 
@@ -95,9 +96,9 @@ Evaluator::eval(Div_expr const* e)
 {
   Value v1 = eval(e->left());
   Value v2 = eval(e->right());
-  if (v2.r.z == 0)
+  if (v2.get_integer() == 0)
     throw std::runtime_error("division by 0");
-  return v1.r.z / v2.r.z;
+  return v1.get_integer() / v2.get_integer();
 }
 
 
@@ -106,9 +107,9 @@ Evaluator::eval(Rem_expr const* e)
 {
   Value v1 = eval(e->left());
   Value v2 = eval(e->right());
-  if (v2.r.z == 0)
+  if (v2.get_integer() == 0)
     throw std::runtime_error("division by 0");
-  return v1.r.z / v2.r.z;
+  return v1.get_integer() / v2.get_integer();
 }
 
 
@@ -116,7 +117,7 @@ Value
 Evaluator::eval(Neg_expr const* e)
 {
   Value v = eval(e->operand());
-  return -v.r.z;
+  return -v.get_integer();
 }
 
 
@@ -132,14 +133,18 @@ template<typename F>
 bool 
 compare_equal(Value const& v1, Value const& v2, F fn)
 {
-  if (v1.k == v2.k) {
-    if (v1.k == integer_value)
-      return fn(v1.r.z, v2.r.z);
-    if (v1.k == function_value)
-      return fn(v1.r.f, v2.r.f);
-    throw std::runtime_error("imcomparable values");
+  // See through references.
+  Value const& a = v1.is_reference() ? *v1.get_reference() : v1;
+  Value const& b = v2.is_reference() ? *v2.get_reference() : v2;
+  
+  // Perform comparison.
+  if (a.kind() == b.kind()) {
+    if (a.is_integer())
+      return fn(a.get_integer(), b.get_integer());
+    if (a.is_function())
+      return fn(a.get_function(), b.get_function());
   }
-  throw std::runtime_error("invalid operands");
+  throw Evaluation_error({}, "invalid operands");
 }
 
 
@@ -167,12 +172,14 @@ template<typename F>
 bool 
 compare_less(Value const& v1, Value const& v2, F fn)
 {
-  if (v1.k == v2.k) {
-    if (v1.k == integer_value)
-      return fn(v1.r.z, v2.r.z);
-    throw std::runtime_error("imcomparable values");
+  Value const& a = v1.is_reference() ? *v1.get_reference() : v1;
+  Value const& b = v2.is_reference() ? *v2.get_reference() : v2;
+
+  if (a.kind() == b.kind()) {
+    if (a.is_integer())
+      return fn(a.get_integer(), b.get_integer());
   }
-  throw std::runtime_error("invalid operands");
+  throw Evaluation_error({}, "invalid operands");
 }
 
 // Order two integer values.
@@ -216,7 +223,7 @@ Value
 Evaluator::eval(And_expr const* e)
 {
   Value v = eval(e->left());
-  if (!v.r.z)
+  if (!v.get_integer())
     return v;
   else
     return eval(e->right());
@@ -227,7 +234,7 @@ Value
 Evaluator::eval(Or_expr const* e)
 {
   Value v = eval(e->left());
-  if (v.r.z)
+  if (v.get_integer())
     return v;
   else
     return eval(e->right());
@@ -238,7 +245,7 @@ Value
 Evaluator::eval(Not_expr const* e)
 {
   Value v = eval(e->operand());
-  return !v.r.z;
+  return !v.get_integer();
 }
 
 
@@ -247,7 +254,7 @@ Evaluator::eval(Call_expr const* e)
 {
   // Evaluate the function expression.
   Value v = eval(e->target());
-  Function_decl const* f = v.r.f;
+  Function_decl const* f = v.get_function();
 
   // Evaluate each argument in turn.
   Value_seq args;
@@ -388,14 +395,9 @@ Evaluator::eval(Block_stmt const* s, Value& r)
 Control
 Evaluator::eval(Assign_stmt const* s, Value& r)
 {
-  Value v = eval(s->value());
-
-  // FIXME: We really want to evaluate the LHS and
-  // compute an object reference rather than performing
-  // the lookup in this way. 
-  Id_expr* id = cast<Id_expr>(s->object());
-  stack.lookup(id->symbol())->second = v;
-
+  Value lhs = eval(s->object());
+  Value rhs = eval(s->value());
+  *lhs.get_reference() = rhs;
   return next_ctl;
 }
 
@@ -414,7 +416,7 @@ Control
 Evaluator::eval(If_then_stmt const* s, Value& r)
 {
   Value c = eval(s->condition());
-  if (c.r.z)
+  if (c.get_integer())
     return eval(s->body(), r);
   return next_ctl;
 }
@@ -429,7 +431,7 @@ Control
 Evaluator::eval(If_else_stmt const* s, Value& r)
 {
   Value c = eval(s->condition());
-  if (c.r.z)
+  if (c.get_integer())
     return eval(s->true_branch(), r);
   else
     return eval(s->false_branch(), r);

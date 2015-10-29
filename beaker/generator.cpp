@@ -112,9 +112,9 @@ Generator::gen(Literal_expr const* e)
   // TODO: Write a better interface for values.
   Value v = evaluate(e);
   if (e->type() == get_boolean_type())
-    return build.getInt1(v.r.z);
+    return build.getInt1(v.get_integer());
   if (e->type() == get_integer_type())
-    return build.getInt32(v.r.z);
+    return build.getInt32(v.get_integer());
   else
     throw std::runtime_error("cannot generate function literal");
 }

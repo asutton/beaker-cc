@@ -53,6 +53,14 @@ struct Type_error : Translation_error
 };
 
 
+// Represents an error that occurs during
+// compile-time evaluation or interpretation.
+struct Evaluation_error : Translation_error
+{
+  using Translation_error::Translation_error;
+};
+
+
 void diagnose(Translation_error&);
 
 

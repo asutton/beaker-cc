@@ -10,6 +10,7 @@
 #include "lingo/node.hpp"
 #include "lingo/print.hpp"
 
+#include <iosfwd>
 #include <vector>
 #include <stdexcept>
 #include <type_traits>
