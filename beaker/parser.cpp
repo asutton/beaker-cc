@@ -411,7 +411,7 @@ Stmt*
 Parser::empty_stmt()
 {
   require(semicolon_tok);
-  return on_empty_stmt();
+  return on_empty();
 }
 
 
@@ -438,7 +438,7 @@ Parser::block_stmt()
   // TODO: This may be a generally unrecoverable error.
   term_ = rbrace_tok;
   match(rbrace_tok);
-  return on_block_stmt(stmts);
+  return on_block(stmts);
 }
 
 
@@ -452,7 +452,7 @@ Parser::return_stmt()
   require(return_kw);
   Expr* e = expr();
   match(semicolon_tok);
-  return on_return_stmt(e);
+  return on_return(e);
 }
 
 
@@ -480,6 +480,21 @@ Parser::if_stmt()
 }
 
 
+// Parse a for statement.
+//
+//    for-stmt -> 'for' '(' decl ';' expr [update-clause]')' stmt
+//
+//    update-clause -> ';' expr
+//
+// If the update-clause is omitted, it defaults to the
+// integer literal 1.
+Stmt*
+Parser::for_stmt()
+{
+  throw std::runtime_error("not implemented");
+}
+
+
 // Parse a declaration statement.
 //
 //    declaration-stmt -> decl
@@ -487,20 +502,30 @@ Stmt*
 Parser::declaration_stmt()
 {
   Decl* d = decl();
-  return on_declaration_stmt(d);
+  return on_declaration(d);
 }
 
 
 // Parse an expression statement.
 //
-//    expression-stmt -> expr ';'
+//    expression-stmt -> expr '=' expr ';'
+//                     | expr ';'
+//
+// The first form of an expression is an
+// assignment statement.
 Stmt*
 Parser::expression_stmt()
 {
   term_ = semicolon_tok;
-  Expr* e = expr();
-  match(semicolon_tok);
-  return on_expression_stmt(e);
+  Expr* e1 = expr();
+  if (match_if(equal_tok)) {
+    Expr* e2 = expr();
+    match(semicolon_tok);
+    return on_assign(e1, e2);
+  } else {
+    match(semicolon_tok);
+    return on_expression(e1);
+  }
 }
 
 
@@ -524,6 +549,9 @@ Parser::stmt()
 
     case if_kw:
       return if_stmt();
+
+    case for_kw:
+      return for_stmt();
 
     case var_kw: 
     case def_kw:
@@ -825,21 +853,28 @@ Parser::on_module_decl(Decl_seq const& d)
 
 
 Stmt*
-Parser::on_empty_stmt()
+Parser::on_empty()
 {
   return new Empty_stmt();
 }
 
 
 Stmt* 
-Parser::on_block_stmt(std::vector<Stmt*> const& s)
+Parser::on_block(std::vector<Stmt*> const& s)
 {
   return new Block_stmt(s);
 }
 
 
 Stmt*
-Parser::on_return_stmt(Expr* e)
+Parser::on_assign(Expr* e1, Expr* e2)
+{
+  return new Assign_stmt(e1, e2);
+}
+
+
+Stmt*
+Parser::on_return(Expr* e)
 {
   return new Return_stmt(e);
 }
@@ -859,15 +894,22 @@ Parser::on_if_else(Expr* e, Stmt* s1, Stmt* s2)
 }
 
 
+Stmt*
+Parser::on_for(Decl* d, Expr* c, Expr* n)
+{
+  return new For_stmt(d, c, n);
+}
+
+
 Stmt* 
-Parser::on_expression_stmt(Expr* e)
+Parser::on_expression(Expr* e)
 {
   return new Expression_stmt(e);
 }
 
 
 Stmt* 
-Parser::on_declaration_stmt(Decl* d)
+Parser::on_declaration(Decl* d)
 {
   return new Declaration_stmt(d);
 }

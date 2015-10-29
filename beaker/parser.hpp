@@ -47,6 +47,7 @@ public:
   Stmt* block_stmt();
   Stmt* return_stmt();
   Stmt* if_stmt();
+  Stmt* for_stmt();
   Stmt* declaration_stmt();
   Stmt* expression_stmt();
 
@@ -87,13 +88,15 @@ private:
   Decl* on_module_decl(Decl_seq const&);
 
   // FIXME: Remove _stmt from handlers.
-  Stmt* on_empty_stmt();
-  Stmt* on_block_stmt(Stmt_seq const&);
-  Stmt* on_return_stmt(Expr*);
+  Stmt* on_empty();
+  Stmt* on_block(Stmt_seq const&);
+  Stmt* on_assign(Expr*, Expr*);
+  Stmt* on_return(Expr*);
   Stmt* on_if_then(Expr*, Stmt*);
   Stmt* on_if_else(Expr*, Stmt*, Stmt*);
-  Stmt* on_expression_stmt(Expr*);
-  Stmt* on_declaration_stmt(Decl*);
+  Stmt* on_for(Decl*, Expr*, Expr*);
+  Stmt* on_expression(Expr*);
+  Stmt* on_declaration(Decl*);
 
   // Parsing support
   Token_kind lookahead() const;

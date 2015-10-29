@@ -51,6 +51,7 @@ enum Token_kind
   else_kw,
   if_kw,
   int_kw,
+  for_kw,
   return_kw,
   var_kw,
 

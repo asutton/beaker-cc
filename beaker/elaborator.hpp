@@ -97,9 +97,11 @@ public:
   void elaborate(Stmt*);
   void elaborate(Empty_stmt*);
   void elaborate(Block_stmt*);
+  void elaborate(Assign_stmt*);
   void elaborate(Return_stmt*);
   void elaborate(If_then_stmt*);
   void elaborate(If_else_stmt*);
+  void elaborate(For_stmt*);
   void elaborate(Expression_stmt*);
   void elaborate(Declaration_stmt*);
 

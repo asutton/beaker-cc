@@ -1,0 +1,7 @@
+
+def main() -> bool
+{
+  var x : int = 0;
+  var b : bool = true;
+  return false;  
+}

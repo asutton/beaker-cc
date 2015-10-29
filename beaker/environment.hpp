@@ -24,6 +24,7 @@ public:
   Binding const& bind(S const&, T const&);
   Binding const& get(S const&) const;
   Binding const* lookup(S const&) const;
+  Binding*       lookup(S const&);
 };
 
 
@@ -65,6 +66,19 @@ Environment<S, T>::lookup(S const& sym) const -> Binding const*
 }
 
 
+// Returns the entity bound to the given symbol.
+template<typename S, typename T>
+inline auto
+Environment<S, T>::lookup(S const& sym) -> Binding*
+{
+  auto iter = this->find(sym);
+  if (iter == this->end())
+    return nullptr;
+  else
+    return &*iter;
+}
+
+
 // The stack maintains the nested binding environments at
 // certain point in the program. Symbol lookup is processed
 // in the innermost environment, and works outward.
@@ -88,6 +102,7 @@ struct Stack : std::vector<E>
   E const& bottom() const { return this->front(); }
 
   Binding const* lookup(Name const&) const;
+  Binding*       lookup(Name const&);
 };
 
 
@@ -114,6 +129,18 @@ Stack<E>::lookup(Name const& n) const -> Binding const*
 {
   for (auto iter = this->rbegin(); iter != this->rend(); ++iter) {
     if (Binding const* bind = iter->lookup(n))
+      return bind;
+  }
+  return nullptr;
+}
+
+
+template<typename E>
+auto
+Stack<E>::lookup(Name const& n) -> Binding*
+{
+  for (auto iter = this->rbegin(); iter != this->rend(); ++iter) {
+    if (Binding* bind = iter->lookup(n))
       return bind;
   }
   return nullptr;

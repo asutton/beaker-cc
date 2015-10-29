@@ -23,9 +23,11 @@ struct Stmt::Visitor
 {
   virtual void visit(Empty_stmt const*) = 0;
   virtual void visit(Block_stmt const*) = 0;
+  virtual void visit(Assign_stmt const*) = 0;
   virtual void visit(Return_stmt const*) = 0;
   virtual void visit(If_then_stmt const*) = 0;
   virtual void visit(If_else_stmt const*) = 0;
+  virtual void visit(For_stmt const*) = 0;
   virtual void visit(Expression_stmt const*) = 0;
   virtual void visit(Declaration_stmt const*) = 0;
 };
@@ -36,9 +38,11 @@ struct Stmt::Mutator
 {
   virtual void visit(Empty_stmt*) = 0;
   virtual void visit(Block_stmt*) = 0;
+  virtual void visit(Assign_stmt*) = 0;
   virtual void visit(Return_stmt*) = 0;
   virtual void visit(If_then_stmt*) = 0;
   virtual void visit(If_else_stmt*) = 0;
+  virtual void visit(For_stmt*) = 0;
   virtual void visit(Expression_stmt*) = 0;
   virtual void visit(Declaration_stmt*) = 0;
 };
@@ -66,6 +70,26 @@ struct Block_stmt : Stmt
   Stmt_seq const& statements() const { return first; }
 
   Stmt_seq first;
+};
+
+
+// An assignment statement of the form:
+//
+//    e1 = e2
+struct Assign_stmt : Stmt
+{
+  Assign_stmt(Expr* e1, Expr* e2)
+    : first(e1), second(e2)
+  { }
+
+  void accept(Visitor& v) const { return v.visit(this); }
+  void accept(Mutator& v)       { return v.visit(this); }
+
+  Expr* object() const { return first; }
+  Expr* value() const  { return second; }
+
+  Expr* first;
+  Expr* second;
 };
 
 
@@ -127,6 +151,32 @@ struct If_else_stmt : Stmt
 };
 
 
+// A statement of the form:
+//
+//    for(d ; e1; e2)
+//
+// Here, d is the loop variable, e1 is the loop condition,
+// and e2 is the variable update (increment or decrement). 
+// Note that the increment is not required to be a constant.
+struct For_stmt : Stmt
+{
+  For_stmt(Decl* d, Expr* e1, Expr* e2)
+    : first(d), second(e1), third(e2)
+  { }
+
+  void accept(Visitor& v) const { return v.visit(this); }
+  void accept(Mutator& v)       { return v.visit(this); }
+
+  Decl* variable() const  { return first; }
+  Expr* condition() const { return second; }
+  Expr* update() const    { return second; }
+
+  Decl* first;
+  Expr* second;
+  Expr* third;
+};
+
+
 // An expression statement.
 struct Expression_stmt : Stmt
 {
@@ -171,9 +221,11 @@ struct Generic_stmt_visitor : Stmt::Visitor, lingo::Generic_visitor<F, T>
   
   void visit(Empty_stmt const* d) { this->invoke(d); };
   void visit(Block_stmt const* d) { this->invoke(d); };
+  void visit(Assign_stmt const* d) { this->invoke(d); };
   void visit(Return_stmt const* d) { this->invoke(d); };
   void visit(If_then_stmt const* d) { this->invoke(d); };
   void visit(If_else_stmt const* d) { this->invoke(d); };
+  void visit(For_stmt const* d) { this->invoke(d); };
   void visit(Expression_stmt const* d) { this->invoke(d); };
   void visit(Declaration_stmt const* d) { this->invoke(d); };
 };
@@ -202,9 +254,11 @@ struct Generic_stmt_mutator : Stmt::Mutator, lingo::Generic_mutator<F, T>
   
   void visit(Empty_stmt* d) { this->invoke(d); };
   void visit(Block_stmt* d) { this->invoke(d); };
+  void visit(Assign_stmt* d) { this->invoke(d); };
   void visit(Return_stmt* d) { this->invoke(d); };
   void visit(If_then_stmt* d) { this->invoke(d); };
   void visit(If_else_stmt* d) { this->invoke(d); };
+  void visit(For_stmt* d) { this->invoke(d); };
   void visit(Expression_stmt* d) { this->invoke(d); };
   void visit(Declaration_stmt* d) { this->invoke(d); };
 };

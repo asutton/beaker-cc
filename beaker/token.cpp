@@ -36,6 +36,7 @@ spelling(Token_kind k)
     case else_kw: return "else";
     case if_kw: return "if";
     case int_kw: return "int";
+    case for_kw: return "int";
     case return_kw: return "return";
     case var_kw: return "var";
 

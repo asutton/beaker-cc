@@ -350,9 +350,11 @@ Evaluator::eval(Stmt const* s, Value& r)
 
     Control operator()(Empty_stmt const* s) { return ev.eval(s, r); }
     Control operator()(Block_stmt const* s) { return ev.eval(s, r); }
+    Control operator()(Assign_stmt const* s) { return ev.eval(s, r); }
     Control operator()(Return_stmt const* s) { return ev.eval(s, r); }
     Control operator()(If_then_stmt const* s) { return ev.eval(s, r); }
     Control operator()(If_else_stmt const* s) { return ev.eval(s, r); }
+    Control operator()(For_stmt const* s) { return ev.eval(s, r); }
     Control operator()(Expression_stmt const* s) { return ev.eval(s, r); }
     Control operator()(Declaration_stmt const* s) { return ev.eval(s, r); }
   };
@@ -379,6 +381,21 @@ Evaluator::eval(Block_stmt const* s, Value& r)
 
     // TODO: Handle other control flow mechanisms.
   }
+  return next_ctl;
+}
+
+
+Control
+Evaluator::eval(Assign_stmt const* s, Value& r)
+{
+  Value v = eval(s->value());
+
+  // FIXME: We really want to evaluate the LHS and
+  // compute an object reference rather than performing
+  // the lookup in this way. 
+  Id_expr* id = cast<Id_expr>(s->object());
+  stack.lookup(id->symbol())->second = v;
+
   return next_ctl;
 }
 
@@ -416,6 +433,13 @@ Evaluator::eval(If_else_stmt const* s, Value& r)
     return eval(s->true_branch(), r);
   else
     return eval(s->false_branch(), r);
+}
+
+
+Control
+Evaluator::eval(For_stmt const* s, Value& r)
+{
+  throw std::runtime_error("not implemented");
 }
 
 

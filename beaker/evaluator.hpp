@@ -72,9 +72,11 @@ public:
   Control eval(Stmt const*, Value&);
   Control eval(Empty_stmt const*, Value&);
   Control eval(Block_stmt const*, Value&);
+  Control eval(Assign_stmt const*, Value&);
   Control eval(Return_stmt const*, Value&);
   Control eval(If_then_stmt const*, Value&);
   Control eval(If_else_stmt const*, Value&);
+  Control eval(For_stmt const*, Value&);
   Control eval(Expression_stmt const*, Value&);
   Control eval(Declaration_stmt const*, Value&);
 

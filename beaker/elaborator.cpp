@@ -491,9 +491,11 @@ Elaborator::elaborate(Stmt* s)
 
     void operator()(Empty_stmt* d) const { elab.elaborate(d); }
     void operator()(Block_stmt* d) const { elab.elaborate(d); }
+    void operator()(Assign_stmt* d) const { elab.elaborate(d); }
     void operator()(Return_stmt* d) const { elab.elaborate(d); }
     void operator()(If_then_stmt* d) const { elab.elaborate(d); }
     void operator()(If_else_stmt* d) const { elab.elaborate(d); }
+    void operator()(For_stmt* d) const { elab.elaborate(d); }
     void operator()(Expression_stmt* d) const { elab.elaborate(d); }
     void operator()(Declaration_stmt* d) const { elab.elaborate(d); }
   };
@@ -514,6 +516,33 @@ Elaborator::elaborate(Block_stmt* s)
   Scope_sentinel scope = *this;
   for (Stmt* s1 : s->statements())
     elaborate(s1);
+}
+
+
+// In an assignment expression, the left operand shall
+// refer to a mutable object. The types of the left and
+// right operands shall match.
+//
+// TODO: The current interpretation of "refers to a mutable
+// object" is "is an id-expression".
+//
+// TODO: If we have const types, then we'd have to add this
+// checking.
+void
+Elaborator::elaborate(Assign_stmt* s)
+{
+  // Refers to a mutable object.
+  Expr* e1 = s->object();
+  if (!is<Id_expr>(e1)) {
+    throw Type_error({}, "assignment to non-object");
+  }
+  Expr* e2 = s->value();
+
+  // The types shall match.
+  Type const* t1 = elaborate(e1);
+  Type const* t2 = elaborate(e2);
+  if (t1 != t2)
+    throw Type_error({}, "assignment to an object of a different type");
 }
 
 
@@ -556,6 +585,13 @@ Elaborator::elaborate(If_else_stmt* s)
     throw Type_error({}, "condition does not have type 'bool'");
   elaborate(s->true_branch());
   elaborate(s->false_branch());
+}
+
+
+void
+Elaborator::elaborate(For_stmt* s)
+{
+  throw std::runtime_error("not implemented");
 }
 
 

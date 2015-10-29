@@ -126,6 +126,7 @@ init_symbols(Symbol_table& syms)
   syms.put<Symbol>("else", else_kw);
   syms.put<Symbol>("if", if_kw);
   syms.put<Symbol>("int", int_kw);
+  syms.put<Symbol>("for", for_kw);
   syms.put<Symbol>("return", return_kw);
   syms.put<Symbol>("var", var_kw);
   

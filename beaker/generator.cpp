@@ -260,9 +260,11 @@ Generator::gen(Stmt const* s)
     Generator& g;
     void operator()(Empty_stmt const* s) { g.gen(s); }
     void operator()(Block_stmt const* s) { g.gen(s); }
+    void operator()(Assign_stmt const* s) { g.gen(s); }
     void operator()(Return_stmt const* s) { g.gen(s); }
     void operator()(If_then_stmt const* s) { g.gen(s); }
     void operator()(If_else_stmt const* s) { g.gen(s); }
+    void operator()(For_stmt const* s) { g.gen(s); }
     void operator()(Expression_stmt const* s) { g.gen(s); }
     void operator()(Declaration_stmt const* s) { g.gen(s); }
   };
@@ -297,6 +299,13 @@ Generator::gen(Block_stmt const* s)
 
 
 void
+Generator::gen(Assign_stmt const* s)
+{
+  throw std::runtime_error("not implemented");
+}
+
+
+void
 Generator::gen(Return_stmt const* s)
 {
   llvm::Value* v = gen(s->value());
@@ -313,6 +322,13 @@ Generator::gen(If_then_stmt const* s)
 
 void
 Generator::gen(If_else_stmt const* s)
+{
+  throw std::runtime_error("not implemented");
+}
+
+
+void
+Generator::gen(For_stmt const* s)
 {
   throw std::runtime_error("not implemented");
 }
