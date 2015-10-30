@@ -77,6 +77,8 @@ public:
   Control eval(If_then_stmt const*, Value&);
   Control eval(If_else_stmt const*, Value&);
   Control eval(While_stmt const*, Value&);
+  Control eval(Break_stmt const*, Value&);
+  Control eval(Continue_stmt const*, Value&);
   Control eval(Expression_stmt const*, Value&);
   Control eval(Declaration_stmt const*, Value&);
 

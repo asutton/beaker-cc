@@ -32,6 +32,8 @@ spelling(Token_kind k)
     case arrow_tok: return "->";
 
     case bool_kw: return "bool";
+    case break_kw: return "break";
+    case continue_kw: return "continue";
     case def_kw: return "def";
     case else_kw: return "else";
     case if_kw: return "if";

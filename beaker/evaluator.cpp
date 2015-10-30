@@ -362,6 +362,8 @@ Evaluator::eval(Stmt const* s, Value& r)
     Control operator()(If_then_stmt const* s) { return ev.eval(s, r); }
     Control operator()(If_else_stmt const* s) { return ev.eval(s, r); }
     Control operator()(While_stmt const* s) { return ev.eval(s, r); }
+    Control operator()(Break_stmt const* s) { return ev.eval(s, r); }
+    Control operator()(Continue_stmt const* s) { return ev.eval(s, r); }
     Control operator()(Expression_stmt const* s) { return ev.eval(s, r); }
     Control operator()(Declaration_stmt const* s) { return ev.eval(s, r); }
   };
@@ -382,11 +384,17 @@ Evaluator::eval(Block_stmt const* s, Value& r)
 {
   Store_sentinel store(*this);
   for(Stmt const* s1 : s->statements()) {
-    Control ctl = eval(s1, r);
-    if (ctl == return_ctl)
-      return ctl;
 
-    // TODO: Handle other control flow mechanisms.
+    // Evaluate each statement in turn. If the 
+    Control ctl = eval(s1, r);
+    switch (ctl) {
+      case return_ctl:
+      case break_ctl:
+      case continue_ctl:
+        return ctl;
+      default:
+        break;
+    }
   }
   return next_ctl;
 }
@@ -438,10 +446,40 @@ Evaluator::eval(If_else_stmt const* s, Value& r)
 }
 
 
+// Continue evaluationg the body while the condition
+// evaluates to true.
 Control
 Evaluator::eval(While_stmt const* s, Value& r)
 {
-  throw std::runtime_error("not implemented");
+  while (true) {
+    Value c = eval(s->condition());
+    if (!c.get_integer())
+      break;
+    
+    // Evaluate the body. Stop iterating if we got 
+    // a break, or return if we got a return. 
+    // Otherwise, continue to the next iteration. 
+    Control ctl = eval(s->body(), r);
+    if (ctl == break_ctl)
+      break;
+    if (ctl == return_ctl)
+      return ctl;
+  }
+  return next_ctl;
+}
+
+
+Control
+Evaluator::eval(Break_stmt const* s, Value& r)
+{
+  return break_ctl;
+}
+
+
+Control
+Evaluator::eval(Continue_stmt const* s, Value& r)
+{
+  return continue_ctl;
 }
 
 

@@ -1,0 +1,18 @@
+
+// FIXME: This is not a good example program.
+// Find a simple test that does not require
+// ouptut to determine the useulness of continue
+// statements.
+
+def main() -> int
+{
+  var x : int = 0;
+  while (true) {
+    x = x + 1;
+    if (x < 10)
+      continue;
+    else
+      break;
+  }
+  return x;
+}

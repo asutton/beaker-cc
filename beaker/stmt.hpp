@@ -28,6 +28,8 @@ struct Stmt::Visitor
   virtual void visit(If_then_stmt const*) = 0;
   virtual void visit(If_else_stmt const*) = 0;
   virtual void visit(While_stmt const*) = 0;
+  virtual void visit(Break_stmt const*) = 0;
+  virtual void visit(Continue_stmt const*) = 0;
   virtual void visit(Expression_stmt const*) = 0;
   virtual void visit(Declaration_stmt const*) = 0;
 };
@@ -43,6 +45,8 @@ struct Stmt::Mutator
   virtual void visit(If_then_stmt*) = 0;
   virtual void visit(If_else_stmt*) = 0;
   virtual void visit(While_stmt*) = 0;
+  virtual void visit(Break_stmt*) = 0;
+  virtual void visit(Continue_stmt*) = 0;
   virtual void visit(Expression_stmt*) = 0;
   virtual void visit(Declaration_stmt*) = 0;
 };
@@ -171,6 +175,26 @@ struct While_stmt : Stmt
 };
 
 
+// A break statement.
+struct Break_stmt : Stmt
+{
+  using Stmt::Stmt;
+
+  void accept(Visitor& v) const { return v.visit(this); }
+  void accept(Mutator& v)       { return v.visit(this); }
+};
+
+
+// A break statement.
+struct Continue_stmt : Stmt
+{
+  using Stmt::Stmt;
+
+  void accept(Visitor& v) const { return v.visit(this); }
+  void accept(Mutator& v)       { return v.visit(this); }
+};
+
+
 // An expression statement.
 struct Expression_stmt : Stmt
 {
@@ -220,6 +244,8 @@ struct Generic_stmt_visitor : Stmt::Visitor, lingo::Generic_visitor<F, T>
   void visit(If_then_stmt const* d) { this->invoke(d); };
   void visit(If_else_stmt const* d) { this->invoke(d); };
   void visit(While_stmt const* d) { this->invoke(d); };
+  void visit(Break_stmt const* d) { this->invoke(d); };
+  void visit(Continue_stmt const* d) { this->invoke(d); };
   void visit(Expression_stmt const* d) { this->invoke(d); };
   void visit(Declaration_stmt const* d) { this->invoke(d); };
 };
@@ -253,6 +279,8 @@ struct Generic_stmt_mutator : Stmt::Mutator, lingo::Generic_mutator<F, T>
   void visit(If_then_stmt* d) { this->invoke(d); };
   void visit(If_else_stmt* d) { this->invoke(d); };
   void visit(While_stmt* d) { this->invoke(d); };
+  void visit(Break_stmt* d) { this->invoke(d); };
+  void visit(Continue_stmt* d) { this->invoke(d); };
   void visit(Expression_stmt* d) { this->invoke(d); };
   void visit(Declaration_stmt* d) { this->invoke(d); };
 };

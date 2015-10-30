@@ -69,6 +69,8 @@ struct Generator
   void gen(If_then_stmt const*);
   void gen(If_else_stmt const*);
   void gen(While_stmt const*);
+  void gen(Break_stmt const*);
+  void gen(Continue_stmt const*);
   void gen(Expression_stmt const*);
   void gen(Declaration_stmt const*);
 

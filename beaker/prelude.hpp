@@ -56,6 +56,8 @@ struct Return_stmt;
 struct If_then_stmt;
 struct If_else_stmt;
 struct While_stmt;
+struct Break_stmt;
+struct Continue_stmt;
 struct Expression_stmt;
 struct Declaration_stmt;
 

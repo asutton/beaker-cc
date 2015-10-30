@@ -105,6 +105,8 @@ public:
   void elaborate(If_then_stmt*);
   void elaborate(If_else_stmt*);
   void elaborate(While_stmt*);
+  void elaborate(Break_stmt*);
+  void elaborate(Continue_stmt*);
   void elaborate(Expression_stmt*);
   void elaborate(Declaration_stmt*);
 

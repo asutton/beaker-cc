@@ -265,6 +265,8 @@ Generator::gen(Stmt const* s)
     void operator()(If_then_stmt const* s) { g.gen(s); }
     void operator()(If_else_stmt const* s) { g.gen(s); }
     void operator()(While_stmt const* s) { g.gen(s); }
+    void operator()(Break_stmt const* s) { g.gen(s); }
+    void operator()(Continue_stmt const* s) { g.gen(s); }
     void operator()(Expression_stmt const* s) { g.gen(s); }
     void operator()(Declaration_stmt const* s) { g.gen(s); }
   };
@@ -329,6 +331,20 @@ Generator::gen(If_else_stmt const* s)
 
 void
 Generator::gen(While_stmt const* s)
+{
+  throw std::runtime_error("not implemented");
+}
+
+
+void
+Generator::gen(Break_stmt const* s)
+{
+  throw std::runtime_error("not implemented");
+}
+
+
+void
+Generator::gen(Continue_stmt const* s)
 {
   throw std::runtime_error("not implemented");
 }

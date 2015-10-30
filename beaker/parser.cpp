@@ -495,6 +495,30 @@ Parser::while_stmt()
 }
 
 
+// Parse a break statement.
+//
+//    break-stmt -> 'break' ';'
+Stmt*
+Parser::break_stmt()
+{
+  require(break_kw);
+  match(semicolon_tok);
+  return on_break();
+}
+
+
+// Parse a continue statement.
+//
+//    continue-stmt -> 'continue' ';'
+Stmt*
+Parser::continue_stmt()
+{
+  require(continue_kw);
+  match(semicolon_tok);
+  return on_continue();
+}
+
+
 // Parse a declaration statement.
 //
 //    declaration-stmt -> decl
@@ -552,6 +576,12 @@ Parser::stmt()
 
     case while_kw:
       return while_stmt();
+
+    case break_kw:
+      return break_stmt();
+
+    case continue_kw:
+      return continue_stmt();
 
     case var_kw: 
     case def_kw:
@@ -898,6 +928,20 @@ Stmt*
 Parser::on_while(Expr* c, Stmt* s)
 {
   return new While_stmt(c, s);
+}
+
+
+Stmt*
+Parser::on_break()
+{
+  return new Break_stmt();
+}
+
+
+Stmt*
+Parser::on_continue()
+{
+  return new Continue_stmt();
 }
 
 

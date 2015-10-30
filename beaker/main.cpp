@@ -125,6 +125,8 @@ init_symbols(Symbol_table& syms)
 
   // Keywords
   syms.put<Symbol>("bool", bool_kw);
+  syms.put<Symbol>("break", break_kw);
+  syms.put<Symbol>("continue", continue_kw);
   syms.put<Symbol>("def", def_kw);
   syms.put<Symbol>("else", else_kw);
   syms.put<Symbol>("if", if_kw);

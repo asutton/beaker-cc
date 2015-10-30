@@ -499,6 +499,8 @@ Elaborator::elaborate(Stmt* s)
     void operator()(If_then_stmt* d) const { elab.elaborate(d); }
     void operator()(If_else_stmt* d) const { elab.elaborate(d); }
     void operator()(While_stmt* d) const { elab.elaborate(d); }
+    void operator()(Break_stmt* d) const { elab.elaborate(d); }
+    void operator()(Continue_stmt* d) const { elab.elaborate(d); }
     void operator()(Expression_stmt* d) const { elab.elaborate(d); }
     void operator()(Declaration_stmt* d) const { elab.elaborate(d); }
   };
@@ -574,7 +576,7 @@ Elaborator::elaborate(If_then_stmt* s)
 {
   Type const* t = elaborate(s->condition());
   if (t != get_boolean_type())
-    throw Type_error({}, "condition does not have type 'bool'");
+    throw Type_error({}, "if condition does not have type 'bool'");
   elaborate(s->body());
 }
 
@@ -585,7 +587,7 @@ Elaborator::elaborate(If_else_stmt* s)
 {
   Type const* t = elaborate(s->condition());
   if (t != get_boolean_type())
-    throw Type_error({}, "condition does not have type 'bool'");
+    throw Type_error({}, "if condition does not have type 'bool'");
   elaborate(s->true_branch());
   elaborate(s->false_branch());
 }
@@ -594,7 +596,26 @@ Elaborator::elaborate(If_else_stmt* s)
 void
 Elaborator::elaborate(While_stmt* s)
 {
-  throw std::runtime_error("not implemented");
+  Type const* t = elaborate(s->condition());
+  if (t != get_boolean_type())
+    throw Type_error({}, "loop condition does not have type 'bool'");
+  elaborate(s->body());
+}
+
+
+void
+Elaborator::elaborate(Break_stmt* s)
+{
+  // TODO: Verify that a break occurs within an
+  // appropriate context.
+}
+
+
+void
+Elaborator::elaborate(Continue_stmt* s)
+{
+  // TODO: Verify that a continue occurs within an 
+  // appropriate context.
 }
 
 

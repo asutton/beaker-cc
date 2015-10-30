@@ -49,6 +49,8 @@ public:
   Stmt* return_stmt();
   Stmt* if_stmt();
   Stmt* while_stmt();
+  Stmt* break_stmt();
+  Stmt* continue_stmt();
   Stmt* declaration_stmt();
   Stmt* expression_stmt();
 
@@ -96,6 +98,8 @@ private:
   Stmt* on_if_then(Expr*, Stmt*);
   Stmt* on_if_else(Expr*, Stmt*, Stmt*);
   Stmt* on_while(Expr*, Stmt*);
+  Stmt* on_break();
+  Stmt* on_continue();
   Stmt* on_expression(Expr*);
   Stmt* on_declaration(Decl*);
 
