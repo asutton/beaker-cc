@@ -480,18 +480,18 @@ Parser::if_stmt()
 }
 
 
-// Parse a for statement.
+// Parse a while statement.
 //
-//    for-stmt -> 'for' '(' decl ';' expr [update-clause]')' stmt
-//
-//    update-clause -> ';' expr
-//
-// If the update-clause is omitted, it defaults to the
-// integer literal 1.
+//    while -> 'while' '(' expr ')' stmt
 Stmt*
-Parser::for_stmt()
+Parser::while_stmt()
 {
-  throw std::runtime_error("not implemented");
+  require(while_kw);
+  match(lparen_tok);
+  Expr* e = expr();
+  match(rparen_tok);
+  Stmt* s = stmt();
+  return on_while(e, s);
 }
 
 
@@ -550,8 +550,8 @@ Parser::stmt()
     case if_kw:
       return if_stmt();
 
-    case for_kw:
-      return for_stmt();
+    case while_kw:
+      return while_stmt();
 
     case var_kw: 
     case def_kw:
@@ -895,9 +895,9 @@ Parser::on_if_else(Expr* e, Stmt* s1, Stmt* s2)
 
 
 Stmt*
-Parser::on_for(Decl* d, Expr* c, Expr* n)
+Parser::on_while(Expr* c, Stmt* s)
 {
-  return new For_stmt(d, c, n);
+  return new While_stmt(c, s);
 }
 
 

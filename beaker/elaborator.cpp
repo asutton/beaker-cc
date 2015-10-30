@@ -498,7 +498,7 @@ Elaborator::elaborate(Stmt* s)
     void operator()(Return_stmt* d) const { elab.elaborate(d); }
     void operator()(If_then_stmt* d) const { elab.elaborate(d); }
     void operator()(If_else_stmt* d) const { elab.elaborate(d); }
-    void operator()(For_stmt* d) const { elab.elaborate(d); }
+    void operator()(While_stmt* d) const { elab.elaborate(d); }
     void operator()(Expression_stmt* d) const { elab.elaborate(d); }
     void operator()(Declaration_stmt* d) const { elab.elaborate(d); }
   };
@@ -592,7 +592,7 @@ Elaborator::elaborate(If_else_stmt* s)
 
 
 void
-Elaborator::elaborate(For_stmt* s)
+Elaborator::elaborate(While_stmt* s)
 {
   throw std::runtime_error("not implemented");
 }

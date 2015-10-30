@@ -48,7 +48,7 @@ public:
   Stmt* block_stmt();
   Stmt* return_stmt();
   Stmt* if_stmt();
-  Stmt* for_stmt();
+  Stmt* while_stmt();
   Stmt* declaration_stmt();
   Stmt* expression_stmt();
 
@@ -95,7 +95,7 @@ private:
   Stmt* on_return(Expr*);
   Stmt* on_if_then(Expr*, Stmt*);
   Stmt* on_if_else(Expr*, Stmt*, Stmt*);
-  Stmt* on_for(Decl*, Expr*, Expr*);
+  Stmt* on_while(Expr*, Stmt*);
   Stmt* on_expression(Expr*);
   Stmt* on_declaration(Decl*);
 

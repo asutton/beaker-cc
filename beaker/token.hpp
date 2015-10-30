@@ -51,9 +51,9 @@ enum Token_kind
   else_kw,
   if_kw,
   int_kw,
-  for_kw,
   return_kw,
   var_kw,
+  while_kw,
 
   // Multi-valued tokens
   boolean_tok,      // true | false

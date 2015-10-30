@@ -361,7 +361,7 @@ Evaluator::eval(Stmt const* s, Value& r)
     Control operator()(Return_stmt const* s) { return ev.eval(s, r); }
     Control operator()(If_then_stmt const* s) { return ev.eval(s, r); }
     Control operator()(If_else_stmt const* s) { return ev.eval(s, r); }
-    Control operator()(For_stmt const* s) { return ev.eval(s, r); }
+    Control operator()(While_stmt const* s) { return ev.eval(s, r); }
     Control operator()(Expression_stmt const* s) { return ev.eval(s, r); }
     Control operator()(Declaration_stmt const* s) { return ev.eval(s, r); }
   };
@@ -439,7 +439,7 @@ Evaluator::eval(If_else_stmt const* s, Value& r)
 
 
 Control
-Evaluator::eval(For_stmt const* s, Value& r)
+Evaluator::eval(While_stmt const* s, Value& r)
 {
   throw std::runtime_error("not implemented");
 }
