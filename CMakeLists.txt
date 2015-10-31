@@ -27,16 +27,19 @@ set(LINGO_INCLUDE_DIR ./lingo)
 # Configuration for llvm dependencies
 set(LLVM_INCLUDE_DIR ./llvm)
 
+# Adding cxx ast dependency
+set(CXX_INCLUDE_DIR ./cxx)
 
 # Build configuration
 include_directories(
   ${Boost_INCLUDE_DIRS} 
   ${LINGO_INCLUDE_DIR} 
-  ${LLVM_INCLUDE_DIR})
+  ${LLVM_INCLUDE_DIR}
+  ${CXX_INCLUDE_DIR})
 
 link_directories(
   ${Boost_LIBRARY_DIRS})
 
-
+add_subdirectory(cxx)
 add_subdirectory(lingo)
 add_subdirectory(beaker)

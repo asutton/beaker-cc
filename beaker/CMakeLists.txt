@@ -35,8 +35,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++1y")
 
 
 # Build configuration
-include_directories(. ${Boost_INCLUDE_DIRS} ${LLVM_INCLUDE_DIR})
-link_directories(${Boost_LIBRARY_DIRS} ${LLVM_LIBRARY_DIR})
+include_directories(. ${Boost_INCLUDE_DIRS} ${LLVM_INCLUDE_DIR} ${CXX_INCLUDE_DIR})
+link_directories(${Boost_LIBRARY_DIRS} ${LLVM_LIBRARY_DIR} ${CXX_INCLUDE_DIR})
 
 
 add_executable(beaker 
@@ -71,7 +71,9 @@ target_link_libraries(beaker
   ${Boost_SYSTEM_LIBRARIES}
   ${Boost_FILESYSTEM_LIBRARIES}
   ${LLVM_LIBS}
+  metal-cxx
   dl        # FIXME: This is dumb
   tinfo     # FIXME: Also dumb
   ${CMAKE_THREAD_LIBS_INIT}
-  lingo)
+  lingo
+  )
