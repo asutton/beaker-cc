@@ -30,7 +30,7 @@ struct Decl
   Symbol const* name() const { return name_; }
   Type const*   type() const { return type_; }
 
-  virtual bool has_def() const { return false; }
+  virtual bool has_def() const { return true; }
 
   Decl const*   cxt_;
   Symbol const* name_;
