@@ -15,6 +15,15 @@
 // Lexical scoping
 
 
+Overload const& 
+Scope::bind(Symbol const* sym, Decl* d)
+{
+  Overload ovl { d };
+  Binding const& ins = Environment::bind(sym, ovl);
+  return ins.second;
+}
+
+
 // Create a declarative binding for d. This also checks
 // that the we are not redefining a symbol in the current 
 // scope.
@@ -29,8 +38,18 @@ Scope_stack::declare(Decl* d)
   // FIXME: Actually diagnose the error. Also, we
   // probably don't need to throw an exception, but
   // simply indicate that the failure.
-  if (scope.lookup(d->name()))
+  if (auto binding = scope.lookup(d->name())) {
+    // check to see if overloading is possible
+    // the second member of the pair is an overload set
+    if (overload_decl(&binding->second, d)) {
+      // set the declaration context
+      d->cxt_ = context();
+      return;
+    }
+
+    // if the overload is not possible then throw
     throw std::runtime_error("definition error");
+  }
   
   // Create the binding.
   scope.bind(d->name(), d);
@@ -237,7 +256,7 @@ Elaborator::elaborate(Id_expr* e)
     ss << "no matching declaration for '" << *e->symbol() << '\'';
     throw Lookup_error(locs.get(e), ss.str());
   }
-  return b->second->type();
+  return b->second.front()->type();
 }
 
 

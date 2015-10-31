@@ -30,6 +30,8 @@ struct Decl
   Symbol const* name() const { return name_; }
   Type const*   type() const { return type_; }
 
+  virtual bool has_def() const { return false; }
+
   Decl const*   cxt_;
   Symbol const* name_;
   Type const*   type_;
@@ -90,6 +92,8 @@ struct Function_decl : Decl
 
   Stmt const* body() const { return body_; }
   Stmt*       body()       { return body_; }
+
+  bool has_def() { return (body()) ? true : false; }
 
   Decl_seq parms_;
   Stmt*    body_;

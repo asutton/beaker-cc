@@ -6,6 +6,7 @@
 
 #include "prelude.hpp"
 #include "location.hpp"
+#include "overload.hpp"
 #include "environment.hpp"
 
 // The elaborator is responsible for a number of static
@@ -26,16 +27,18 @@
 // where no bindings are destroyed. A scope optionally
 // assocaites a declaration with its bindings. This is
 // used to maintain the current declaration context.
-struct Scope : Environment<Symbol const*, Decl*>
+struct Scope : Environment<Symbol const*, Overload>
 {
-  Scope()
+  Scope() 
     : decl(nullptr)
   { }
 
   Scope(Decl* d)
     : decl(d)
   { }
-  
+
+  Overload const& bind(Symbol const*, Decl*);
+
   Decl* decl;
 };
 

@@ -61,6 +61,7 @@ add_executable(beaker
   parser.cpp
   environment.cpp
   elaborator.cpp
+  overload.cpp
   evaluator.cpp
   generator.cpp)
 
