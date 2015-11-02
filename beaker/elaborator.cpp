@@ -25,12 +25,13 @@ Scope_stack::declare(Decl* d)
 
   // TODO: If we allow overloading, then this is
   // where we would handle that.
-  //
-  // FIXME: Actually diagnose the error. Also, we
-  // probably don't need to throw an exception, but
-  // simply indicate that the failure.
-  if (scope.lookup(d->name()))
-    throw std::runtime_error("definition error");
+  if (scope.lookup(d->name())) {
+    // TODO: Add a note that points to the previous
+    // definition.
+    std::stringstream ss;
+    ss << "redefinition of '" << *d->name() << "'\n";
+    throw Lookup_error({}, ss.str());
+  }
   
   // Create the binding.
   scope.bind(d->name(), d);
