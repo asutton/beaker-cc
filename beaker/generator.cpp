@@ -123,14 +123,16 @@ Generator::gen(Literal_expr const* e)
 llvm::Value* 
 Generator::gen(Id_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+  return stack.lookup(e->declaration())->second;
 }
 
 
 llvm::Value* 
 Generator::gen(Add_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* l = gen(e->left());
+  llvm::Value* r = gen(e->right());
+  return build.CreateAdd(l, r);
 }
 
 
@@ -408,6 +410,8 @@ Generator::gen_global(Variable_decl const* d)
 {
   String const&   name = d->name()->spelling();
   llvm::Type*     type = build.getInt32Ty();
+
+  // FIXME: Handle initialization correctly.
   llvm::Constant* init = llvm::ConstantAggregateZero::get(type);
 
   // Build the global variable, automatically adding
@@ -439,7 +443,7 @@ Generator::gen(Variable_decl const* d)
     return gen_global(d);
   else
     return gen_local(d);
-} 
+}
 
 
 void

@@ -237,6 +237,10 @@ Elaborator::elaborate(Id_expr* e)
     ss << "no matching declaration for '" << *e->symbol() << '\'';
     throw Lookup_error(locs.get(e), ss.str());
   }
+
+  // Annotate the expression with its declaration.
+  e->decl = b->second;
+  
   return b->second->type();
 }
 

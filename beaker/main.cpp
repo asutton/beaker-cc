@@ -26,7 +26,7 @@ main(int argc, char* argv[])
 {
   // FIXME: This is gross. Do one or the other, but
   // never both.
-  bool evaluate = true;
+  bool evaluate = false;
 
   // Prepare the symbol table.
   Symbol_table syms;
