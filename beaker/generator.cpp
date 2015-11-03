@@ -134,6 +134,10 @@ Generator::gen(Literal_expr const* e)
 }
 
 
+// Returns the value associated with the declaration.
+//
+// TODO: Do we need to do anything different for function
+// identifiers or not?
 llvm::Value* 
 Generator::gen(Id_expr const* e)
 {
@@ -265,7 +269,8 @@ Generator::gen(Call_expr const* e)
 llvm::Value*
 Generator::gen(Value_conv const* e)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* v = gen(e->source());
+  return build.CreateLoad(v);
 }
 
 
@@ -326,7 +331,9 @@ Generator::gen(Block_stmt const* s)
 void
 Generator::gen(Assign_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* lhs = gen(s->object());
+  llvm::Value* rhs = gen(s->value());
+  build.CreateStore(rhs, lhs);
 }
 
 
@@ -376,14 +383,14 @@ Generator::gen(Continue_stmt const* s)
 void
 Generator::gen(Expression_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  gen(s->expression());
 }
 
 
 void
 Generator::gen(Declaration_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  gen(s->declaration());
 }
 
 
@@ -485,8 +492,7 @@ Generator::gen(Function_decl const* d)
   // related to this function.
   Symbol_sentinel scope(*this);
   
-  // Set the names of function arguments and establish
-  // bindings for all of them.
+  // Build the argument list. Note that 
   {
     auto ai = fn->arg_begin();
     auto pi = d->parameters().begin();
@@ -495,7 +501,10 @@ Generator::gen(Function_decl const* d)
       llvm::Argument* a = &*ai;
       a->setName(p->name()->spelling());
 
-      // Establish the symbol binding for the parameter.
+      // Create an initial name binding for the
+      // function parameter. Note that we're
+      // going to overwrite this when we create
+      // locals for each parameter.
       stack.top().bind(p, a);
 
       ++ai;
@@ -510,17 +519,24 @@ Generator::gen(Function_decl const* d)
   // so that we know where we are.
   llvm::BasicBlock* b = llvm::BasicBlock::Create(cxt, "b", fn);
   build.SetInsertPoint(b);
+
+  // Generate a local variable for each of the variables.
+  for (Decl const* p : d->parameters())
+    gen(p);
+
+  // Generate the body of the function.
   gen(d->body());
 }
 
 
 void
-Generator::gen(Parameter_decl const*)
+Generator::gen(Parameter_decl const* d)
 {
-  // NOTE: We don't visit parameters independently
-  // of function declarations, so we should never
-  // reach here.
-  throw std::runtime_error("unreachable");
+  llvm::Type* t = get_type(d->type());
+  llvm::Value* a = stack.top().get(d).second;
+  llvm::Value* v = build.CreateAlloca(t);
+  stack.top().rebind(d, v);
+  build.CreateStore(a, v);
 }
 
 

@@ -22,6 +22,7 @@ public:
   using Binding = typename Map::value_type;
 
   Binding const& bind(S const&, T const&);
+  Binding const& rebind(S const&, T const&);
   Binding const& get(S const&) const;
   Binding const* lookup(S const&) const;
   Binding*       lookup(S const&);
@@ -38,6 +39,18 @@ Environment<S, T>::bind(S const& sym, T const& ent) -> Binding const&
   assert(!this->count(sym));
   auto ins = this->emplace(sym, ent);
   return *ins.first;
+}
+
+
+// Overwrite an existing binding. Behavior is undefined if
+// the bindign does not exist.
+template<typename S, typename T>
+inline auto
+Environment<S, T>::rebind(S const& sym, T const& ent) -> Binding const& 
+{
+  auto iter = this->find(sym);
+  iter->second = ent;
+  return *iter;
 }
 
 

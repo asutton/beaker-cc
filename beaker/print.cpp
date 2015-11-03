@@ -239,7 +239,7 @@ operator<<(std::ostream& os, Call_expr const&)
 std::ostream& 
 operator<<(std::ostream& os, Value_conv const& e)
 {
-  return os << "__lvalue_to_rvalue("
+  return os << "__to_value("
             << *e.source() << ','
             << *e.target() << ')';
 }

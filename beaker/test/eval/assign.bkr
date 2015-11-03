@@ -1,0 +1,15 @@
+
+def f(x : int) -> int
+{
+  return x + 1;
+}
+
+var v : int = 0;
+
+def main() -> int
+{
+  v + 1;
+  // v = 2;
+  // return f(v);
+  return 12;
+}
