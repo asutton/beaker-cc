@@ -365,7 +365,7 @@ struct Conversion : Expr
 };
 
 
-// Represents the conversion of an object to a value.
+// Represents the conversion of a reference to a value.
 struct Value_conv : Conversion
 {
   using Conversion::Conversion;

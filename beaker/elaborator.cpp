@@ -177,33 +177,41 @@ Elaborator::elaborate(Id_expr* e)
 namespace
 {
 
-// Elaborate the operands of a binary expression
-// whose operands are required to be rvalues. This
-// applies implicit convesions as needed.
-void
-convert_rvalue_operands(Elaborator& elab, Binary_expr* e, Type const* t)
-{
-  // Process sub-expressions.
-  elab.elaborate(e->left());
-  elab.elaborate(e->right());
 
-  // Apply conversions, updating the expression.
-  e->first = convert(e->left(), t);
-  e->second = convert(e->right(), t);
+// Used to require the conversion of a reference to a
+// value. Essentially, this unwraps the reference if
+// needed.
+//
+// Note that after completion, the pointer e is modified
+// so that it is the same as the return value. 
+Expr*
+require_value(Elaborator& elab, Expr*& e)
+{
+  e = convert_to_value(elab.elaborate(e));
+  return e;
 }
 
 
-// Elaborate the operand of unary expression whose
-// operand is required to be an rvalue. This applies
-// implicit conversions as needed.
-void
-convert_rvalue_operands(Elaborator& elab, Unary_expr* e, Type const* t)
+// Used to require the conversion of an expression
+// to a given type. 
+//
+// Note that after succesful completion, the pointer 
+// e is modified so that it is the same as the return 
+// value.
+//
+// This returns nullptr if the convesion fails.
+Expr*
+require_converted(Elaborator& elab, Expr*& e, Type const* t)
 {
-  // Process the operand.
-  elab.elaborate(e->operand());
-
-  // Apply conversions.
-  e->first = convert(e->operand(), t);
+  elab.elaborate(e);
+  
+  // Try a conversion. If it succeeds, update
+  // the original expression.
+  Expr* c = convert(e, t);
+  if (c)
+    e = c;
+  
+  return c;
 }
 
 
@@ -215,16 +223,13 @@ Expr*
 check_binary_arithmetic_expr(Elaborator& elab, Binary_expr* e)
 {
   Type const* z = get_integer_type();
-  convert_rvalue_operands(elab, e, z);
-  
-  Type const* t1 = e->left()->type();
-  Type const* t2 = e->right()->type();
-  if (t1 != get_integer_type())
-    throw Type_error({}, "left operand does not have type 'int'");
-  if (t2 != get_integer_type())
-    throw Type_error({}, "right operand does not have type 'int'");
+  Expr* c1 = require_converted(elab, e->first, z); 
+  Expr* c2 = require_converted(elab, e->second, z); 
+  if (!c1)
+    throw Type_error({}, "left operand cannot be converted to 'int'");
+  if (!c2)
+    throw Type_error({}, "right operand cannot be converted to 'int'");
   e->type(z);
-
   return e;
 }
 
@@ -236,14 +241,12 @@ check_binary_arithmetic_expr(Elaborator& elab, Binary_expr* e)
 Expr*
 check_unary_arithmetic_expr(Elaborator& elab, Unary_expr* e)
 {
+  // Apply conversions
   Type const* z = get_integer_type();
-  convert_rvalue_operands(elab, e, z);
-
-  Type const* t = e->operand()->type();
-  if (t != z)
-    throw Type_error({}, "operand does not have type 'int'");
+  Expr* c = require_converted(elab, e->first, z);
+  if (!c)
+    throw Type_error({}, "operand cannot be converted to 'int'");
   e->type(z);
-
   return e;
 }
 
@@ -311,19 +314,15 @@ namespace
 Expr*
 check_equality_expr(Elaborator& elab, Binary_expr* e)
 {
-  elab.elaborate(e->left());
-  elab.elaborate(e->right());
+  // Apply conversions.
+  Expr* e1 = require_value(elab, e->first);
+  Expr* e2 = require_value(elab, e->second);
 
-  // Apply conversions and update the expression.
-  e->first = convert(e->left(), e->left()->type()->nonref());
-  e->second = convert(e->right(), e->right()->type()->nonref());
-
-  Type const* t1 = e->left()->type();
-  Type const* t2 = e->right()->type();
-  if (t1 != t2)
+  // Check types.
+  if (e1->type() != e2->type())
     throw Type_error({}, "operands have different types");
   e->type(get_boolean_type());
-  
+
   return e;
 }
 
@@ -355,15 +354,14 @@ namespace
 Expr*
 check_ordering_expr(Elaborator& elab, Binary_expr* e)
 {
+  // Apply conversions.
   Type const* z = get_integer_type();
-  convert_rvalue_operands(elab, e, z);
-  
-  Type const* t1 = e->left()->type();
-  Type const* t2 = e->right()->type();
-  if (t1 != z)
-    throw Type_error({}, "left operand does not have type 'int'");
-  if (t2 != z)
-    throw Type_error({}, "left operand does not have type 'int'");
+  Expr* c1 = require_converted(elab, e->first, z);
+  Expr* c2 = require_converted(elab, e->second, z);
+  if (!c1)
+    throw Type_error({}, "left operand cannot be converted to 'int'");
+  if (!c2)
+    throw Type_error({}, "right operand cannot be converted to 'int'");
   e->type(get_boolean_type());
   return e;
 }
@@ -408,17 +406,15 @@ namespace
 Expr*
 check_binary_logical_expr(Elaborator& elab, Binary_expr* e)
 {
+  // Apply conversions.
   Type const* b = get_boolean_type();
-  convert_rvalue_operands(elab, e, b);
-
-  Type const* t1 = e->left()->type();
-  Type const* t2 = e->right()->type();
-  if (t1 != b)
-    throw Type_error({}, "left operand does not have type 'bool'");
-  if (t2 != b)
-    throw Type_error({}, "right operand does not have type 'bool'");
+  Expr const* c1 = require_converted(elab, e->first, b);
+  Expr const* c2 = require_converted(elab, e->second, b);
+  if (!c1)
+    throw Type_error({}, "left operand cannot be converted to 'bool'");
+  if (!c2)
+    throw Type_error({}, "right operand cannot be converted to 'bool'");
   e->type(b);
-
   return e;
 }
 
@@ -428,13 +424,10 @@ Expr*
 check_unary_logical_expr(Elaborator& elab, Unary_expr* e)
 {
   Type const* b = get_boolean_type();
-  convert_rvalue_operands(elab, e, b);
-
-  Type const* t = e->operand()->type();
-  if (t != b)
-    throw Type_error({}, "operand does not have type 'bool'");
+  Expr const* c = require_converted(elab, e->first, b);
+  if (!c)
+    throw Type_error({}, "operand cannot be converted to 'bool'");
   e->type(b);
-  
   return e;
 }
 
@@ -469,11 +462,10 @@ Elaborator::elaborate(Call_expr* e)
 {
   // Apply lvalue to rvalue conversion and ensure that
   // the target has function type.
-  elaborate(e->target());
-  e->first = lvalue_to_rvalue(e->target(), e->target()->type()->nonref());
-  Type const* t1 = e->target()->type();
+  Expr* f = require_value(*this, e->first);
+  Type const* t1 = f->type();
   if (!is<Function_type>(t1))
-    throw Type_error({}, "call to non-function");
+    throw Type_error({}, "cannot call to non-function");
   Function_type const* t = cast<Function_type>(t1);
   
   // Check for basic function arity.
@@ -488,21 +480,8 @@ Elaborator::elaborate(Call_expr* e)
   // parameter. 
   for (std::size_t i = 0; i < parms.size(); ++i) {
     Type const* p = parms[i];
-    Expr*& a = args[i];
-
-    // TODO: Allow conversions from e to p.
-    elaborate(a);
-
-    // Apply conversions and update the original
-    // expression.
-    //
-    // TODO: If we fail to find a conversion, then a
-    // type mismatch is guaranteed. The check below
-    // would be redundant.
-    a = convert(a, p);
-
-    // Check for type match.
-    if (a->type() != p) {
+    Expr* a = require_converted(*this, args[i], p);
+    if (!a) {
       std::stringstream ss;
       ss << "type mismatch in argument " << i + 1 << '\n';
       throw Type_error({}, ss.str());
@@ -549,14 +528,10 @@ Elaborator::elaborate(Variable_decl* d)
 {
   stack.declare(d);
 
-  // Elaborate the initializer.
-  elaborate(d->init());
-
-  // Try converting the initializer to the declared
-  // type of the variable. Note that errors may occur
-  // during conversion.
-  Expr* c = convert(d->init(), d->type());
-  if (c->type() != d->type())
+  // Apply conversions to the initializer.
+  // FIXME: Consider renaming init_.
+  Expr* c = require_converted(*this, d->init_, d->type());
+  if (!c)
     throw Type_error({}, "type mismatch in initializer");
 }
 
@@ -658,27 +633,24 @@ Elaborator::elaborate(Block_stmt* s)
 // refer to a mutable object. The types of the left and
 // right operands shall match.
 //
-// TODO: The current interpretation of "refers to a mutable
-// object" is "is an id-expression".
-//
 // TODO: If we have const types, then we'd have to add this
 // checking.
 void
 Elaborator::elaborate(Assign_stmt* s)
 {
-  elaborate(s->object());
-  if (!is_lvalue(s->object()))
+  // FIXME: Write a better predicate?
+  Expr* lhs = elaborate(s->object());
+  if (!is<Reference_type>(lhs->type()))
     throw Type_error({}, "assignment to rvalue");
 
   // Apply rvalue conversion to the value and update the
   // expression.
-  elaborate(s->value());
-  s->second = lvalue_to_rvalue(s->value());
+  Expr *rhs = require_value(*this, s->second);
 
   // The types shall match. Compare t1 using the non-reference
   // type of the object.
-  Type const* t1 = s->object()->type()->nonref();
-  Type const* t2 = s->value()->type();
+  Type const* t1 = lhs->type()->nonref();
+  Type const* t2 = rhs->type();
   if (t1 != t2)
     throw Type_error({}, "assignment to an object of a different type");
 }
@@ -695,9 +667,8 @@ Elaborator::elaborate(Return_stmt* s)
   Type const* t = fn->return_type();
 
   // Check that the return type matches the returned value.
-  elaborate(s->value());
-  Expr* c = convert(s->value(), t);
-  if (c->type() != t)
+  Expr* c = require_converted(*this, s->first, t);
+  if (!c)
     throw std::runtime_error("return type mismatch");
 }
 
@@ -706,14 +677,9 @@ Elaborator::elaborate(Return_stmt* s)
 void
 Elaborator::elaborate(If_then_stmt* s)
 {
-  Type const* b = get_boolean_type();
-  
-  // Apply rvalue conversions.
-  elaborate(s->condition());
-  s->first = convert(s->condition(), b);
-  if (s->condition()->type() != b)
+  Expr* c = require_converted(*this, s->first, get_boolean_type());
+  if (!c)
     throw Type_error({}, "if condition does not have type 'bool'");
-
   elaborate(s->body());
 }
 
@@ -722,13 +688,9 @@ Elaborator::elaborate(If_then_stmt* s)
 void
 Elaborator::elaborate(If_else_stmt* s)
 {
-  Type const* b = get_boolean_type();
-  
-  elaborate(s->condition());
-  if (s->condition()->type() != b)
-  s->first = convert(s->condition(), b);
+  Expr* c = require_converted(*this, s->first, get_boolean_type());
+  if (!c)
     throw Type_error({}, "if condition does not have type 'bool'");
-
   elaborate(s->true_branch());
   elaborate(s->false_branch());
 }
@@ -737,13 +699,9 @@ Elaborator::elaborate(If_else_stmt* s)
 void
 Elaborator::elaborate(While_stmt* s)
 {
-  Type const* b = get_boolean_type();
-  
-  elaborate(s->condition());
-  s->first = convert(s->condition(), b);
-  if (s->condition()->type() != b)
+  Expr* c = require_converted(*this, s->first, get_boolean_type());
+  if (!c)
     throw Type_error({}, "loop condition does not have type 'bool'");
-
   elaborate(s->body());
 }
 

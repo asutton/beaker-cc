@@ -8,12 +8,8 @@
 #include "prelude.hpp"
 
 
-bool is_lvalue(Expr const*);
-bool is_rvalue(Expr const*);
-
 Expr* convert(Expr*, Type const*);
-Expr* lvalue_to_rvalue(Expr*, Type const*);
-Expr* lvalue_to_rvalue(Expr*);
+Expr* convert_to_value(Expr*);
 
 
 #endif

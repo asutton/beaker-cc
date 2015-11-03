@@ -58,11 +58,7 @@ Evaluator::eval(Literal_expr const* e)
 Value
 Evaluator::eval(Id_expr const* e)
 {
-  std::cout << "ID: " << *e << '\n';
-  std::cout << "TY: " << *e->type() << '\n';
-  Value& val = stack.lookup(e->symbol())->second;
-  std::cout << "VAL: " << val << '\n';
-  return &val;
+  return &stack.lookup(e->symbol())->second;
 }
 
 
