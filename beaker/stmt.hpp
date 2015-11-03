@@ -251,7 +251,6 @@ struct Generic_stmt_visitor : Stmt::Visitor, lingo::Generic_visitor<F, T>
 };
 
 
-// Apply fn to the propositoin p.
 template<typename F, typename T = typename std::result_of<F(Empty_stmt const*)>::type>
 inline T
 apply(Stmt const* s, F fn)
@@ -286,7 +285,6 @@ struct Generic_stmt_mutator : Stmt::Mutator, lingo::Generic_mutator<F, T>
 };
 
 
-// Apply fn to the propositoin p.
 template<typename F, typename T = typename std::result_of<F(Empty_stmt*)>::type>
 inline T
 apply(Stmt* s, F fn)

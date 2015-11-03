@@ -8,6 +8,39 @@
 #include <set>
 
 
+// Return a reference type for this type.
+Type const*
+Type::ref() const
+{
+  return get_reference_type(this);
+}
+
+
+// Return the non-reference type for this type.
+Type const*
+Type::nonref() const
+{
+  return this;
+}
+
+
+Type const* 
+Reference_type::ref() const 
+{ 
+  return this; 
+}
+
+
+Type const* 
+Reference_type::nonref() const 
+{ 
+  return first; 
+}
+
+
+// -------------------------------------------------------------------------- //
+// Type accessors
+
 template<typename T>
 struct Type_less
 {
@@ -55,4 +88,14 @@ get_function_type(Decl_seq const& d, Type const* r)
   for (Decl* d1 : d)
     t.push_back(d1->type());
   return get_function_type(t, r);
+}
+
+
+// FIXME: Don't allow references to non-object types.
+Type const*
+get_reference_type(Type const* t)
+{
+  static Type_set<Reference_type> ts;
+  auto ins = ts.emplace(t);
+  return &*ins.first;
 }

@@ -36,6 +36,7 @@ Evaluator::eval(Expr const* e)
     Value operator()(Or_expr const* e) { return ev.eval(e); }
     Value operator()(Not_expr const* e) { return ev.eval(e); }
     Value operator()(Call_expr const* e) { return ev.eval(e); }
+    Value operator()(Value_conv const* e) { return ev.eval(e); }
   };
 
   return apply(e, Fn {*this});
@@ -57,7 +58,11 @@ Evaluator::eval(Literal_expr const* e)
 Value
 Evaluator::eval(Id_expr const* e)
 {
-  return &stack.lookup(e->symbol())->second;
+  std::cout << "ID: " << *e << '\n';
+  std::cout << "TY: " << *e->type() << '\n';
+  Value& val = stack.lookup(e->symbol())->second;
+  std::cout << "VAL: " << val << '\n';
+  return &val;
 }
 
 
@@ -285,6 +290,17 @@ Evaluator::eval(Call_expr const* e)
     throw std::runtime_error("function evaluation failed");
 
   return result;
+}
+
+
+// Apply an lvalue-to-rvalue conversion by dereferencing
+// the reference value. Note that the source must evaluate
+// to a reference.
+Value
+Evaluator::eval(Value_conv const* e)
+{
+  Value v = eval(e->source());
+  return *v.get_reference();
 }
 
 

@@ -32,6 +32,7 @@ Generator::get_type(Type const* t)
     llvm::Type* operator()(Boolean_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Integer_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Function_type const* t) const { return g.get_type(t); }
+    llvm::Type* operator()(Reference_type const* t) const { return g.get_type(t); }
   };
   return apply(t, Fn{*this});
 }
@@ -66,6 +67,18 @@ Generator::get_type(Function_type const* t)
 }
 
 
+// Translate reference types into pointer types in the
+// generic address space.
+//
+// TODO: Actually do this?
+llvm::Type*
+Generator::get_type(Reference_type const* t)
+{
+  llvm::Type* t1 = get_type(t->type());
+  return llvm::PointerType::getUnqual(t1);
+}
+
+
 // -------------------------------------------------------------------------- //
 // Code generation for expressions
 //
@@ -97,6 +110,7 @@ Generator::gen(Expr const* e)
     llvm::Value* operator()(Or_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Not_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Call_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Value_conv const* e) const { return g.gen(e); }
   };
 
   return apply(e, Fn{*this});
@@ -243,6 +257,13 @@ Generator::gen(Not_expr const* e)
 
 llvm::Value* 
 Generator::gen(Call_expr const* e)
+{
+  throw std::runtime_error("not implemented");
+}
+
+
+llvm::Value*
+Generator::gen(Value_conv const* e)
 {
   throw std::runtime_error("not implemented");
 }

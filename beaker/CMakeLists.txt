@@ -43,6 +43,8 @@ add_executable(beaker
   main.cpp
   string.cpp
   file.cpp
+  line.cpp
+  location.cpp
   cast.cpp
   symbol.cpp
   expr.cpp
@@ -52,9 +54,7 @@ add_executable(beaker
   print.cpp
   equal.cpp
   less.cpp
-  hash.cpp
-  line.cpp
-  location.cpp
+  convert.cpp
   error.cpp
   token.cpp
   lexer.cpp

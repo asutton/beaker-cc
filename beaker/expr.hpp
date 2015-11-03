@@ -22,6 +22,10 @@ struct Expr
     : type_(nullptr)
   { }
 
+  Expr(Type const* t)
+    : type_(t)
+  { }
+
   virtual ~Expr() { }
 
   virtual void accept(Visitor&) const = 0;
@@ -57,6 +61,7 @@ struct Expr::Visitor
   virtual void visit(Or_expr const*) = 0;
   virtual void visit(Not_expr const*) = 0;
   virtual void visit(Call_expr const*) = 0;
+  virtual void visit(Value_conv const*) = 0;
 };
 
 
@@ -83,6 +88,7 @@ struct Expr::Mutator
   virtual void visit(Or_expr*) = 0;
   virtual void visit(Not_expr*) = 0;
   virtual void visit(Call_expr*) = 0;
+  virtual void visit(Value_conv*) = 0;
 };
 
 
@@ -101,7 +107,8 @@ struct Literal_expr : Expr
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
 
-  Symbol const* symbol() const { return sym; }
+  Symbol const* symbol() const   { return sym; }
+  String const& spelling() const { return sym->spelling(); }
 
   Symbol const* sym;
 };
@@ -120,8 +127,11 @@ struct Id_expr : Expr
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
 
-  Symbol const* symbol() const { return sym; }
-  Decl const*   declaration() const { return decl; }
+  Symbol const* symbol() const             { return sym; }
+  String const& spelling() const           { return sym->spelling(); }
+
+  Decl const*   declaration() const        { return decl; }
+  void          declaration(Decl const* d) { decl = d; }
 
   Symbol const* sym;
   Decl const*   decl;
@@ -135,7 +145,7 @@ struct Unary_expr : Expr
     : first(e)
   { }
 
-  Expr const* operand() const { return first; }
+  Expr* operand() const { return first; }
 
   Expr* first;
 };
@@ -148,8 +158,8 @@ struct Binary_expr : Expr
     : first(e1), second(e2)
   { }
 
-  Expr const* left() const { return first; }
-  Expr const* right() const { return second; }
+  Expr* left() const { return first; }
+  Expr* right() const { return second; }
 
   Expr* first;
   Expr* second;
@@ -338,198 +348,117 @@ struct Call_expr : Expr
 
 
 // -------------------------------------------------------------------------- //
-//                              Generic visitors
+//                              Conversions
 
-template<typename F, typename R>
-struct Generic_expr_visitor : Expr::Visitor
+// Represents the conversion of a source expression to
+// a target type.
+struct Conversion : Expr
 {
-  Generic_expr_visitor(F fn)
-    : fn(fn)
+  Conversion(Type const* t, Expr* e)
+    : Expr(t), first(e)
   { }
-  
-  void visit(Literal_expr const* e) { r = fn(e); }
-  void visit(Id_expr const* e) { r = fn(e); }
-  void visit(Add_expr const* e) { r = fn(e); }
-  void visit(Sub_expr const* e) { r = fn(e); }
-  void visit(Mul_expr const* e) { r = fn(e); }
-  void visit(Div_expr const* e) { r = fn(e); }
-  void visit(Rem_expr const* e) { r = fn(e); }
-  void visit(Neg_expr const* e) { r = fn(e); }
-  void visit(Pos_expr const* e) { r = fn(e); }
-  void visit(Eq_expr const* e) { r = fn(e); }
-  void visit(Ne_expr const* e) { r = fn(e); }
-  void visit(Lt_expr const* e) { r = fn(e); }
-  void visit(Gt_expr const* e) { r = fn(e); }
-  void visit(Le_expr const* e) { r = fn(e); }
-  void visit(Ge_expr const* e) { r = fn(e); }
-  void visit(And_expr const* e) { r = fn(e); }
-  void visit(Or_expr const* e) { r = fn(e); }
-  void visit(Not_expr const* e) { r = fn(e); }
-  void visit(Call_expr const* e) { r = fn(e); }
 
-  F fn;
-  R r;
+  Expr*       source() const { return first; }
+  Type const* target() const { return type(); }
+
+  Expr* first;
 };
 
 
-// A specialization for functions returning void.
-template<typename F>
-struct Generic_expr_visitor<F, void> : Expr::Visitor
+// Represents the conversion of an object to a value.
+struct Value_conv : Conversion
 {
-  Generic_expr_visitor(F fn)
-    : fn(fn)
-  { }
-  
-  void visit(Literal_expr const* e) { fn(e); }
-  void visit(Id_expr const* e) { fn(e); }
-  void visit(Add_expr const* e) { fn(e); }
-  void visit(Sub_expr const* e) { fn(e); }
-  void visit(Mul_expr const* e) { fn(e); }
-  void visit(Div_expr const* e) { fn(e); }
-  void visit(Rem_expr const* e) { fn(e); }
-  void visit(Neg_expr const* e) { fn(e); }
-  void visit(Pos_expr const* e) { fn(e); }
-  void visit(Eq_expr const* e) { fn(e); }
-  void visit(Ne_expr const* e) { fn(e); }
-  void visit(Lt_expr const* e) { fn(e); }
-  void visit(Gt_expr const* e) { fn(e); }
-  void visit(Le_expr const* e) { fn(e); }
-  void visit(Ge_expr const* e) { fn(e); }
-  void visit(And_expr const* e) { fn(e); }
-  void visit(Or_expr const* e) { fn(e); }
-  void visit(Not_expr const* e) { fn(e); }
-  void visit(Call_expr const* e) { fn(e); }
+  using Conversion::Conversion;
 
-  F fn;
-};
-
-
-// Dispatch visitor to a void visitor.
-template<typename F, typename R = typename std::result_of<F(Literal_expr const*)>::type>
-inline typename std::enable_if<std::is_void<R>::value, void>::type
-dispatch(Expr const* p, F fn)
-{
-  Generic_expr_visitor<F, void> v(fn);
-  p->accept(v);
-}
-
-
-// Dispatch to a non-void visitor.
-template<typename F, typename R = typename std::result_of<F(Literal_expr const*)>::type>
-inline typename std::enable_if<!std::is_void<R>::value, R>::type
-dispatch(Expr const* p, F fn)
-{
-  Generic_expr_visitor<F, R> v(fn);
-  p->accept(v);
-  return v.r;
-}
-
-
-// Apply fn to the propositoin p.
-template<typename F, typename R = typename std::result_of<F(Literal_expr const*)>::type>
-inline R
-apply(Expr const* p, F fn)
-{
-  return dispatch(p, fn);
-}
-
-
-template<typename F, typename R>
-struct Generic_mutator : Expr::Mutator
-{
-  Generic_mutator(F fn)
-    : fn(fn)
-  { }
-  
-  void visit(Literal_expr* e) { r = fn(e); }
-  void visit(Id_expr* e) { r = fn(e); }
-  void visit(Add_expr* e) { r = fn(e); }
-  void visit(Sub_expr* e) { r = fn(e); }
-  void visit(Mul_expr* e) { r = fn(e); }
-  void visit(Div_expr* e) { r = fn(e); }
-  void visit(Rem_expr* e) { r = fn(e); }
-  void visit(Neg_expr* e) { r = fn(e); }
-  void visit(Pos_expr* e) { r = fn(e); }
-  void visit(Eq_expr* e) { r = fn(e); }
-  void visit(Ne_expr* e) { r = fn(e); }
-  void visit(Lt_expr* e) { r = fn(e); }
-  void visit(Gt_expr* e) { r = fn(e); }
-  void visit(Le_expr* e) { r = fn(e); }
-  void visit(Ge_expr* e) { r = fn(e); }
-  void visit(And_expr* e) { r = fn(e); }
-  void visit(Or_expr* e) { r = fn(e); }
-  void visit(Not_expr* e) { r = fn(e); }
-  void visit(Call_expr* e) { r = fn(e); }
-
-  F fn;
-  R r;
+  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Mutator& v)       { v.visit(this); }
 };
 
 
 // -------------------------------------------------------------------------- //
-//                              Generic mutator
+// Generic visitor
 
-
-// A specialization for functions returning void.
-template<typename F>
-struct Generic_mutator<F, void> : Expr::Mutator
+template<typename F, typename T>
+struct Generic_expr_visitor : Expr::Visitor, lingo::Generic_visitor<F, T>
 {
-  Generic_mutator(F fn)
-    : fn(fn)
+  Generic_expr_visitor(F fn)
+    : lingo::Generic_visitor<F, T>(fn)
   { }
   
-  void visit(Literal_expr* e) { fn(e); }
-  void visit(Id_expr* e) { fn(e); }
-  void visit(Add_expr* e) { fn(e); }
-  void visit(Sub_expr* e) { fn(e); }
-  void visit(Mul_expr* e) { fn(e); }
-  void visit(Div_expr* e) { fn(e); }
-  void visit(Rem_expr* e) { fn(e); }
-  void visit(Neg_expr* e) { fn(e); }
-  void visit(Pos_expr* e) { fn(e); }
-  void visit(Eq_expr* e) { fn(e); }
-  void visit(Ne_expr* e) { fn(e); }
-  void visit(Lt_expr* e) { fn(e); }
-  void visit(Gt_expr* e) { fn(e); }
-  void visit(Le_expr* e) { fn(e); }
-  void visit(Ge_expr* e) { fn(e); }
-  void visit(And_expr* e) { fn(e); }
-  void visit(Or_expr* e) { fn(e); }
-  void visit(Not_expr* e) { fn(e); }
-  void visit(Call_expr* e) { fn(e); }
-
-  F fn;
+  void visit(Literal_expr const* e) { this->invoke(e); }
+  void visit(Id_expr const* e) { this->invoke(e); }
+  void visit(Add_expr const* e) { this->invoke(e); }
+  void visit(Sub_expr const* e) { this->invoke(e); }
+  void visit(Mul_expr const* e) { this->invoke(e); }
+  void visit(Div_expr const* e) { this->invoke(e); }
+  void visit(Rem_expr const* e) { this->invoke(e); }
+  void visit(Neg_expr const* e) { this->invoke(e); }
+  void visit(Pos_expr const* e) { this->invoke(e); }
+  void visit(Eq_expr const* e) { this->invoke(e); }
+  void visit(Ne_expr const* e) { this->invoke(e); }
+  void visit(Lt_expr const* e) { this->invoke(e); }
+  void visit(Gt_expr const* e) { this->invoke(e); }
+  void visit(Le_expr const* e) { this->invoke(e); }
+  void visit(Ge_expr const* e) { this->invoke(e); }
+  void visit(And_expr const* e) { this->invoke(e); }
+  void visit(Or_expr const* e) { this->invoke(e); }
+  void visit(Not_expr const* e) { this->invoke(e); }
+  void visit(Call_expr const* e) { this->invoke(e); }
+  void visit(Value_conv const* e) { this->invoke(e); }
 };
 
 
-// Dispatch visitor to a void visitor.
-template<typename F, typename R = typename std::result_of<F(Literal_expr*)>::type>
-inline typename std::enable_if<std::is_void<R>::value, void>::type
-dispatch(Expr* p, F fn)
+template<typename F, typename T = typename std::result_of<F(Literal_expr const*)>::type>
+inline T
+apply(Expr const* e, F fn)
 {
-  Generic_mutator<F, void> v(fn);
-  p->accept(v);
+  Generic_expr_visitor<F, T> v(fn);
+  return lingo::accept(e, v);
 }
 
 
-// Dispatch to a non-void visitor.
-template<typename F, typename R = typename std::result_of<F(Literal_expr*)>::type>
-inline typename std::enable_if<!std::is_void<R>::value, R>::type
-dispatch(Expr* p, F fn)
-{
-  Generic_mutator<F, R> v(fn);
-  p->accept(v);
-  return v.r;
-}
+// -------------------------------------------------------------------------- //
+// Generic mutator
 
 
-// Apply fn to the propositoin p.
-template<typename F, typename R = typename std::result_of<F(Literal_expr*)>::type>
-inline R
-apply(Expr* p, F fn)
+template<typename F, typename T>
+struct Generic_expr_mutator : Expr::Mutator, lingo::Generic_mutator<F, T>
 {
-  return dispatch(p, fn);
+  Generic_expr_mutator(F fn)
+    : lingo::Generic_mutator<F, T>(fn)
+  { }
+  
+  void visit(Literal_expr* e) { this->invoke(e); }
+  void visit(Id_expr* e) { this->invoke(e); }
+  void visit(Add_expr* e) { this->invoke(e); }
+  void visit(Sub_expr* e) { this->invoke(e); }
+  void visit(Mul_expr* e) { this->invoke(e); }
+  void visit(Div_expr* e) { this->invoke(e); }
+  void visit(Rem_expr* e) { this->invoke(e); }
+  void visit(Neg_expr* e) { this->invoke(e); }
+  void visit(Pos_expr* e) { this->invoke(e); }
+  void visit(Eq_expr* e) { this->invoke(e); }
+  void visit(Ne_expr* e) { this->invoke(e); }
+  void visit(Lt_expr* e) { this->invoke(e); }
+  void visit(Gt_expr* e) { this->invoke(e); }
+  void visit(Le_expr* e) { this->invoke(e); }
+  void visit(Ge_expr* e) { this->invoke(e); }
+  void visit(And_expr* e) { this->invoke(e); }
+  void visit(Or_expr* e) { this->invoke(e); }
+  void visit(Not_expr* e) { this->invoke(e); }
+  void visit(Call_expr* e) { this->invoke(e); }
+  void visit(Value_conv* e) { this->invoke(e); }
+};
+
+
+template<typename F, typename T = typename std::result_of<F(Literal_expr*)>::type>
+inline T
+apply(Expr* e, F fn)
+{
+  Generic_expr_mutator<F, T> v(fn);
+  return lingo::accept(e, v);
 }
+
 
 
 #endif

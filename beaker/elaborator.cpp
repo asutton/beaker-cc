@@ -6,6 +6,7 @@
 #include "expr.hpp"
 #include "decl.hpp"
 #include "stmt.hpp"
+#include "convert.hpp"
 #include "error.hpp"
 
 #include <iostream>
@@ -78,158 +79,77 @@ Scope_stack::function() const
 }
 
 
-
-// -------------------------------------------------------------------------- //
-// Type checking
-
-// FIXME: Improve diagnostics.
-
-template<typename T>
-Type const*
-check_unary_arithmetic_expr(Elaborator& elab, T const* e)
-{
-  Type const* z = get_integer_type();
-  Type const* t = elab.elaborate(e->first);
-  if (t != z)
-    throw std::runtime_error("type error");
-  return z;
-}
-
-
-template<typename T>
-Type const*
-check_binary_arithmetic_expr(Elaborator& elab, T const* e)
-{
-  Type const* z = get_integer_type();
-  Type const* t1 = elab.elaborate(e->first);
-  if (t1 != z)
-    throw std::runtime_error("type error");
-  Type const* t2 = elab.elaborate(e->second);
-  if (t2 != z)
-    throw std::runtime_error("type error");
-  return z;
-}
-
-
-template<typename T>
-Type const*
-check_ordering_expr(Elaborator& elab, T const* e)
-{
-  Type const* z = get_integer_type();
-  Type const* b = get_boolean_type();
-  Type const* t1 = elab.elaborate(e->first);
-  if (t1 != z)
-    throw std::runtime_error("type error");
-  Type const* t2 = elab.elaborate(e->second);
-  if (t2 != z)
-    throw std::runtime_error("type error");
-  return b;
-}
-
-
-// In types of the operands shall be the same.
-template<typename T>
-Type const*
-check_equality_expr(Elaborator& elab, T const* e)
-{
-  Type const* t1 = elab.elaborate(e->first);
-  Type const* t2 = elab.elaborate(e->second);
-  if (t1 != t2)
-    throw std::runtime_error("type error");
-  return get_boolean_type();
-}
-
-
-template<typename T>
-Type const*
-check_unary_logical_expr(Elaborator& elab, T const* e)
-{
-  Type const* b = get_boolean_type();
-  Type const* t = elab.elaborate(e->first);
-  if (t != b)
-    throw std::runtime_error("type error");
-  return b;
-}
-
-
-template<typename T>
-Type const*
-check_binary_logical_expr(Elaborator& elab, T const* e)
-{
-  Type const* b = get_boolean_type();
-  Type const* t1 = elab.elaborate(e->first);
-  if (t1 != b)
-    throw std::runtime_error("type error");
-  Type const* t2 = elab.elaborate(e->second);
-  if (t2 != b)
-    throw std::runtime_error("type error");
-  return b;
-}
-
-
 // -------------------------------------------------------------------------- //
 // Elaboration of expressions
 
 // Returns the type of an expression. This also annotates
 // the expression by saving the computed type as part of
 // the expression.
-Type const* 
+Expr*
 Elaborator::elaborate(Expr* e)
 {
   struct Fn
   {
     Elaborator& elab;
 
-    Type const* operator()(Literal_expr* e) const { return elab.elaborate(e); }
-    Type const* operator()(Id_expr* e) const { return elab.elaborate(e); }
-
-    Type const* operator()(Add_expr* e) const { return elab.elaborate(e); }
-    Type const* operator()(Sub_expr* e) const { return elab.elaborate(e); }
-    Type const* operator()(Mul_expr* e) const { return elab.elaborate(e); }
-    Type const* operator()(Div_expr* e) const { return elab.elaborate(e); }
-    Type const* operator()(Rem_expr* e) const { return elab.elaborate(e); }
-    Type const* operator()(Neg_expr* e) const { return elab.elaborate(e); }
-    Type const* operator()(Pos_expr* e) const { return elab.elaborate(e); }
-    Type const* operator()(Eq_expr* e) const { return elab.elaborate(e); }
-    Type const* operator()(Ne_expr* e) const { return elab.elaborate(e); }
-    Type const* operator()(Lt_expr* e) const { return elab.elaborate(e); }
-    Type const* operator()(Gt_expr* e) const { return elab.elaborate(e); }
-    Type const* operator()(Le_expr* e) const { return elab.elaborate(e); }
-    Type const* operator()(Ge_expr* e) const { return elab.elaborate(e); }
-    Type const* operator()(And_expr* e) const { return elab.elaborate(e); }
-    Type const* operator()(Or_expr* e) const { return elab.elaborate(e); }
-    Type const* operator()(Not_expr* e) const { return elab.elaborate(e); }
-
-    Type const* operator()(Call_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Literal_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Id_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Add_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Sub_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Mul_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Div_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Rem_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Neg_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Pos_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Eq_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Ne_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Lt_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Gt_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Le_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Ge_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(And_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Or_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Not_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Call_expr* e) const { return elab.elaborate(e); }
+    
+    // Conversions are created as needed and do not
+    // need to be elaborated.
+    Expr* operator()(Conversion* e) const { return e; }
   };
 
-  // Check to see if we've already computed the type.
+  // If the expression has no type, then we need to
+  // elaborate it and annotate the object.
   if (!e->type())
-    e->type(apply(e, Fn{*this}));
-  return e->type();
+    return apply(e, Fn{*this});
+  else
+    return e;
 }
 
 
-Type const*
+Expr*
 Elaborator::elaborate(Literal_expr* e)
 {
   if (is<Boolean_sym>(e->symbol()))
-    return get_boolean_type();
+    e->type(get_boolean_type());
   else if (is<Integer_sym>(e->symbol()))
-    return get_integer_type();
+    e->type(get_integer_type());
   else
     throw std::runtime_error("untyped literal");
+  return e;
 }
 
 
-// Elaborate an id expression.
+// Elaborate an id expression. When the identifier refers
+// to an object of type T (a variable or parameter), the
+// type of the expression is T&. Otherwise, the type of the
+// expression is the type of the declaration.
 //
 // TODO: There may be some contexts in which an unresolved
 // identifier can be useful. Unfortunately, this means that
 // we have to push the handling of lookup errors up one
 // layer, unless we to precisely establish contexts where
 // such identifiers are allowed.
-Type const*
+Expr*
 Elaborator::elaborate(Id_expr* e)
 {
   Scope::Binding const* b = stack.lookup(e->symbol());
@@ -240,154 +160,360 @@ Elaborator::elaborate(Id_expr* e)
   }
 
   // Annotate the expression with its declaration.
-  e->decl = b->second;
-  
-  return b->second->type();
+  Decl* d = b->second;
+  e->declaration(d);
+
+  // If the referenced declaration is a variable of
+  // type T, then the type is T&. Otherwise, it is just T.
+  Type const* t = d->type();
+  if (defines_object(d))
+    t = t->ref();
+  e->type(t);
+
+  return e;
 }
 
 
-Type const* 
+namespace
+{
+
+// Elaborate the operands of a binary expression
+// whose operands are required to be rvalues. This
+// applies implicit convesions as needed.
+void
+convert_rvalue_operands(Elaborator& elab, Binary_expr* e, Type const* t)
+{
+  // Process sub-expressions.
+  elab.elaborate(e->left());
+  elab.elaborate(e->right());
+
+  // Apply conversions, updating the expression.
+  e->first = convert(e->left(), t);
+  e->second = convert(e->right(), t);
+}
+
+
+// Elaborate the operand of unary expression whose
+// operand is required to be an rvalue. This applies
+// implicit conversions as needed.
+void
+convert_rvalue_operands(Elaborator& elab, Unary_expr* e, Type const* t)
+{
+  // Process the operand.
+  elab.elaborate(e->operand());
+
+  // Apply conversions.
+  e->first = convert(e->operand(), t);
+}
+
+
+// The operands of a binary arithmetic expression are 
+// converted to rvalues. The converted operands shall have 
+// type int. The result of an arithmetic expression is an 
+// rvalue with type int.
+Expr*
+check_binary_arithmetic_expr(Elaborator& elab, Binary_expr* e)
+{
+  Type const* z = get_integer_type();
+  convert_rvalue_operands(elab, e, z);
+  
+  Type const* t1 = e->left()->type();
+  Type const* t2 = e->right()->type();
+  if (t1 != get_integer_type())
+    throw Type_error({}, "left operand does not have type 'int'");
+  if (t2 != get_integer_type())
+    throw Type_error({}, "right operand does not have type 'int'");
+  e->type(z);
+
+  return e;
+}
+
+
+// The operands of a unary arithmetic expression are 
+// converted to rvalues. The converted operands shall 
+// have type int. The result of an arithmetic expression 
+// is an rvalue of type int.
+Expr*
+check_unary_arithmetic_expr(Elaborator& elab, Unary_expr* e)
+{
+  Type const* z = get_integer_type();
+  convert_rvalue_operands(elab, e, z);
+
+  Type const* t = e->operand()->type();
+  if (t != z)
+    throw Type_error({}, "operand does not have type 'int'");
+  e->type(z);
+
+  return e;
+}
+
+
+} // namespace
+
+
+Expr*
 Elaborator::elaborate(Add_expr* e)
 {
   return check_binary_arithmetic_expr(*this, e);
 }
 
 
-Type const* 
+Expr*
 Elaborator::elaborate(Sub_expr* e)
 {
   return check_binary_arithmetic_expr(*this, e);
 }
 
 
-Type const* 
+Expr*
 Elaborator::elaborate(Mul_expr* e)
 {
   return check_binary_arithmetic_expr(*this, e);
 }
 
 
-Type const* 
+Expr*
 Elaborator::elaborate(Div_expr* e)
 {
   return check_binary_arithmetic_expr(*this, e);
 }
 
 
-Type const* 
+Expr*
 Elaborator::elaborate(Rem_expr* e)
 {
   return check_binary_arithmetic_expr(*this, e);
 }
 
 
-Type const* 
+// 
+Expr*
 Elaborator::elaborate(Neg_expr* e)
 {
   return check_unary_arithmetic_expr(*this, e);
 }
 
 
-Type const* 
+Expr*
 Elaborator::elaborate(Pos_expr* e)
 {
   return check_unary_arithmetic_expr(*this, e);
 }
 
 
-Type const* 
+namespace
+{
+
+// The operands of an equality expression are converted
+// to rvalues. The operands shall have the same type. The
+// result of an equality expression is an rvalue of type
+// bool.
+Expr*
+check_equality_expr(Elaborator& elab, Binary_expr* e)
+{
+  elab.elaborate(e->left());
+  elab.elaborate(e->right());
+
+  // Apply conversions and update the expression.
+  e->first = convert(e->left(), e->left()->type()->nonref());
+  e->second = convert(e->right(), e->right()->type()->nonref());
+
+  Type const* t1 = e->left()->type();
+  Type const* t2 = e->right()->type();
+  if (t1 != t2)
+    throw Type_error({}, "operands have different types");
+  e->type(get_boolean_type());
+  
+  return e;
+}
+
+} // naespace
+
+
+Expr*
 Elaborator::elaborate(Eq_expr* e)
 {
   return check_equality_expr(*this, e);
 }
 
 
-Type const* 
+Expr*
 Elaborator::elaborate(Ne_expr* e)
 {
   return check_equality_expr(*this, e);
 }
 
 
-Type const* 
+
+namespace
+{
+
+// The operands of an ordering expression are converted
+// to rvalues. The operands shall have type int. The
+// result of an equality expression is an rvalue of type
+// bool.
+Expr*
+check_ordering_expr(Elaborator& elab, Binary_expr* e)
+{
+  Type const* z = get_integer_type();
+  convert_rvalue_operands(elab, e, z);
+  
+  Type const* t1 = e->left()->type();
+  Type const* t2 = e->right()->type();
+  if (t1 != z)
+    throw Type_error({}, "left operand does not have type 'int'");
+  if (t2 != z)
+    throw Type_error({}, "left operand does not have type 'int'");
+  e->type(get_boolean_type());
+  return e;
+}
+
+
+} // naespace
+
+
+Expr*
 Elaborator::elaborate(Lt_expr* e)
 {
   return check_ordering_expr(*this, e);
 }
 
 
-Type const* 
+Expr*
 Elaborator::elaborate(Gt_expr* e)
 {
   return check_ordering_expr(*this, e);
 }
 
 
-Type const* 
+Expr*
 Elaborator::elaborate(Le_expr* e)
 {
   return check_ordering_expr(*this, e);
 }
 
 
-Type const* 
+Expr*
 Elaborator::elaborate(Ge_expr* e)
 {
   return check_ordering_expr(*this, e);
 }
 
 
-Type const* 
+namespace
+{
+
+
+// TODO: Document me!
+Expr*
+check_binary_logical_expr(Elaborator& elab, Binary_expr* e)
+{
+  Type const* b = get_boolean_type();
+  convert_rvalue_operands(elab, e, b);
+
+  Type const* t1 = e->left()->type();
+  Type const* t2 = e->right()->type();
+  if (t1 != b)
+    throw Type_error({}, "left operand does not have type 'bool'");
+  if (t2 != b)
+    throw Type_error({}, "right operand does not have type 'bool'");
+  e->type(b);
+
+  return e;
+}
+
+
+// TODO: Document me!
+Expr*
+check_unary_logical_expr(Elaborator& elab, Unary_expr* e)
+{
+  Type const* b = get_boolean_type();
+  convert_rvalue_operands(elab, e, b);
+
+  Type const* t = e->operand()->type();
+  if (t != b)
+    throw Type_error({}, "operand does not have type 'bool'");
+  e->type(b);
+  
+  return e;
+}
+
+} // namespace
+
+
+Expr*
 Elaborator::elaborate(And_expr* e)
 {
   return check_binary_logical_expr(*this, e);
 }
 
 
-Type const* 
+Expr*
 Elaborator::elaborate(Or_expr* e)
 {
   return check_binary_logical_expr(*this, e);
 }
 
 
-Type const* 
+Expr* 
 Elaborator::elaborate(Not_expr* e)
 {
   return check_unary_logical_expr(*this, e);
 }
 
 
-Type const*
+// The target function operand is converted to
+// an rvalue and shall have funtion type.
+Expr*
 Elaborator::elaborate(Call_expr* e)
 {
-  Type const* t1 = elaborate(e->target());
+  // Apply lvalue to rvalue conversion and ensure that
+  // the target has function type.
+  elaborate(e->target());
+  e->first = lvalue_to_rvalue(e->target(), e->target()->type()->nonref());
+  Type const* t1 = e->target()->type();
   if (!is<Function_type>(t1))
-    throw std::runtime_error("call to non-function");
+    throw Type_error({}, "call to non-function");
   Function_type const* t = cast<Function_type>(t1);
   
-  // FIXME: Match arguments against parameter types.
+  // Check for basic function arity.
   Type_seq const& parms = t->parameter_types();
-  Expr_seq const& args = e->arguments();
+  Expr_seq& args = e->arguments();
   if (args.size() < parms.size())
-    throw std::runtime_error("too few arguments");
+    throw Type_error({}, "too few arguments");
   if (parms.size() < args.size())
-    throw std::runtime_error("too many arguments");
+    throw Type_error({}, "too many arguments");
 
+  // Check that each argument conforms to the the
+  // parameter. 
   for (std::size_t i = 0; i < parms.size(); ++i) {
     Type const* p = parms[i];
+    Expr*& a = args[i];
 
     // TODO: Allow conversions from e to p.
-    Expr* e = args[i];
-    Type const* a = elaborate(e);
-    if (p != a) {
-      std::cerr << "type mismatch in argument " << i + 1 << '\n';
-      std::cerr << "  expected " << p << " but got " << a << '\n';
-      throw std::runtime_error("type mismatch");
+    elaborate(a);
+
+    // Apply conversions and update the original
+    // expression.
+    //
+    // TODO: If we fail to find a conversion, then a
+    // type mismatch is guaranteed. The check below
+    // would be redundant.
+    a = convert(a, p);
+
+    // Check for type match.
+    if (a->type() != p) {
+      std::stringstream ss;
+      ss << "type mismatch in argument " << i + 1 << '\n';
+      throw Type_error({}, ss.str());
     }
   }
 
-  return t->return_type();
+  // The type of the expression is that of the
+  // function return type.
+  e->type(t->return_type());
+
+  return e;
 }
 
 
@@ -396,17 +522,17 @@ Elaborator::elaborate(Call_expr* e)
 
 // Elaborate a declaration. This returns true if
 // elaboration succeeds and false otherwise.
-Type const*
+void
 Elaborator::elaborate(Decl* d)
 {
   struct Fn
   {
     Elaborator& elab;
 
-    Type const* operator()(Variable_decl* d) const { return elab.elaborate(d); }
-    Type const* operator()(Function_decl* d) const { return elab.elaborate(d); }
-    Type const* operator()(Parameter_decl* d) const { return elab.elaborate(d); }
-    Type const* operator()(Module_decl* d) const { return elab.elaborate(d); }
+    void operator()(Variable_decl* d) const { return elab.elaborate(d); }
+    void operator()(Function_decl* d) const { return elab.elaborate(d); }
+    void operator()(Parameter_decl* d) const { return elab.elaborate(d); }
+    void operator()(Module_decl* d) const { return elab.elaborate(d); }
   };
 
   return apply(d, Fn{*this});
@@ -418,21 +544,26 @@ Elaborator::elaborate(Decl* d)
 //
 // The variable is declared prior to the elaboration of its
 // initializer.
-Type const*
+void
 Elaborator::elaborate(Variable_decl* d)
 {
   stack.declare(d);
 
-  Type const* t = elaborate(d->init());
-  if (t != d->type())
-    throw std::runtime_error("initializer type error");
-  return d->type();
+  // Elaborate the initializer.
+  elaborate(d->init());
+
+  // Try converting the initializer to the declared
+  // type of the variable. Note that errors may occur
+  // during conversion.
+  Expr* c = convert(d->init(), d->type());
+  if (c->type() != d->type())
+    throw Type_error({}, "type mismatch in initializer");
 }
 
 
 // The types of return expressions shall match the declared
 // return type of the function.
-Type const*
+void
 Elaborator::elaborate(Function_decl* d)
 {
   stack.declare(d);
@@ -456,32 +587,26 @@ Elaborator::elaborate(Function_decl* d)
 
   // TODO: Build a control flow graph and ensure that
   // every branch returns a value.
-
-  return d->type();
 }
 
 
 // Elaborate a parameter declaration. This simply declares
 // the parameter in the current scope.
-Type const*
+void
 Elaborator::elaborate(Parameter_decl* d)
 {
   stack.declare(d);
-  return d->type();
 }
 
 
 // Elaborate the module.  Returns true if successful and
 // false otherwise.
-Type const*
+void
 Elaborator::elaborate(Module_decl* m)
 {
   Scope_sentinel scope(*this, m);
   for (Decl* d : m->declarations())
     elaborate(d);
-  
-  // FIXME: Return a module type.
-  return get_boolean_type();
 }
 
 
@@ -541,16 +666,19 @@ Elaborator::elaborate(Block_stmt* s)
 void
 Elaborator::elaborate(Assign_stmt* s)
 {
-  // Refers to a mutable object.
-  Expr* e1 = s->object();
-  if (!is<Id_expr>(e1)) {
-    throw Type_error({}, "assignment to non-object");
-  }
-  Expr* e2 = s->value();
+  elaborate(s->object());
+  if (!is_lvalue(s->object()))
+    throw Type_error({}, "assignment to rvalue");
 
-  // The types shall match.
-  Type const* t1 = elaborate(e1);
-  Type const* t2 = elaborate(e2);
+  // Apply rvalue conversion to the value and update the
+  // expression.
+  elaborate(s->value());
+  s->second = lvalue_to_rvalue(s->value());
+
+  // The types shall match. Compare t1 using the non-reference
+  // type of the object.
+  Type const* t1 = s->object()->type()->nonref();
+  Type const* t2 = s->value()->type();
   if (t1 != t2)
     throw Type_error({}, "assignment to an object of a different type");
 }
@@ -564,13 +692,12 @@ void
 Elaborator::elaborate(Return_stmt* s)
 {
   Function_decl* fn = stack.function();
+  Type const* t = fn->return_type();
 
   // Check that the return type matches the returned value.
-  //
-  // TODO: Provide better diagnostics for return values in
-  // void functions (after adding a void type).
-  Type const* t = elaborate(s->value());
-  if (t != fn->return_type())
+  elaborate(s->value());
+  Expr* c = convert(s->value(), t);
+  if (c->type() != t)
     throw std::runtime_error("return type mismatch");
 }
 
@@ -579,9 +706,14 @@ Elaborator::elaborate(Return_stmt* s)
 void
 Elaborator::elaborate(If_then_stmt* s)
 {
-  Type const* t = elaborate(s->condition());
-  if (t != get_boolean_type())
+  Type const* b = get_boolean_type();
+  
+  // Apply rvalue conversions.
+  elaborate(s->condition());
+  s->first = convert(s->condition(), b);
+  if (s->condition()->type() != b)
     throw Type_error({}, "if condition does not have type 'bool'");
+
   elaborate(s->body());
 }
 
@@ -590,9 +722,13 @@ Elaborator::elaborate(If_then_stmt* s)
 void
 Elaborator::elaborate(If_else_stmt* s)
 {
-  Type const* t = elaborate(s->condition());
-  if (t != get_boolean_type())
+  Type const* b = get_boolean_type();
+  
+  elaborate(s->condition());
+  if (s->condition()->type() != b)
+  s->first = convert(s->condition(), b);
     throw Type_error({}, "if condition does not have type 'bool'");
+
   elaborate(s->true_branch());
   elaborate(s->false_branch());
 }
@@ -601,9 +737,13 @@ Elaborator::elaborate(If_else_stmt* s)
 void
 Elaborator::elaborate(While_stmt* s)
 {
-  Type const* t = elaborate(s->condition());
-  if (t != get_boolean_type())
+  Type const* b = get_boolean_type();
+  
+  elaborate(s->condition());
+  s->first = convert(s->condition(), b);
+  if (s->condition()->type() != b)
     throw Type_error({}, "loop condition does not have type 'bool'");
+
   elaborate(s->body());
 }
 

@@ -62,6 +62,7 @@ public:
   Value eval(Or_expr const*);
   Value eval(Not_expr const*);
   Value eval(Call_expr const*);
+  Value eval(Value_conv const*);
   
   void eval(Decl const*);
   void eval(Variable_decl const*);

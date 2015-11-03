@@ -1,0 +1,11 @@
+
+
+def f1(x : int) -> int { return x; }
+
+def main() -> int
+{
+  var v : int = 0;
+  f1(0);  // no rvalue conversion
+  f1(v);  // rvalue conversion
+  return 0;
+}

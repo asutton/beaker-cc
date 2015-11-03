@@ -39,6 +39,7 @@ struct Generator
   llvm::Type* get_type(Boolean_type const*);
   llvm::Type* get_type(Integer_type const*);
   llvm::Type* get_type(Function_type const*);
+  llvm::Type* get_type(Reference_type const*);
 
   llvm::Value* gen(Expr const*);
   llvm::Value* gen(Literal_expr const*);
@@ -60,6 +61,7 @@ struct Generator
   llvm::Value* gen(Or_expr const*);
   llvm::Value* gen(Not_expr const*);
   llvm::Value* gen(Call_expr const*);
+  llvm::Value* gen(Value_conv const*);
   
   void gen(Stmt const*);
   void gen(Empty_stmt const*);
