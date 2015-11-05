@@ -157,98 +157,127 @@ Generator::gen(Add_expr const* e)
 llvm::Value* 
 Generator::gen(Sub_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* left = gen(e->left());
+  llvm::Value* right = gen(e->right());
+  return build.CreateSub(left,right);
 }
 
 
 llvm::Value* 
 Generator::gen(Mul_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* left = gen(e->left());
+  llvm::Value* right = gen(e->right());
+  return build.CreateMul(left,right);
 }
 
 
 llvm::Value* 
 Generator::gen(Div_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* left = gen(e->left());
+  llvm::Value* right = gen(e->right());
+  return build.CreateUDiv(left,right);
 }
 
 
 llvm::Value* 
 Generator::gen(Rem_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* left = gen(e->left());
+  llvm::Value* right = gen(e->right());
+  return build.CreateURem(left,right);
 }
 
 
 llvm::Value* 
 Generator::gen(Neg_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* v1 = build.getInt32(0);
+  llvm::Value* v2 = gen(e->first);
+  return build.CreateSub(v1,v2);
+
 }
 
 
 llvm::Value* 
 Generator::gen(Pos_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* v1 = build.getInt32(0);
+  llvm::Value* v2 = gen(e->first);
+  return build.CreateAdd(v1,v2);
 }
 
 
 llvm::Value* 
 Generator::gen(Eq_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* left = gen(e->left());
+  llvm::Value* right = gen(e->right());
+  return build.CreateICmpEQ(left,right);
 }
 
 
 llvm::Value* 
 Generator::gen(Ne_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* left = gen(e->left());
+  llvm::Value* right = gen(e->right());
+  return build.CreateICmpNE(left,right);
 }
 
 
 llvm::Value* 
 Generator::gen(Lt_expr const* e)
-{
-  throw std::runtime_error("not implemented");
+{ 
+  llvm::Value* left = gen(e->left());
+  llvm::Value* right = gen(e->right());
+  return build.CreateICmpULT(left,right);
 }
 
 
 llvm::Value* 
 Generator::gen(Gt_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* left = gen(e->left());
+  llvm::Value* right = gen(e->right());
+  return build.CreateICmpUGT(left,right);
 }
 
 
 llvm::Value* 
 Generator::gen(Le_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* left = gen(e->left());
+  llvm::Value* right = gen(e->right());
+  return build.CreateICmpULE(left,right);
 }
 
 
 llvm::Value* 
 Generator::gen(Ge_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* left = gen(e->left());
+  llvm::Value* right = gen(e->right());
+  return build.CreateICmpUGE(left,right);
 }
 
 
 llvm::Value* 
 Generator::gen(And_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* left = gen(e->left());
+  llvm::Value* right = gen(e->right());
+  return build.CreateAnd(left,right);
 }
 
 
 llvm::Value* 
 Generator::gen(Or_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* left = gen(e->left());
+  llvm::Value* right = gen(e->right());
+  return build.CreateOr(left,right);
 }
 
 
