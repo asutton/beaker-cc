@@ -280,13 +280,13 @@ Generator::gen(Or_expr const* e)
 }
 
 
-// Logical not is a simple XOR with the value 1
+// Logical not is a simple XOR with the value true
 // 1 xor 1 = 0
 // 0 xor 1 = 1
 llvm::Value* 
 Generator::gen(Not_expr const* e)
 {
-  llvm::Value* one = build.getInt1(1);
+  llvm::Value* one = build.getTrue();
   llvm::Value* operand = gen(e->operand());
   return build.CreateXor(one, operand);
 }
@@ -378,24 +378,123 @@ Generator::gen(Return_stmt const* s)
 }
 
 
+// To generate the if-then
+// You need to introduce the 
 void
 Generator::gen(If_then_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* cond = gen(s->condition());
+
+  cond = build.CreateICmpEQ(cond, build.getTrue(), "ifcond");
+
+  llvm::Function* fn = build.GetInsertBlock()->getParent();
+
+  // create then block
+  llvm::BasicBlock* then = llvm::BasicBlock::Create(cxt, "then", fn);
+  // create an empty else block
+  llvm::BasicBlock* el = llvm::BasicBlock::Create(cxt, "cont", fn);
+  // create the branch
+  build.CreateCondBr(cond, then, el);
+
+  // emit the 'then' block
+  build.SetInsertPoint(then);
+  gen(s->body());
+  build.CreateBr(el);
+  // apparently codegen of 'then' can change the current block, update then for the PHI
+  then = build.GetInsertBlock();
+
+  // emit the rest of the code as the else block
+  // since we don
+  // fn->getBasicBlockList().push_back(el);
+  build.SetInsertPoint(el);
+  // branch back to merge
+  el = build.GetInsertBlock();
 }
 
 
 void
 Generator::gen(If_else_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* cond = gen(s->condition());
+
+  cond = build.CreateICmpEQ(cond, build.getTrue(), "ifcond");
+
+  llvm::Function* fn = build.GetInsertBlock()->getParent();
+
+  // create then block
+  llvm::BasicBlock* then = llvm::BasicBlock::Create(cxt, "then", fn);
+  // create an empty else block
+  llvm::BasicBlock* el = llvm::BasicBlock::Create(cxt, "else", fn);
+  // create a merge block
+  llvm::BasicBlock* merge = llvm::BasicBlock::Create(cxt, "ifcont", fn);
+  // create the branch
+  build.CreateCondBr(cond, then, el);
+
+  // emit the 'then' block
+  build.SetInsertPoint(then);
+  gen(s->true_branch());
+  build.CreateBr(merge);
+  // apparently codegen of 'then' can change the current block, update then for the PHI
+  then = build.GetInsertBlock();
+
+  // emit the else block
+  // FIXME: apparently theese push back lines (even though they are in the tutorial)
+  // cause double frees with the environment. Not sure why but removing these solves the problem.
+  // fn->getBasicBlockList().push_back(el);
+
+
+  build.SetInsertPoint(el);
+  gen(s->false_branch());
+  build.CreateBr(merge);
+  // branch back to merge
+  el = build.GetInsertBlock();
+
+  // emit the merge block
+  // FIXME: apparently theese push back lines (even though they are in the tutorial)
+  // cause double frees with the environment. Not sure why but removing these solves the problem.
+  // fn->getBasicBlockList().push_back(merge);
+  build.SetInsertPoint(merge);
+  merge = build.GetInsertBlock();
 }
 
 
 void
 Generator::gen(While_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  // generate the value for the cond
+  llvm::Value* cond = gen(s->condition());
+
+  // convert cond to boolean i1
+  cond = build.CreateICmpEQ(cond, build.getTrue(), "whilecond");
+
+  llvm::Function* fn = build.GetInsertBlock()->getParent();
+
+  // create while block
+  llvm::BasicBlock* while_ = llvm::BasicBlock::Create(cxt, "while", fn);
+  llvm::BasicBlock* after_while = llvm::BasicBlock::Create(cxt, "after_while", fn);
+
+  build.CreateCondBr(cond, while_, after_while);
+
+  // emit the 'while' block
+  build.SetInsertPoint(while_);
+  gen(s->body());
+
+  // generate the value for the cond
+  llvm::Value* tmpcond = gen(s->condition());
+
+  // convert cond to boolean i1
+  tmpcond = build.CreateICmpEQ(tmpcond, build.getTrue(), "tmpcond");
+
+  // inject a condition for getting out of the while loop
+  // create the branch
+  build.CreateCondBr(tmpcond, while_, after_while);
+  
+  // apparently codegen of 'while' can change the current block, update then for the PHI
+  while_ = build.GetInsertBlock();
+
+  // emit the rest of the code in after_while
+  build.SetInsertPoint(after_while);
+  after_while = build.GetInsertBlock();
 }
 
 
@@ -462,7 +561,13 @@ Generator::gen(Decl const* d)
 void
 Generator::gen_local(Variable_decl const* d)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Type* t = get_type(d->type());
+  String const& name = d->name()->spelling();
+  llvm::Value* local = build.CreateAlloca(t, nullptr, name);
+  llvm::Value* init = gen(d->init());
+  build.CreateStore(init, local);
+
+  stack.top().bind(d, local);
 }
 
 
