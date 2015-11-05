@@ -14,6 +14,7 @@
 #include "llvm/IR/Module.h"
 
 #include <iostream>
+#include <stack>
 
 
 // -------------------------------------------------------------------------- //
@@ -338,7 +339,7 @@ Generator::gen(Stmt const* s)
 void
 Generator::gen(Empty_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  // do nothing
 }
 
 
@@ -458,6 +459,17 @@ Generator::gen(If_else_stmt const* s)
 }
 
 
+// Helper functions for determining where
+// breaks and continues should go to
+
+// keep track of the current loop entry
+std::stack<llvm::BasicBlock*> loop_entry_stack;
+
+
+// keep track of the current loop exit
+std::stack<llvm::BasicBlock*> loop_exit_stack;
+
+
 void
 Generator::gen(While_stmt const* s)
 {
@@ -472,6 +484,9 @@ Generator::gen(While_stmt const* s)
   // create while block
   llvm::BasicBlock* while_ = llvm::BasicBlock::Create(cxt, "while", fn);
   llvm::BasicBlock* after_while = llvm::BasicBlock::Create(cxt, "after_while", fn);
+  // push the entry and exit
+  loop_entry_stack.push(while_);
+  loop_exit_stack.push(after_while);
 
   build.CreateCondBr(cond, while_, after_while);
 
@@ -488,27 +503,37 @@ Generator::gen(While_stmt const* s)
   // inject a condition for getting out of the while loop
   // create the branch
   build.CreateCondBr(tmpcond, while_, after_while);
-  
+
   // apparently codegen of 'while' can change the current block, update then for the PHI
   while_ = build.GetInsertBlock();
 
   // emit the rest of the code in after_while
   build.SetInsertPoint(after_while);
   after_while = build.GetInsertBlock();
+
+  // pop the entry and exit
+  loop_entry_stack.pop();
+  loop_exit_stack.pop();
 }
 
 
 void
 Generator::gen(Break_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  if (!loop_entry_stack.empty()) {
+    llvm::BasicBlock* exit_ = loop_exit_stack.top();
+    build.CreateBr(exit_);
+  }
 }
 
 
 void
 Generator::gen(Continue_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  if (!loop_entry_stack.empty()) {
+    llvm::BasicBlock* reentry = loop_entry_stack.top();
+    build.CreateBr(reentry);
+  }
 }
 
 
