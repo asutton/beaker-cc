@@ -14,4 +14,9 @@ std::ostream& operator<<(std::ostream&, Integer_type const*);
 std::ostream& operator<<(std::ostream&, Function_type const*);
 std::ostream& operator<<(std::ostream&, Record_type const*);
 
+// network specific types
+std::ostream& operator<<(std::ostream&, Table_type const*);
+std::ostream& operator<<(std::ostream&, Flow_type const*);
+std::ostream& operator<<(std::ostream&, Port_type const*);
+
 #endif

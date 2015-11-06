@@ -44,6 +44,29 @@ hash_value(Type const* t)
       std::size_t h = hash_ptr(t->decl());
       return h;
     }
+
+    // network specific types
+    std::size_t operator()(Table_type const* t)
+    {
+      // hash the member decls not the types
+      std::size_t seed;
+      boost::hash_combine(seed, t->key_fields());
+      return seed;
+    }
+
+    std::size_t operator()(Flow_type const* t)
+    {
+      std::size_t seed;
+      boost::hash_combine(seed, t->key_types());
+      return seed;
+    }
+
+    // Currently no difference between port types
+    std::size_t operator()(Port_type const* t)
+    {
+      std::size_t  h = hash_ptr(t);
+      return h;
+    }
   };
 
   std::size_t h = apply(t, Fn{});

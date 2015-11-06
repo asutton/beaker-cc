@@ -42,6 +42,9 @@ struct Boolean_type;
 struct Integer_type;
 struct Record_type;
 struct Function_type;
+struct Table_type;
+struct Flow_type;
+struct Port_type;
 
 struct Decl;
 struct Record_decl;

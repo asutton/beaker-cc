@@ -56,3 +56,12 @@ get_function_type(Decl_seq const& d, Type const* r)
     t.push_back(d1->type());
   return get_function_type(t, r);
 }
+
+
+Type const*
+get_record_type(Decl const* d)
+{
+  static Type_set<Record_type> fn;
+  auto ins = fn.emplace(d);
+  return &*ins.first;  
+}

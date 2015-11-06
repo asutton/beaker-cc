@@ -40,6 +40,29 @@ is_less(Record_type const* a, Record_type const* b)
 }
 
 
+// Two table types are equal if all of their key fields
+// are equal
+inline bool
+is_less(Table_type const* a, Table_type const* b)
+{
+  Decl_seq const& a_fields = a->key_fields();
+  Decl_seq const& b_fields = b->key_fields();
+
+  auto cmp = [](Decl const* x, Decl const* y) { return is_less(x->type(), y->type()); };
+  return std::lexicographical_compare(a_fields.begin(), a_fields.end(), 
+                                      b_fields.begin(), b_fields.end(), cmp);
+}
+
+
+// Two flow types are equal if each of their key types
+// are equal
+inline bool
+is_less(Flow_type const* a, Flow_type const* b)
+{
+  return is_less(a->key_types(), b->key_types());
+}
+
+
 bool
 is_less(Type const* a, Type const* b)
 {
@@ -59,6 +82,24 @@ is_less(Type const* a, Type const* b)
     {
       return is_less(a, cast<Record_type>(b));
     }
+
+    // network specific types
+    bool operator()(Table_type const* a)
+    {
+      return is_less(a, cast<Table_type>(b));
+    }
+
+    bool operator()(Flow_type const* a)
+    {
+      return is_less(a, cast<Flow_type>(b));
+    }
+
+    // Currently no difference between port types
+    bool operator()(Port_type const* a)
+    {
+      return false;
+    }
+
   };
 
   std::type_index t1 = typeid(*a);

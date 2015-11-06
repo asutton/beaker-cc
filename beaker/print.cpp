@@ -20,6 +20,11 @@ operator<<(std::ostream& os, Type const* t)
     void operator()(Boolean_type const* t) { os << t; }
     void operator()(Integer_type const* t) { os << t; }
     void operator()(Function_type const* t) { os << t; }
+
+    // network specific types
+    void operator()(Table_type const* t) { os << t; }
+    void operator()(Flow_type const* t) { os << t; }
+    void operator()(Port_type const* t) { os << t; }
   };
 
   apply(t, Fn{os});
@@ -62,3 +67,31 @@ operator<<(std::ostream& os, Record_type const* t)
 {
   return os << "record " << t->decl()->name();
 }
+
+
+// FIXME: print key fields correctly
+std::ostream& operator<<(std::ostream& os, Table_type const* t) 
+{
+  // for (auto key : t->key_fields())
+  //   os << key;
+
+  return os << "table ";
+}
+
+
+std::ostream& operator<<(std::ostream& os, Flow_type const* t) 
+{
+  os << "flow(";
+  for (auto key : t->key_types())
+    os << key << " ";
+
+  os << ")";
+
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, Port_type const* t) 
+{
+  return os << "port"; 
+}
+

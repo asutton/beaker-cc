@@ -41,6 +41,11 @@ struct Generator
   llvm::Type* get_type(Integer_type const*);
   llvm::Type* get_type(Function_type const*);
 
+  // network specific types
+  llvm::Type* get_type(Table_type const*);
+  llvm::Type* get_type(Flow_type const*);
+  llvm::Type* get_type(Port_type const*);
+
   llvm::Value* gen(Expr const*);
   llvm::Value* gen(Literal_expr const*);
   llvm::Value* gen(Id_expr const*);

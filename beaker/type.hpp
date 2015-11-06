@@ -40,6 +40,11 @@ struct Type::Visitor
   virtual void visit(Boolean_type const*) = 0;
   virtual void visit(Integer_type const*) = 0;
   virtual void visit(Function_type const*) = 0;
+
+  // network specific types
+  virtual void visit(Table_type const*) = 0;
+  virtual void visit(Flow_type const*) = 0;
+  virtual void visit(Port_type const*) = 0;
 };
 
 
@@ -105,6 +110,50 @@ struct Function_type : Type
 };
 
 
+
+// -------------------------------------------------------------------------- //
+//          Network specific types
+
+
+// Table types.
+struct Table_type : Type
+{
+  Table_type(Decl_seq const& d)
+    : keys_(d)
+  { }
+
+  Decl_seq const& key_fields() const { return keys_; }
+
+  void accept(Visitor& v) const { v.visit(this); }
+
+  Decl_seq const keys_;
+};
+
+
+// open flow table entry
+struct Flow_type : Type
+{
+  Flow_type(Type_seq const& t)
+    : key_types_(t)
+  { }
+
+  Type_seq const& key_types() const { return key_types_; }
+
+  void accept(Visitor& v) const { v.visit(this); }
+
+  Type_seq const key_types_;
+};
+
+
+// Port type
+struct Port_type : Type
+{
+  Port_type() { }
+
+  void accept(Visitor& v) const { v.visit(this); }
+};
+
+
 // -------------------------------------------------------------------------- //
 //                              Type accessors
 
@@ -113,6 +162,12 @@ Type const* get_boolean_type();
 Type const* get_integer_type();
 Type const* get_function_type(Type_seq const&, Type const*);
 Type const* get_function_type(Decl_seq const&, Type const*);
+Type const* get_record_type(Decl const*);
+
+// network specific types
+Type const* get_table_type(Decl_seq const&);
+Type const* get_flow_type(Type_seq const&);
+Type const* get_port_type();
 
 
 // -------------------------------------------------------------------------- //
@@ -129,6 +184,11 @@ struct Generic_type_visitor : Type::Visitor
   void visit(Boolean_type const* t) { r = fn(t); }
   void visit(Integer_type const* t) { r = fn(t); }
   void visit(Function_type const* t) { r = fn(t); }
+
+    // network specific types
+  void visit(Table_type const* t) { r = fn(t); }
+  void visit(Flow_type const* t) { r = fn(t); }
+  void visit(Port_type const* t) { r = fn(t); }
 
   F fn;
   R r;
@@ -147,6 +207,11 @@ struct Generic_type_visitor<F, void> : Type::Visitor
   void visit(Boolean_type const* t) { fn(t); }
   void visit(Integer_type const* t) { fn(t); }
   void visit(Function_type const* t) { fn(t); }
+
+  // network specific types
+  void visit(Table_type const* t) { fn(t); }
+  void visit(Flow_type const* t) { fn(t); }
+  void visit(Port_type const* t) { fn(t); }
 
   F fn;
 };
