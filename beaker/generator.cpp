@@ -141,6 +141,7 @@ Generator::gen(Literal_expr const* e)
 llvm::Value* 
 Generator::gen(Id_expr const* e)
 {
+  std::cout << "id\n";
   return stack.lookup(e->declaration())->second;
 }
 
@@ -291,7 +292,17 @@ Generator::gen(Not_expr const* e)
 llvm::Value* 
 Generator::gen(Call_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+  std::cout << "test\n";
+  llvm::Value* callee = gen(e->target());
+  if(!callee) throw std::runtime_error("!callee");
+  std::vector<llvm::Value*> args;
+
+
+  for(auto a : e->arguments()) {
+    args.push_back(gen(a));
+  }
+
+  return build.CreateCall(callee, args);
 }
 
 
