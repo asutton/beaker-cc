@@ -65,6 +65,7 @@ public:
   
   void eval(Decl const*);
   void eval(Record_decl const*);
+  void eval(Member_decl const*);
   void eval(Variable_decl const*);
   void eval(Function_decl const*);
   void eval(Parameter_decl const*);

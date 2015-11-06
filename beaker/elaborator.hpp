@@ -94,6 +94,7 @@ public:
   
   Type const* elaborate(Decl*);
   Type const* elaborate(Record_decl*);
+  Type const* elaborate(Member_decl*);
   Type const* elaborate(Variable_decl*);
   Type const* elaborate(Function_decl*);
   Type const* elaborate(Parameter_decl*);

@@ -299,6 +299,7 @@ Evaluator::eval(Decl const* d)
     Evaluator& ev;
 
     void operator()(Record_decl const* d) { ev.eval(d); }
+    void operator()(Member_decl const* d) { ev.eval(d); }
     void operator()(Variable_decl const* d) { ev.eval(d); }
     void operator()(Function_decl const* d) { ev.eval(d); }
     void operator()(Parameter_decl const* d) { ev.eval(d); }
@@ -321,6 +322,15 @@ Evaluator::eval(Decl const* d)
 // declaration. This should probably never be called.
 void
 Evaluator::eval(Record_decl const* d)
+{
+  return;
+}
+
+
+// FIXME: I'm not sure you ever evaluate a member
+// declaration. This should probably never be called.
+void
+Evaluator::eval(Member_decl const* d)
 {
   return;
 }

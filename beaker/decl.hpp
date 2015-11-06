@@ -40,6 +40,7 @@ struct Decl
 struct Decl::Visitor
 {
   virtual void visit(Record_decl const*) = 0;
+  virtual void visit(Member_decl const*) = 0;
   virtual void visit(Variable_decl const*) = 0;
   virtual void visit(Function_decl const*) = 0;
   virtual void visit(Parameter_decl const*) = 0;
@@ -59,6 +60,7 @@ struct Decl::Visitor
 struct Decl::Mutator
 {
   virtual void visit(Record_decl*) = 0;
+  virtual void visit(Member_decl*) = 0;
   virtual void visit(Variable_decl*) = 0;
   virtual void visit(Function_decl*) = 0;
   virtual void visit(Parameter_decl*) = 0;
@@ -86,6 +88,19 @@ struct Record_decl : Decl
   void accept(Mutator& v)       { v.visit(this); }
 
   Decl_seq mem_;
+};
+
+
+// A member declaration.
+//
+// TODO: Support member initializers.
+struct Member_decl : Decl
+{
+  Member_decl(Symbol const* n, Type const* t)
+    : Decl(n, t)
+  { }
+
+  void accept(Visitor& v) const { v.visit(this); }
 };
 
 
@@ -329,6 +344,7 @@ struct Generic_decl_visitor : Decl::Visitor
   { }
   
   void visit(Record_decl const* d) { r = fn(d); }
+  void visit(Member_decl const* d) { r = fn(d); }
   void visit(Variable_decl const* d) { r = fn(d); }
   void visit(Function_decl const* d) { r = fn(d); }
   void visit(Parameter_decl const* d) { r = fn(d); }
@@ -356,6 +372,7 @@ struct Generic_decl_visitor<F, void> : Decl::Visitor
   { }
   
   void visit(Record_decl const* d) { fn(d); }
+  void visit(Member_decl const* d) { fn(d); }
   void visit(Variable_decl const* d) { fn(d); }
   void visit(Function_decl const* d) { fn(d); }
   void visit(Parameter_decl const* d) { fn(d); }
@@ -411,6 +428,7 @@ struct Generic_decl_mutator : Decl::Mutator
   { }
   
   void visit(Record_decl* d) { r = fn(d); }
+  void visit(Member_decl* d) { r = fn(d); }
   void visit(Variable_decl* d) { r = fn(d); }
   void visit(Function_decl* d) { r = fn(d); }
   void visit(Parameter_decl* d) { r = fn(d); }
@@ -438,6 +456,7 @@ struct Generic_decl_mutator<F, void> : Decl::Mutator
   { }
   
   void visit(Record_decl* d) { fn(d); }
+  void visit(Member_decl* d) { fn(d); }
   void visit(Variable_decl* d) { fn(d); }
   void visit(Function_decl* d) { fn(d); }
   void visit(Parameter_decl* d) { fn(d); }
@@ -482,6 +501,52 @@ inline R
 apply(Decl* p, F fn)
 {
   return dispatch(p, fn);
+}
+
+
+// -------------------------------------------------------------------------- //
+//                                  Queries
+
+// Returns true if the record `r` contains the member `m`.
+//
+// TODO: This is currently a linear search. We could optimize
+// this by equipping the class with a hash set that stores
+// know declrations.
+//
+// This function is used to guarntee compiler consistency
+// in the checking of member expressions.
+inline bool 
+has_member(Record_decl const* r, Member_decl const* m)
+{
+  Decl_seq const& mem = r->members();
+  return std::find(mem.begin(), mem.end(), m) != mem.end();
+}
+
+
+// Returns the member decl with a specific name within a record_decl
+// or nullptr if no member declaration with the given name can
+// be found.
+inline Member_decl const*
+find_member(Record_decl const* r, Symbol const* name)
+{
+  Decl_seq const& mems = r->members();
+  for (auto member : mems) {
+    if (member->name() == name)
+      return as<Member_decl>(member);
+  }
+
+  return nullptr;
+}
+
+
+// Returns the index of the member `m` in the record 
+// declaration `r`.
+inline int
+member_index(Record_decl const* r, Member_decl const* m)
+{
+  Decl_seq const& mem = r->members();
+  auto iter = std::find(mem.begin(), mem.end(), m);
+  return iter - mem.begin();
 }
 
 

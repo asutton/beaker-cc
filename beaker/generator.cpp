@@ -398,6 +398,7 @@ Generator::gen(Decl const* d)
   {
     Generator& g;
     void operator()(Record_decl const* d) { return g.gen(d); }
+    void operator()(Member_decl const* d) { return g.gen(d); }
     void operator()(Variable_decl const* d) { return g.gen(d); }
     void operator()(Function_decl const* d) { return g.gen(d); }
     void operator()(Parameter_decl const* d) { return g.gen(d); }
@@ -449,6 +450,16 @@ Generator::gen_global(Variable_decl const* d)
 // TODO: implement
 void
 Generator::gen(Record_decl const* d)
+{
+  // TODO: implement me
+}
+
+
+// Generate code for a member decl
+//
+// TODO: implement
+void
+Generator::gen(Member_decl const* d)
 {
   // TODO: implement me
 }
@@ -548,6 +559,7 @@ Generator::gen(Module_decl const* d)
   // TODO: Make a second pass to generate global
   // constructors for initializers.
 }
+
 
 // TODO: implement me
 void 
