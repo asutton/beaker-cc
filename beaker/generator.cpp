@@ -429,6 +429,8 @@ Generator::gen(Decl const* d)
 void
 Generator::gen_local(Variable_decl const* d)
 {
+  // NOTE: You will need to rebind this declaration to
+  // the allocated local. Use Environment<S, T>::rebind.
   throw std::runtime_error("not implemented");
 }
 
@@ -487,6 +489,9 @@ Generator::gen(Function_decl const* d)
     llvm::Function::ExternalLinkage, // linkage
     name,                            // name
     mod);                            // owning module
+
+  // Create a new binding for the variable.
+  stack.top().bind(d, fn);
 
   // Establish a new binding environment for declarations
   // related to this function.
