@@ -473,37 +473,33 @@ std::stack<llvm::BasicBlock*> loop_exit_stack;
 void
 Generator::gen(While_stmt const* s)
 {
-  // generate the value for the cond
-  llvm::Value* cond = gen(s->condition());
-
-  // convert cond to boolean i1
-  cond = build.CreateICmpEQ(cond, build.getTrue(), "whilecond");
-
   llvm::Function* fn = build.GetInsertBlock()->getParent();
 
   // create while block
+  llvm::BasicBlock* before_while = llvm::BasicBlock::Create(cxt, "before_while", fn);
   llvm::BasicBlock* while_ = llvm::BasicBlock::Create(cxt, "while", fn);
   llvm::BasicBlock* after_while = llvm::BasicBlock::Create(cxt, "after_while", fn);
+
   // push the entry and exit
-  loop_entry_stack.push(while_);
+  loop_entry_stack.push(before_while);
   loop_exit_stack.push(after_while);
 
+  // emit a branch to the loop entry
+  build.CreateBr(before_while);
+
+  // emit the block which evaluates the condition
+  build.SetInsertPoint(before_while);
+  // generate the value for the cond
+  llvm::Value* cond = gen(s->condition());
+  // convert cond to boolean i1
+  cond = build.CreateICmpEQ(cond, build.getTrue(), "whilecond");
   build.CreateCondBr(cond, while_, after_while);
 
   // emit the 'while' block
   build.SetInsertPoint(while_);
   gen(s->body());
-
-  // generate the value for the cond
-  llvm::Value* tmpcond = gen(s->condition());
-
-  // convert cond to boolean i1
-  tmpcond = build.CreateICmpEQ(tmpcond, build.getTrue(), "tmpcond");
-
-  // inject a condition for getting out of the while loop
-  // create the branch
-  build.CreateCondBr(tmpcond, while_, after_while);
-
+  // generate branch back to condition testing block
+  build.CreateBr(before_while);
   // apparently codegen of 'while' can change the current block, update then for the PHI
   while_ = build.GetInsertBlock();
 
