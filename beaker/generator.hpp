@@ -75,6 +75,7 @@ struct Generator
   void gen(Declaration_stmt const*);
 
   void gen(Decl const*);
+  void gen(Record_decl const*);
   void gen(Variable_decl const*);
   void gen_local(Variable_decl const*);
   void gen_global(Variable_decl const*);

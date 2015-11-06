@@ -43,6 +43,7 @@ struct Integer_type;
 struct Function_type;
 
 struct Decl;
+struct Record_decl;
 struct Variable_decl;
 struct Function_decl;
 struct Parameter_decl;

@@ -414,6 +414,7 @@ Elaborator::elaborate(Decl* d)
   {
     Elaborator& elab;
 
+    Type const* operator()(Record_decl* d) const { return elab.elaborate(d); }
     Type const* operator()(Variable_decl* d) const { return elab.elaborate(d); }
     Type const* operator()(Function_decl* d) const { return elab.elaborate(d); }
     Type const* operator()(Parameter_decl* d) const { return elab.elaborate(d); }
@@ -421,6 +422,14 @@ Elaborator::elaborate(Decl* d)
   };
 
   return apply(d, Fn{*this});
+}
+
+
+// FIXME: implement record elaboration
+Type const*
+Elaborator::elaborate(Record_decl* d)
+{
+  return nullptr;
 }
 
 

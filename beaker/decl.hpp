@@ -39,6 +39,7 @@ struct Decl
 // The read-only declaration visitor.
 struct Decl::Visitor
 {
+  virtual void visit(Record_decl const*) = 0;
   virtual void visit(Variable_decl const*) = 0;
   virtual void visit(Function_decl const*) = 0;
   virtual void visit(Parameter_decl const*) = 0;
@@ -49,10 +50,26 @@ struct Decl::Visitor
 // The read/write declaration visitor.
 struct Decl::Mutator
 {
+  virtual void visit(Record_decl*) = 0;
   virtual void visit(Variable_decl*) = 0;
   virtual void visit(Function_decl*) = 0;
   virtual void visit(Parameter_decl*) = 0;
   virtual void visit(Module_decl*) = 0;
+};
+
+
+// A record declaration.
+struct Record_decl : Decl
+{
+  Record_decl(Symbol const* n, Type const* t, Decl_seq const& m)
+    : Decl(n, t), mem_(m)
+  { }
+
+  Decl_seq const& members() const { return mem_; }
+  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Mutator& v)       { v.visit(this); }
+
+  Decl_seq mem_;
 };
 
 
@@ -157,6 +174,7 @@ struct Generic_decl_visitor : Decl::Visitor
     : fn(fn)
   { }
   
+  void visit(Record_decl const* d) { r = fn(d); }
   void visit(Variable_decl const* d) { r = fn(d); }
   void visit(Function_decl const* d) { r = fn(d); }
   void visit(Parameter_decl const* d) { r = fn(d); }
@@ -175,6 +193,7 @@ struct Generic_decl_visitor<F, void> : Decl::Visitor
     : fn(fn)
   { }
   
+  void visit(Record_decl const* d) { fn(d); }
   void visit(Variable_decl const* d) { fn(d); }
   void visit(Function_decl const* d) { fn(d); }
   void visit(Parameter_decl const* d) { fn(d); }
@@ -221,6 +240,7 @@ struct Generic_decl_mutator : Decl::Mutator
     : fn(fn)
   { }
   
+  void visit(Record_decl* d) { r = fn(d); }
   void visit(Variable_decl* d) { r = fn(d); }
   void visit(Function_decl* d) { r = fn(d); }
   void visit(Parameter_decl* d) { r = fn(d); }
@@ -239,6 +259,7 @@ struct Generic_decl_mutator<F, void> : Decl::Mutator
     : fn(fn)
   { }
   
+  void visit(Record_decl* d) { fn(d); }
   void visit(Variable_decl* d) { fn(d); }
   void visit(Function_decl* d) { fn(d); }
   void visit(Parameter_decl* d) { fn(d); }

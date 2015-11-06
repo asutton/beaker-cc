@@ -387,6 +387,7 @@ Generator::gen(Decl const* d)
   struct Fn
   {
     Generator& g;
+    void operator()(Record_decl const* d) { return g.gen(d); }
     void operator()(Variable_decl const* d) { return g.gen(d); }
     void operator()(Function_decl const* d) { return g.gen(d); }
     void operator()(Parameter_decl const* d) { return g.gen(d); }
@@ -423,6 +424,16 @@ Generator::gen_global(Variable_decl const* d)
 
   // Create a binding for the new variable.
   stack.top().bind(d, var);
+}
+
+
+// Generate code for a record decl
+//
+// TODO: implement
+void
+Generator::gen(Record_decl const* d)
+{
+  // TODO: implement me
 }
 
 

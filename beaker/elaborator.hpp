@@ -93,11 +93,12 @@ public:
   Type const* elaborate(Call_expr* e);
   
   Type const* elaborate(Decl*);
+  Type const* elaborate(Record_decl*);
   Type const* elaborate(Variable_decl*);
   Type const* elaborate(Function_decl*);
   Type const* elaborate(Parameter_decl*);
   Type const* elaborate(Module_decl*);
-  
+
   // FIXME: Is there any real reason that these return
   // types? What is the type of an if statement?
   void elaborate(Stmt*);

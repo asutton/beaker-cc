@@ -64,6 +64,7 @@ public:
   Value eval(Call_expr const*);
   
   void eval(Decl const*);
+  void eval(Record_decl const*);
   void eval(Variable_decl const*);
   void eval(Function_decl const*);
   void eval(Parameter_decl const*);
