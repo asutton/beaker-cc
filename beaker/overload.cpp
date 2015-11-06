@@ -23,8 +23,9 @@ bool
 diagnose_error(Decl const* d1, Decl const* d2, std::string const& reason)
 {
   std::cerr << "Cannot overload " << *d1->name() << " of type " << d1->type()
-            << " with " << *d2->name() << " of type " << d2->type() << '\n';
-  throw std::runtime_error("Cannot overload");
+            << " with " << *d2->name() << " of type " << d2->type() << '\n'
+            << "Reason: " << reason << '\n';
+
   return false;
 }
 
@@ -75,17 +76,7 @@ can_overload(Decl const* d1, Decl const* d2)
 {
   // If the types are the same, these declare the same function.
   if (d1->type() == d2->type()) {
-    // if d1 has an implementation then it is a redefinition
-    if (d1->has_def()) {
-
-      std::cerr << "Redefinition of " << *d1->name() << '\n';
-      throw std::runtime_error("redefinition error");
-    }
-    // otherwise we want to treat d1 as a forward declaration
-    // and define it using d2
-    // we're still going to return false because they are not to 
-    // be overloaded, just defined
-    return false;
+    return diagnose_error(d1, d2, "Redefinition of declaration.");
   }
 
 

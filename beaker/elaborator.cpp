@@ -46,9 +46,6 @@ Scope_stack::declare(Decl* d)
       d->cxt_ = context();
       return;
     }
-
-    // if the overload is not possible then throw
-    throw std::runtime_error("definition error");
   }
   
   // Create the binding.
