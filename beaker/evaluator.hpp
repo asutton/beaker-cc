@@ -70,6 +70,14 @@ public:
   void eval(Parameter_decl const*);
   void eval(Module_decl const*);
 
+  void eval(Decode_decl const*);
+  void eval(Table_decl const*);
+  void eval(Flow_decl const*);
+  void eval(Port_decl const*);
+  void eval(Extracts_decl const*);
+  void eval(Rebind_decl const*);
+
+
   Control eval(Stmt const*, Value&);
   Control eval(Empty_stmt const*, Value&);
   Control eval(Block_stmt const*, Value&);

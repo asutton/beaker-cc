@@ -44,6 +44,14 @@ struct Decl::Visitor
   virtual void visit(Function_decl const*) = 0;
   virtual void visit(Parameter_decl const*) = 0;
   virtual void visit(Module_decl const*) = 0;
+
+  // network declarations
+  virtual void visit(Decode_decl const*) = 0;
+  virtual void visit(Table_decl const*) = 0;
+  virtual void visit(Flow_decl const*) = 0;
+  virtual void visit(Port_decl const*) = 0;
+  virtual void visit(Extracts_decl const*) = 0;
+  virtual void visit(Rebind_decl const*) = 0;
 };
 
 
@@ -55,6 +63,14 @@ struct Decl::Mutator
   virtual void visit(Function_decl*) = 0;
   virtual void visit(Parameter_decl*) = 0;
   virtual void visit(Module_decl*) = 0;
+
+  // network declarations
+  virtual void visit(Decode_decl*) = 0;
+  virtual void visit(Table_decl*) = 0;
+  virtual void visit(Flow_decl*) = 0;
+  virtual void visit(Port_decl*) = 0;
+  virtual void visit(Extracts_decl*) = 0;
+  virtual void visit(Rebind_decl*) = 0;
 };
 
 
@@ -139,6 +155,144 @@ struct Module_decl : Decl
 };
 
 
+// A decoder declaration
+// A decode declaration  is defined for a type and gives 
+// conditions  to determine the next decoder in line.
+//
+// Stmt* s is a block stmt containing all stmt inside a decoder
+// Type* h is the header type 
+struct Decode_decl : Decl
+{
+  Decode_decl(Symbol const* n, Type const* t, Stmt const* s, Type const* h)
+    : Decl(n, t), header_(h), body_(s), start_(false)
+  { }
+
+  Decode_decl(Symbol const* n, Type const* t, Stmt const* s, Type const* h, bool start)
+    : Decl(n, t), header_(h), body_(s), start_(start)
+  { }
+
+  Type  const* header() const { return header_; }
+  Stmt  const* body()  const { return body_; }
+  bool         is_start() const { return start_; }
+
+  void accept(Visitor& v) const { v.visit(this); }
+
+  void set_body(Stmt const* s) { body_ = s; }
+  void set_start() { start_ = true; }
+
+  Type const* header_;
+  Stmt const* body_;
+  bool start_;
+};
+
+
+
+// A flow table.
+struct Table_decl : Decl
+{
+  // Table kind
+  enum Table_kind
+  {
+    exact_table, 
+    wildcard_table,
+    prefix_table,
+    string_table
+  };
+
+  Table_decl(Symbol const* n, Type const* t, int num, Expr_seq const& conds, 
+             Decl_seq const& init, Table_kind k)
+    : Decl(n, t), num(num), conditions_(conds), body_(init), start_(false), kind_(k)
+  { }
+
+
+  int             number() const     { return num; }
+  Expr_seq const& conditions() const { return conditions_; }
+  Decl_seq const& body() const { return body_; }
+  Table_kind      kind() const { return kind_; }
+  bool is_start() const { return start_; }
+
+  void accept(Visitor& v) const { v.visit(this); }
+
+  void set_body(Decl_seq const& d) { body_ = d; }
+  void set_start() { start_ = true; }
+
+  int      num;
+  Expr_seq conditions_;
+  Decl_seq body_;
+  bool start_;
+  Table_kind kind_;
+};
+
+
+// An entry within a flow table.
+//
+// FIXME: We should check during compile time that the
+// length of the subkey does not exceed the maximum key
+// size of the table.
+struct Flow_decl : Decl
+{
+  Flow_decl(Symbol const* n, Type const* t, Expr_seq const& conds, int prio, Stmt const* i)
+    : Decl(n, t), prio_(prio), conditions_(conds), instructions_(i)
+  { }
+  
+  int    priority() const { return prio_; }
+  Expr_seq const& keys() const { return conditions_; }
+  Stmt const*     instructions() const { return instructions_; }
+
+  void accept(Visitor& v) const { v.visit(this); }
+
+  void set_instructions(Stmt const* i) { instructions_ = i; }
+
+  int prio_;
+  Expr_seq const conditions_;
+  Stmt const* instructions_;
+};
+
+
+// Declaration for extracting a field into a context
+struct Extracts_decl : Decl
+{
+  Extracts_decl(Symbol const* n, Type const* t, Expr const* e)
+    : Decl(n, t), field_(e)
+  { }
+
+  Expr const* field() const { return field_; }
+
+  void accept(Visitor& v) const { v.visit(this); }
+
+  Expr const* field_;
+};
+
+
+// Extracts a field using the same name as another field
+struct Rebind_decl : Decl
+{
+  Rebind_decl(Symbol const* n, Type const* t, Expr const* e1, Expr const* e2)
+    : Decl(n, t), f1(e1), f2(e2)
+  { }
+
+  Expr const* field1() const { return f1; }
+  Expr const* field2() const { return f2; }
+
+  void accept(Visitor& v) const { v.visit(this); }
+
+  Expr const* f1;
+  Expr const* f2;
+};
+
+
+// Declares the name of a port
+struct Port_decl : Decl
+{
+  Port_decl(Symbol const* n, Type const* t)
+    : Decl(n, t)
+  { }
+
+  void accept(Visitor& v) const { v.visit(this); }
+
+};
+
+
 // -------------------------------------------------------------------------- //
 //                              Queries
 
@@ -180,6 +334,14 @@ struct Generic_decl_visitor : Decl::Visitor
   void visit(Parameter_decl const* d) { r = fn(d); }
   void visit(Module_decl const* d) { r = fn(d); }
 
+  // network declarations
+  void visit(Decode_decl const* d) { r = fn(d); }
+  void visit(Table_decl const* d) { r = fn(d); }
+  void visit(Flow_decl const* d) { r = fn(d); }
+  void visit(Port_decl const* d) { r = fn(d); }
+  void visit(Extracts_decl const* d) { r = fn(d); }
+  void visit(Rebind_decl const* d) { r = fn(d); }
+
   F fn;
   R r;
 };
@@ -198,6 +360,14 @@ struct Generic_decl_visitor<F, void> : Decl::Visitor
   void visit(Function_decl const* d) { fn(d); }
   void visit(Parameter_decl const* d) { fn(d); }
   void visit(Module_decl const* d) { fn(d); }
+
+  // network declarations
+  void visit(Decode_decl const* d) { fn(d); }
+  void visit(Table_decl const* d) { fn(d); }
+  void visit(Flow_decl const* d) { fn(d); }
+  void visit(Port_decl const* d) { fn(d); }
+  void visit(Extracts_decl const* d) { fn(d); }
+  void visit(Rebind_decl const* d) { fn(d); }
 
   F fn;
 };
@@ -246,6 +416,14 @@ struct Generic_decl_mutator : Decl::Mutator
   void visit(Parameter_decl* d) { r = fn(d); }
   void visit(Module_decl* d) { r = fn(d); }
 
+  // network declarations
+  void visit(Decode_decl* d) { r = fn(d); }
+  void visit(Table_decl* d) { r = fn(d); }
+  void visit(Flow_decl* d) { r = fn(d); }
+  void visit(Port_decl* d) { r = fn(d); }
+  void visit(Extracts_decl* d) { r = fn(d); }
+  void visit(Rebind_decl* d) { r = fn(d); }
+
   F fn;
   R r;
 };
@@ -264,6 +442,14 @@ struct Generic_decl_mutator<F, void> : Decl::Mutator
   void visit(Function_decl* d) { fn(d); }
   void visit(Parameter_decl* d) { fn(d); }
   void visit(Module_decl* d) { fn(d); }
+
+  // network declarations
+  void visit(Decode_decl* d) { fn(d); }
+  void visit(Table_decl* d) { fn(d); }
+  void visit(Flow_decl* d) { fn(d); }
+  void visit(Port_decl* d) { fn(d); }
+  void visit(Extracts_decl* d) { fn(d); }
+  void visit(Rebind_decl* d) { fn(d); }
 
   F fn;
 };

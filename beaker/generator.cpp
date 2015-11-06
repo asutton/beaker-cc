@@ -402,6 +402,13 @@ Generator::gen(Decl const* d)
     void operator()(Function_decl const* d) { return g.gen(d); }
     void operator()(Parameter_decl const* d) { return g.gen(d); }
     void operator()(Module_decl const* d) { return g.gen(d); }
+
+    void operator()(Decode_decl const* d) { return g.gen(d); }
+    void operator()(Table_decl const* d) { return g.gen(d); }
+    void operator()(Flow_decl const* d) { return g.gen(d); }
+    void operator()(Port_decl const* d) { return g.gen(d); }
+    void operator()(Extracts_decl const* d) { return g.gen(d); }
+    void operator()(Rebind_decl const* d) { return g.gen(d); }
   };
   return apply(d, Fn{*this});
 }
@@ -541,6 +548,50 @@ Generator::gen(Module_decl const* d)
   // TODO: Make a second pass to generate global
   // constructors for initializers.
 }
+
+// TODO: implement me
+void 
+Generator::gen(Decode_decl const* d)
+{
+  throw std::runtime_error("unreachable");
+}
+
+// TODO: implement me
+void 
+Generator::gen(Table_decl const* d)
+{
+  throw std::runtime_error("unreachable");
+}
+
+// TODO: implement me
+void 
+Generator::gen(Flow_decl const* d)
+{
+  throw std::runtime_error("unreachable");
+}
+
+// TODO: implement me
+void 
+Generator::gen(Port_decl const* d)
+{
+  throw std::runtime_error("unreachable");
+}
+
+// TODO: implement me
+void 
+Generator::gen(Extracts_decl const* d)
+{
+  throw std::runtime_error("unreachable");
+}
+
+// TODO: implement me
+void 
+Generator::gen(Rebind_decl const* d)
+{
+  throw std::runtime_error("unreachable");
+}
+
+
 
 
 llvm::Module* 

@@ -49,6 +49,12 @@ struct Variable_decl;
 struct Function_decl;
 struct Parameter_decl;
 struct Module_decl;
+struct Decode_decl;
+struct Table_decl;
+struct Flow_decl;
+struct Extracts_decl;
+struct Rebind_decl;
+struct Port_decl;
 
 struct Stmt;
 struct Empty_stmt;

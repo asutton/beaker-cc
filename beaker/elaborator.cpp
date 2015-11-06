@@ -419,6 +419,14 @@ Elaborator::elaborate(Decl* d)
     Type const* operator()(Function_decl* d) const { return elab.elaborate(d); }
     Type const* operator()(Parameter_decl* d) const { return elab.elaborate(d); }
     Type const* operator()(Module_decl* d) const { return elab.elaborate(d); }
+
+    // network declarations
+    Type const* operator()(Decode_decl* d) const { return elab.elaborate(d); }
+    Type const* operator()(Table_decl* d) const { return elab.elaborate(d); }
+    Type const* operator()(Flow_decl* d) const { return elab.elaborate(d); }
+    Type const* operator()(Port_decl* d) const { return elab.elaborate(d); }
+    Type const* operator()(Extracts_decl* d) const { return elab.elaborate(d); }
+    Type const* operator()(Rebind_decl* d) const { return elab.elaborate(d); }
   };
 
   return apply(d, Fn{*this});
@@ -503,6 +511,55 @@ Elaborator::elaborate(Module_decl* m)
   // FIXME: Return a module type.
   return get_boolean_type();
 }
+
+
+Type const* 
+Elaborator::elaborate(Decode_decl* d)
+{
+  // TODO: implement me
+  return nullptr;
+}
+
+
+Type const* 
+Elaborator::elaborate(Table_decl* d)
+{
+  // TODO: implement me
+  return nullptr;
+}
+
+
+Type const* 
+Elaborator::elaborate(Flow_decl* d)
+{
+  // TODO: implement me
+  return nullptr;
+}
+
+
+Type const* 
+Elaborator::elaborate(Port_decl* d)
+{
+  // TODO: implement me
+  return nullptr;
+}
+
+
+Type const* 
+Elaborator::elaborate(Extracts_decl* d)
+{
+  // TODO: implement me
+  return nullptr;
+}
+
+
+Type const* 
+Elaborator::elaborate(Rebind_decl* d)
+{
+  // TODO: implement me
+  return nullptr;
+}
+
 
 
 // -------------------------------------------------------------------------- //

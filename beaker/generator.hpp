@@ -84,6 +84,14 @@ struct Generator
   void gen(Parameter_decl const*);
   void gen(Module_decl const*);
 
+  // network decl
+  void gen(Decode_decl const*);
+  void gen(Table_decl const*);
+  void gen(Flow_decl const*);
+  void gen(Port_decl const*);
+  void gen(Extracts_decl const*);
+  void gen(Rebind_decl const*);
+
   llvm::LLVMContext cxt;
   llvm::IRBuilder<> build;
   llvm::Module*     mod;

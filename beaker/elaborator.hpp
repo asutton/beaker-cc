@@ -99,6 +99,14 @@ public:
   Type const* elaborate(Parameter_decl*);
   Type const* elaborate(Module_decl*);
 
+  // network declarations
+  Type const* elaborate(Decode_decl*);
+  Type const* elaborate(Table_decl*);
+  Type const* elaborate(Flow_decl*);
+  Type const* elaborate(Port_decl*);
+  Type const* elaborate(Extracts_decl*);
+  Type const* elaborate(Rebind_decl*);
+
   // FIXME: Is there any real reason that these return
   // types? What is the type of an if statement?
   void elaborate(Stmt*);
