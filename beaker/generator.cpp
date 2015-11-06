@@ -12,9 +12,9 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Support/Debug.h"
 
 #include <iostream>
-#include <stack>
 
 
 // -------------------------------------------------------------------------- //
@@ -374,6 +374,14 @@ Generator::gen(Assign_stmt const* s)
 void
 Generator::gen(Return_stmt const* s)
 {
+  llvm::Function* fn = build.GetInsertBlock()->getParent();
+
+  llvm::Function::BasicBlockListType& list = fn->getBasicBlockList();
+
+  // for (auto it = list.begin(); it != list.end(); ++it) {
+  //   llvm::errs() << it->getName();
+  // }
+
   llvm::Value* v = gen(s->value());
   build.CreateRet(v);
 }
@@ -393,23 +401,22 @@ Generator::gen(If_then_stmt const* s)
   // create then block
   llvm::BasicBlock* then = llvm::BasicBlock::Create(cxt, "then", fn);
   // create an empty else block
-  llvm::BasicBlock* el = llvm::BasicBlock::Create(cxt, "cont", fn);
+  llvm::BasicBlock* merge = llvm::BasicBlock::Create(cxt, "cont", fn);
   // create the branch
-  build.CreateCondBr(cond, then, el);
+  build.CreateCondBr(cond, then, merge);
 
   // emit the 'then' block
   build.SetInsertPoint(then);
   gen(s->body());
-  build.CreateBr(el);
-  // apparently codegen of 'then' can change the current block, update then for the PHI
+  build.CreateBr(merge);
+  // reset the block back to where it should be
   then = build.GetInsertBlock();
 
-  // emit the rest of the code as the else block
-  // since we don
-  // fn->getBasicBlockList().push_back(el);
-  build.SetInsertPoint(el);
-  // branch back to merge
-  el = build.GetInsertBlock();
+  // fn->getBasicBlockList().push_back(merge);
+
+  // set the insertion point to the merge block
+  build.SetInsertPoint(merge);
+  merge = build.GetInsertBlock();
 }
 
 
@@ -443,7 +450,6 @@ Generator::gen(If_else_stmt const* s)
   // cause double frees with the environment. Not sure why but removing these solves the problem.
   // fn->getBasicBlockList().push_back(el);
 
-
   build.SetInsertPoint(el);
   gen(s->false_branch());
   build.CreateBr(merge);
@@ -457,17 +463,6 @@ Generator::gen(If_else_stmt const* s)
   build.SetInsertPoint(merge);
   merge = build.GetInsertBlock();
 }
-
-
-// Helper functions for determining where
-// breaks and continues should go to
-
-// keep track of the current loop entry
-std::stack<llvm::BasicBlock*> loop_entry_stack;
-
-
-// keep track of the current loop exit
-std::stack<llvm::BasicBlock*> loop_exit_stack;
 
 
 void
@@ -579,16 +574,41 @@ Generator::gen(Decl const* d)
 }
 
 
+// We actually cannot generate local variables
+// by injecting them at the beginning block
+// because assignment to memory from prior memory would produce 
+// illformed code
 void
 Generator::gen_local(Variable_decl const* d)
 {
+  // get the containing function
+  llvm::Function* fn = build.GetInsertBlock()->getParent();
+
+  // get the entry block
+  llvm::BasicBlock& entry_block = fn->getEntryBlock();
+
+  // store the old insert point
+  auto prev = build.GetInsertBlock();
+
+  // if the entry block is empty
+  if (entry_block.empty())
+    build.SetInsertPoint(&entry_block);
+  else
+    build.SetInsertPoint(locals_insert_pt);
+
+  // generate the initializer first
+  llvm::Value* init = gen(d->init());
+  // generate the alloca
   llvm::Type* t = get_type(d->type());
   String const& name = d->name()->spelling();
   llvm::Value* local = build.CreateAlloca(t, nullptr, name);
-  llvm::Value* init = gen(d->init());
+  // generate the store
   build.CreateStore(init, local);
 
   stack.top().bind(d, local);
+
+  // reset the insert point
+  build.SetInsertPoint(prev);
 }
 
 
@@ -679,12 +699,23 @@ Generator::gen(Function_decl const* d)
   llvm::BasicBlock* b = llvm::BasicBlock::Create(cxt, "b", fn);
   build.SetInsertPoint(b);
 
+  // generate an insertion point for all local variables
+  // this will get deleted later
+  locals_insert_pt = build.CreateRetVoid();
+
+  // build the return point for the function
+  // llvm::BasicBlock* ret = llvm::BasicBlock::Create(cxt, "return", fn);
+
   // Generate a local variable for each of the variables.
   for (Decl const* p : d->parameters())
     gen(p);
 
   // Generate the body of the function.
   gen(d->body());
+
+  // delete the local variable insertion point
+  locals_insert_pt->eraseFromParent();
+  locals_insert_pt = nullptr;
 }
 
 

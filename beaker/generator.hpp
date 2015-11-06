@@ -11,6 +11,7 @@
 
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/IRBuilder.h>
+#include <stack>
 
 
 // Used to maintain a mapping of Beaker declarations
@@ -87,6 +88,18 @@ struct Generator
   llvm::LLVMContext cxt;
   llvm::IRBuilder<> build;
   llvm::Module*     mod;
+
+  // Helper functions for determining where
+  // breaks and continues should go to
+
+  // keep track of the current loop entry
+  std::stack<llvm::BasicBlock*> loop_entry_stack;
+  // keep track of the current loop exit
+  std::stack<llvm::BasicBlock*> loop_exit_stack;
+
+  // points to the beginning of the entry block
+  // so we can insert isntructions here
+  llvm::Instruction* locals_insert_pt;
 
   Symbol_stack      stack;
 
