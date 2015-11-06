@@ -29,6 +29,17 @@ is_less(Function_type const* a, Function_type const* b)
 }
 
 
+// A record type is less if the decl they point to are less
+// Even if two record types have the same field types, this is meaningless
+// as they still represent two different types if the declarations are
+// not the same.
+inline bool
+is_less(Record_type const* a, Record_type const* b)
+{
+  return a->decl() < b->decl();
+}
+
+
 bool
 is_less(Type const* a, Type const* b)
 {
@@ -42,6 +53,11 @@ is_less(Type const* a, Type const* b)
     bool operator()(Function_type const* a)
     {
       return is_less(a, cast<Function_type>(b));
+    }
+
+    bool operator()(Record_type const* a)
+    {
+      return is_less(a, cast<Record_type>(b));
     }
   };
 

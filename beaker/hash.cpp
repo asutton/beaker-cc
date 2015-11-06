@@ -35,6 +35,15 @@ hash_value(Type const* t)
       boost::hash_combine(seed, t->return_type());
       return seed;
     }
+
+
+    // FIXME: is this correct?
+    // is the hash simply a hash of the pointers to their decl?
+    std::size_t operator()(Record_type const* t)
+    {
+      std::size_t h = hash_ptr(t->decl());
+      return h;
+    }
   };
 
   std::size_t h = apply(t, Fn{});

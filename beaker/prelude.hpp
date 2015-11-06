@@ -40,6 +40,7 @@ struct Call_expr;
 struct Type;
 struct Boolean_type;
 struct Integer_type;
+struct Record_type;
 struct Function_type;
 
 struct Decl;

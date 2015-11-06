@@ -16,6 +16,7 @@ operator<<(std::ostream& os, Type const* t)
   {
     std::ostream& os;
 
+    void operator()(Record_type const* t) { os << t; }
     void operator()(Boolean_type const* t) { os << t; }
     void operator()(Integer_type const* t) { os << t; }
     void operator()(Function_type const* t) { os << t; }
@@ -56,3 +57,8 @@ operator<<(std::ostream& os, Function_type const* t)
 }
 
 
+std::ostream&
+operator<<(std::ostream& os, Record_type const* t)
+{
+  return os << "record " << t->decl()->name();
+}

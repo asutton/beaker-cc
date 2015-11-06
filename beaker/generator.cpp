@@ -32,6 +32,7 @@ Generator::get_type(Type const* t)
     llvm::Type* operator()(Boolean_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Integer_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Function_type const* t) const { return g.get_type(t); }
+    llvm::Type* operator()(Record_type const* t) const { return g.get_type(t); }
   };
   return apply(t, Fn{*this});
 }
@@ -63,6 +64,15 @@ Generator::get_type(Function_type const* t)
     ts.push_back(get_type(t1));
   llvm::Type* r = get_type(t->return_type());
   return llvm::FunctionType::get(r, ts, false);
+}
+
+
+// Generate a record type
+llvm::Type*
+Generator::get_type(Record_type const* t)
+{
+  // TODO: implement me
+  return nullptr;
 }
 
 

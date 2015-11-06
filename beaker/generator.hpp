@@ -36,6 +36,7 @@ struct Generator
   llvm::Module* operator()(Decl const*);
 
   llvm::Type* get_type(Type const*);
+  llvm::Type* get_type(Record_type const*);
   llvm::Type* get_type(Boolean_type const*);
   llvm::Type* get_type(Integer_type const*);
   llvm::Type* get_type(Function_type const*);

@@ -12,5 +12,6 @@ std::ostream& operator<<(std::ostream&, Type const*);
 std::ostream& operator<<(std::ostream&, Boolean_type const*);
 std::ostream& operator<<(std::ostream&, Integer_type const*);
 std::ostream& operator<<(std::ostream&, Function_type const*);
+std::ostream& operator<<(std::ostream&, Record_type const*);
 
 #endif

@@ -24,6 +24,15 @@ is_equal(Function_type const* a, Function_type const* b)
 }
 
 
+// Two record types are the same if they point to the same
+// record declaration
+inline bool
+is_equal(Record_type const* a, Record_type const* b)
+{
+  return a->decl() == b->decl();
+}
+
+
 bool
 is_equal(Type const* a, Type const* b)
 {
@@ -44,6 +53,11 @@ is_equal(Type const* a, Type const* b)
     bool operator()(Function_type const* a)
     {
       return is_equal(a, cast<Function_type>(b));
+    }
+
+    bool operator()(Record_type const* a)
+    {
+      return is_equal(a, cast<Record_type>(b));
     }
   };
 
