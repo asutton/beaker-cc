@@ -596,12 +596,12 @@ Generator::gen_local(Variable_decl const* d)
   else
     build.SetInsertPoint(locals_insert_pt);
 
-  // generate the initializer first
-  llvm::Value* init = gen(d->init());
   // generate the alloca
   llvm::Type* t = get_type(d->type());
   String const& name = d->name()->spelling();
   llvm::Value* local = build.CreateAlloca(t, nullptr, name);
+  // generate the initializer first
+  llvm::Value* init = gen(d->init());
   // generate the store
   build.CreateStore(init, local);
 
@@ -699,16 +699,16 @@ Generator::gen(Function_decl const* d)
   llvm::BasicBlock* b = llvm::BasicBlock::Create(cxt, "b", fn);
   build.SetInsertPoint(b);
 
-  // generate an insertion point for all local variables
-  // this will get deleted later
-  locals_insert_pt = build.CreateRetVoid();
-
   // build the return point for the function
   // llvm::BasicBlock* ret = llvm::BasicBlock::Create(cxt, "return", fn);
 
   // Generate a local variable for each of the variables.
   for (Decl const* p : d->parameters())
     gen(p);
+
+  // generate an insertion point for all other local variables
+  // this will get deleted later
+  locals_insert_pt = build.CreateRetVoid();
 
   // Generate the body of the function.
   gen(d->body());
