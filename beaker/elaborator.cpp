@@ -506,12 +506,18 @@ Elaborator::elaborate(Call_expr* e)
 
         // Check that each argument conforms to the the
         // parameter. 
+
+        // FIXME: this is ugly
+        bool parms_ok = true;
         for (std::size_t i = 0; i < parms.size(); ++i) {
           Type const* p = parms[i];
           Expr* a = require_converted(*this, args[i], p);
           if (!a)
-            continue;        
+            parms_ok = false;       
         }
+        // reset the loop
+        if (!parms_ok) 
+          continue;
 
         // if we get here then this is the correct function
         // The type of the expression is that of the
