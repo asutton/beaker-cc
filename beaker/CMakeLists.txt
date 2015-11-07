@@ -65,9 +65,10 @@ add_executable(beaker
 # Note that the order of libraries is established experimentally.
 # It really shouldn't matter, but apparently it does. Yeah.
 target_link_libraries(beaker
+  ${CMAKE_DL_LIBS}
   ${Boost_SYSTEM_LIBRARIES}
   ${Boost_FILESYSTEM_LIBRARIES}
   ${LLVM_LIBRARIES}
-  dl        # FIXME: This is dumb
+  # tinfo     # FIXME: Also dumb
   ${CMAKE_THREAD_LIBS_INIT}
   lingo)
