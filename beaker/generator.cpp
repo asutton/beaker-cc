@@ -529,12 +529,8 @@ Generator::gen(Function_decl const* d)
     name,                            // name
     mod);                            // owning module
 
-<<<<<<< HEAD
-
-  //create new binding for the variable
-=======
   // Create a new binding for the variable.
->>>>>>> upstream/master
+
   stack.top().bind(d, fn);
 
   // Establish a new binding environment for declarations
