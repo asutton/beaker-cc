@@ -310,13 +310,41 @@ Evaluator::eval(Decl const* d)
   {
     Evaluator& ev;
 
+    void operator()(Record_decl const* d) { ev.eval(d); }
+    void operator()(Member_decl const* d) { ev.eval(d); }
     void operator()(Variable_decl const* d) { ev.eval(d); }
     void operator()(Function_decl const* d) { ev.eval(d); }
     void operator()(Parameter_decl const* d) { ev.eval(d); }
     void operator()(Module_decl const* d) { ev.eval(d); }
+
+    void operator()(Decode_decl const* d) { ev.eval(d); }
+    void operator()(Table_decl const* d) { ev.eval(d); }
+    void operator()(Flow_decl const* d) { ev.eval(d); }
+    void operator()(Port_decl const* d) { ev.eval(d); }
+    void operator()(Extracts_decl const* d) { ev.eval(d); }
+    void operator()(Rebind_decl const* d) { ev.eval(d); }
+
   };
 
   return apply(d, Fn{*this});
+}
+
+
+// FIXME: I'm not sure you ever evaluate a record
+// declaration. This should probably never be called.
+void
+Evaluator::eval(Record_decl const* d)
+{
+  return;
+}
+
+
+// FIXME: I'm not sure you ever evaluate a member
+// declaration. This should probably never be called.
+void
+Evaluator::eval(Member_decl const* d)
+{
+  return;
 }
 
 
@@ -350,6 +378,56 @@ Evaluator::eval(Module_decl const* d)
   for (Decl const* d1 : d->declarations())
     eval(d1);
 }
+
+
+void 
+Evaluator::eval(Decode_decl const* d)
+{
+  // FIXME: i don't believe these ever get called
+  return;
+}
+
+
+void 
+Evaluator::eval(Table_decl const* d)
+{
+  // FIXME: i don't believe these ever get called
+  return;
+}
+
+
+void 
+Evaluator::eval(Flow_decl const* d)
+{
+  // FIXME: i don't believe these ever get called
+  return;
+}
+
+
+void 
+Evaluator::eval(Port_decl const* d)
+{
+  // FIXME: i don't believe these ever get called
+  return;
+}
+
+
+void 
+Evaluator::eval(Extracts_decl const* d)
+{
+  // FIXME: i don't believe these ever get called
+  return;
+}
+
+
+void 
+Evaluator::eval(Rebind_decl const* d)
+{
+  // FIXME: i don't believe these ever get called
+  return;
+}
+
+
 
 
 // -------------------------------------------------------------------------- //

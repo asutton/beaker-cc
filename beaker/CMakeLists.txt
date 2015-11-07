@@ -66,6 +66,7 @@ add_executable(beaker
   parser.cpp
   environment.cpp
   elaborator.cpp
+  overload.cpp
   evaluator.cpp
   generator.cpp)
 
@@ -79,4 +80,5 @@ target_link_libraries(beaker
   dl        # FIXME: This is dumb
   tinfo     # FIXME: Also dumb
   ${CMAKE_THREAD_LIBS_INIT}
-  lingo)
+  lingo
+  )

@@ -91,6 +91,15 @@ get_function_type(Decl_seq const& d, Type const* r)
 }
 
 
+Type const*
+get_record_type(Decl const* d)
+{
+  static Type_set<Record_type> fn;
+  auto ins = fn.emplace(d);
+  return &*ins.first;  
+}
+
+
 // FIXME: Don't allow references to non-object types.
 Type const*
 get_reference_type(Type const* t)

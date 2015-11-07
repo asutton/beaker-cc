@@ -14,6 +14,10 @@ std::ostream& operator<<(std::ostream&, Integer_type const&);
 std::ostream& operator<<(std::ostream&, Function_type const&);
 std::ostream& operator<<(std::ostream&, Reference_type const&);
 
+// network specific types
+std::ostream& operator<<(std::ostream&, Table_type const&);
+std::ostream& operator<<(std::ostream&, Flow_type const&);
+std::ostream& operator<<(std::ostream&, Port_type const&);
 
 std::ostream& operator<<(std::ostream&, Expr const&);
 std::ostream& operator<<(std::ostream&, Literal_expr const&);
@@ -36,6 +40,5 @@ std::ostream& operator<<(std::ostream&, Or_expr const&);
 std::ostream& operator<<(std::ostream&, Not_expr const&);
 std::ostream& operator<<(std::ostream&, Call_expr const&);
 std::ostream& operator<<(std::ostream&, Value_conv const&);
-
 
 #endif

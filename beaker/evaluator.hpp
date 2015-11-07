@@ -65,10 +65,20 @@ public:
   Value eval(Value_conv const*);
   
   void eval(Decl const*);
+  void eval(Record_decl const*);
+  void eval(Member_decl const*);
   void eval(Variable_decl const*);
   void eval(Function_decl const*);
   void eval(Parameter_decl const*);
   void eval(Module_decl const*);
+
+  void eval(Decode_decl const*);
+  void eval(Table_decl const*);
+  void eval(Flow_decl const*);
+  void eval(Port_decl const*);
+  void eval(Extracts_decl const*);
+  void eval(Rebind_decl const*);
+
 
   Control eval(Stmt const*, Value&);
   Control eval(Empty_stmt const*, Value&);

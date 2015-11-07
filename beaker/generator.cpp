@@ -32,7 +32,13 @@ Generator::get_type(Type const* t)
     llvm::Type* operator()(Boolean_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Integer_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Function_type const* t) const { return g.get_type(t); }
+    llvm::Type* operator()(Record_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Reference_type const* t) const { return g.get_type(t); }
+
+    // network specific types
+    llvm::Type* operator()(Table_type const* t) const { return g.get_type(t); }
+    llvm::Type* operator()(Flow_type const* t) const { return g.get_type(t); }
+    llvm::Type* operator()(Port_type const* t) const { return g.get_type(t); }
   };
   return apply(t, Fn{*this});
 }
@@ -66,6 +72,39 @@ Generator::get_type(Function_type const* t)
   return llvm::FunctionType::get(r, ts, false);
 }
 
+
+// Generate a record type
+llvm::Type*
+Generator::get_type(Record_type const* t)
+{
+  // TODO: implement me
+  return nullptr;
+}
+
+
+// Generate a table type (?)
+// Is this strictly necessary?
+// I think tables are only for use in semantic checking
+// and just become requests once we move to the runtime
+llvm::Type* 
+Generator::get_type(Table_type const*)
+{
+  return nullptr;
+}
+
+
+llvm::Type* 
+Generator::get_type(Flow_type const*)
+{
+  return nullptr;
+}
+
+
+llvm::Type* 
+Generator::get_type(Port_type const*)
+{
+  return nullptr;
+}
 
 // Translate reference types into pointer types in the
 // generic address space.
@@ -417,10 +456,19 @@ Generator::gen(Decl const* d)
   struct Fn
   {
     Generator& g;
+    void operator()(Record_decl const* d) { return g.gen(d); }
+    void operator()(Member_decl const* d) { return g.gen(d); }
     void operator()(Variable_decl const* d) { return g.gen(d); }
     void operator()(Function_decl const* d) { return g.gen(d); }
     void operator()(Parameter_decl const* d) { return g.gen(d); }
     void operator()(Module_decl const* d) { return g.gen(d); }
+
+    void operator()(Decode_decl const* d) { return g.gen(d); }
+    void operator()(Table_decl const* d) { return g.gen(d); }
+    void operator()(Flow_decl const* d) { return g.gen(d); }
+    void operator()(Port_decl const* d) { return g.gen(d); }
+    void operator()(Extracts_decl const* d) { return g.gen(d); }
+    void operator()(Rebind_decl const* d) { return g.gen(d); }
   };
   return apply(d, Fn{*this});
 }
@@ -457,6 +505,26 @@ Generator::gen_global(Variable_decl const* d)
 
   // Create a binding for the new variable.
   stack.top().bind(d, var);
+}
+
+
+// Generate code for a record decl
+//
+// TODO: implement
+void
+Generator::gen(Record_decl const* d)
+{
+  // TODO: implement me
+}
+
+
+// Generate code for a member decl
+//
+// TODO: implement
+void
+Generator::gen(Member_decl const* d)
+{
+  // TODO: implement me
 }
 
 
@@ -566,6 +634,51 @@ Generator::gen(Module_decl const* d)
   // TODO: Make a second pass to generate global
   // constructors for initializers.
 }
+
+
+// TODO: implement me
+void 
+Generator::gen(Decode_decl const* d)
+{
+  throw std::runtime_error("unreachable");
+}
+
+// TODO: implement me
+void 
+Generator::gen(Table_decl const* d)
+{
+  throw std::runtime_error("unreachable");
+}
+
+// TODO: implement me
+void 
+Generator::gen(Flow_decl const* d)
+{
+  throw std::runtime_error("unreachable");
+}
+
+// TODO: implement me
+void 
+Generator::gen(Port_decl const* d)
+{
+  throw std::runtime_error("unreachable");
+}
+
+// TODO: implement me
+void 
+Generator::gen(Extracts_decl const* d)
+{
+  throw std::runtime_error("unreachable");
+}
+
+// TODO: implement me
+void 
+Generator::gen(Rebind_decl const* d)
+{
+  throw std::runtime_error("unreachable");
+}
+
+
 
 
 llvm::Module* 

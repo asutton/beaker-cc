@@ -16,6 +16,15 @@
 // Lexical scoping
 
 
+Overload const& 
+Scope::bind(Symbol const* sym, Decl* d)
+{
+  Overload ovl { d };
+  Binding const& ins = Environment::bind(sym, ovl);
+  return ins.second;
+}
+
+
 // Create a declarative binding for d. This also checks
 // that the we are not redefining a symbol in the current 
 // scope.
@@ -24,11 +33,20 @@ Scope_stack::declare(Decl* d)
 {
   Scope& scope = current();
 
-  // TODO: If we allow overloading, then this is
-  // where we would handle that.
-  if (scope.lookup(d->name())) {
-    // TODO: Add a note that points to the previous
-    // definition.
+  // FIXME: Actually diagnose the error. Also, we
+  // probably don't need to throw an exception, but
+  // simply indicate that the failure.
+  if (auto binding = scope.lookup(d->name())) {
+    // check to see if overloading is possible
+    // the second member of the pair is an overload set
+    // if it is not possible this call will produce an error
+    if (overload_decl(&binding->second, d)) {
+      // set the declaration context
+      d->cxt_ = context();
+      return;
+    }
+
+    // TODO: Add a note that points to the previous definition
     std::stringstream ss;
     ss << "redefinition of '" << *d->name() << "'\n";
     throw Lookup_error({}, ss.str());
@@ -160,7 +178,7 @@ Elaborator::elaborate(Id_expr* e)
   }
 
   // Annotate the expression with its declaration.
-  Decl* d = b->second;
+  Decl* d = b->second.front();
   e->declaration(d);
 
   // If the referenced declaration is a variable of
@@ -508,13 +526,37 @@ Elaborator::elaborate(Decl* d)
   {
     Elaborator& elab;
 
+    void operator()(Record_decl* d) const { return elab.elaborate(d); }
+    void operator()(Member_decl* d) const { return elab.elaborate(d); }
     void operator()(Variable_decl* d) const { return elab.elaborate(d); }
     void operator()(Function_decl* d) const { return elab.elaborate(d); }
     void operator()(Parameter_decl* d) const { return elab.elaborate(d); }
     void operator()(Module_decl* d) const { return elab.elaborate(d); }
+
+    // network declarations
+    void operator()(Decode_decl* d) const { return elab.elaborate(d); }
+    void operator()(Table_decl* d) const { return elab.elaborate(d); }
+    void operator()(Flow_decl* d) const { return elab.elaborate(d); }
+    void operator()(Port_decl* d) const { return elab.elaborate(d); }
+    void operator()(Extracts_decl* d) const { return elab.elaborate(d); }
+    void operator()(Rebind_decl* d) const { return elab.elaborate(d); }
   };
 
   return apply(d, Fn{*this});
+}
+
+
+// FIXME: implement record elaboration
+void
+Elaborator::elaborate(Record_decl* d)
+{
+}
+
+
+// FIXME: implement member elaboration
+void
+Elaborator::elaborate(Member_decl* d)
+{
 }
 
 
@@ -583,6 +625,49 @@ Elaborator::elaborate(Module_decl* m)
   for (Decl* d : m->declarations())
     elaborate(d);
 }
+
+
+void
+Elaborator::elaborate(Decode_decl* d)
+{
+  // TODO: implement me
+}
+
+
+void
+Elaborator::elaborate(Table_decl* d)
+{
+  // TODO: implement me
+}
+
+
+void
+Elaborator::elaborate(Flow_decl* d)
+{
+  // TODO: implement me
+}
+
+
+void
+Elaborator::elaborate(Port_decl* d)
+{
+  // TODO: implement me
+}
+
+
+void
+Elaborator::elaborate(Extracts_decl* d)
+{
+  // TODO: implement me
+}
+
+
+void
+Elaborator::elaborate(Rebind_decl* d)
+{
+  // TODO: implement me
+}
+
 
 
 // -------------------------------------------------------------------------- //

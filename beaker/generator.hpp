@@ -36,10 +36,16 @@ struct Generator
   llvm::Module* operator()(Decl const*);
 
   llvm::Type* get_type(Type const*);
+  llvm::Type* get_type(Record_type const*);
   llvm::Type* get_type(Boolean_type const*);
   llvm::Type* get_type(Integer_type const*);
   llvm::Type* get_type(Function_type const*);
   llvm::Type* get_type(Reference_type const*);
+
+  // network specific types
+  llvm::Type* get_type(Table_type const*);
+  llvm::Type* get_type(Flow_type const*);
+  llvm::Type* get_type(Port_type const*);
 
   llvm::Value* gen(Expr const*);
   llvm::Value* gen(Literal_expr const*);
@@ -77,12 +83,22 @@ struct Generator
   void gen(Declaration_stmt const*);
 
   void gen(Decl const*);
+  void gen(Record_decl const*);
+  void gen(Member_decl const*);
   void gen(Variable_decl const*);
   void gen_local(Variable_decl const*);
   void gen_global(Variable_decl const*);
   void gen(Function_decl const*);
   void gen(Parameter_decl const*);
   void gen(Module_decl const*);
+
+  // network decl
+  void gen(Decode_decl const*);
+  void gen(Table_decl const*);
+  void gen(Flow_decl const*);
+  void gen(Port_decl const*);
+  void gen(Extracts_decl const*);
+  void gen(Rebind_decl const*);
 
   llvm::LLVMContext cxt;
   llvm::IRBuilder<> build;

@@ -6,6 +6,7 @@
 
 #include "prelude.hpp"
 #include "location.hpp"
+#include "overload.hpp"
 #include "environment.hpp"
 
 // The elaborator is responsible for a number of static
@@ -26,16 +27,18 @@
 // where no bindings are destroyed. A scope optionally
 // assocaites a declaration with its bindings. This is
 // used to maintain the current declaration context.
-struct Scope : Environment<Symbol const*, Decl*>
+struct Scope : Environment<Symbol const*, Overload>
 {
-  Scope()
+  Scope() 
     : decl(nullptr)
   { }
 
   Scope(Decl* d)
     : decl(d)
   { }
-  
+
+  Overload const& bind(Symbol const*, Decl*);
+
   Decl* decl;
 };
 
@@ -90,11 +93,21 @@ public:
   Expr* elaborate(Call_expr* e);
   
   void elaborate(Decl*);
+  void elaborate(Record_decl*);
+  void elaborate(Member_decl*);
   void elaborate(Variable_decl*);
   void elaborate(Function_decl*);
   void elaborate(Parameter_decl*);
   void elaborate(Module_decl*);
-  
+
+  // network declarations
+  void elaborate(Decode_decl*);
+  void elaborate(Table_decl*);
+  void elaborate(Flow_decl*);
+  void elaborate(Port_decl*);
+  void elaborate(Extracts_decl*);
+  void elaborate(Rebind_decl*);
+
   // FIXME: Is there any real reason that these return
   // types? What is the type of an if statement?
   void elaborate(Stmt*);
