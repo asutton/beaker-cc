@@ -43,6 +43,7 @@ struct Boolean_type;
 struct Integer_type;
 struct Function_type;
 struct Reference_type;
+struct Struct_type;
 
 struct Decl;
 struct Variable_decl;

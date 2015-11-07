@@ -33,6 +33,7 @@ Generator::get_type(Type const* t)
     llvm::Type* operator()(Integer_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Function_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Reference_type const* t) const { return g.get_type(t); }
+    llvm::Type* operator()(Struct_type const* t) const { return g.get_type(t); }
   };
   return apply(t, Fn{*this});
 }
@@ -76,6 +77,15 @@ Generator::get_type(Reference_type const* t)
 {
   llvm::Type* t1 = get_type(t->type());
   return llvm::PointerType::getUnqual(t1);
+}
+
+
+// Generate a struct type
+llvm::Type*
+Generator::get_type(Struct_type const* t)
+{
+  // TODO: implement me
+  return nullptr;
 }
 
 
