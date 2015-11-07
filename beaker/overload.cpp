@@ -68,6 +68,9 @@ can_overload_functions(Function_decl const* f1, Function_decl const* f2)
 //    - Only functions can be overloaded.
 //
 // Note that d2 is the new declaration.
+//
+// TODO: we should support overload of different declaration
+// kinds rather than only functions.
 bool
 can_overload(Decl const* d1, Decl const* d2)
 {
