@@ -6,9 +6,8 @@
 add_definitions(${LLVM_DEFINITIONS})
 
 
-# Create the beaker compiler.
-add_executable(beaker
-  main.cpp
+# The Core Beaker library
+add_library(beaker STATIC
   string.cpp
   file.cpp
   line.cpp
@@ -30,15 +29,26 @@ add_executable(beaker
   environment.cpp
   elaborator.cpp
   evaluator.cpp
-  generator.cpp)
+  generator.cpp
+)
 
 
-# Note that the order of libraries is established experimentally.
-# It really shouldn't matter, but apparently it does. Yeah.
-target_link_libraries(beaker
+
+# Libraries requried for executable targets.
+set(libs
   ${CMAKE_DL_LIBS}
   ${CMAKE_THREAD_LIBS_INIT}
   ${Boost_SYSTEM_LIBRARIES}
   ${Boost_FILESYSTEM_LIBRARIES}
   ${LLVM_LIBRARIES}
-  lingo)
+  lingo
+  beaker)
+
+
+# Create the beaker compiler.
+add_executable(beaker-compile compiler.cpp)
+target_link_libraries(beaker-compile ${libs})
+
+# Create the beaker runtime interpreter.
+add_executable(beaker-interpret interpreter.cpp)
+target_link_libraries(beaker-interpret ${libs})
