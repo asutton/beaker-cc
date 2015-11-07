@@ -85,7 +85,8 @@ struct Generator
   void gen(Parameter_decl const*);
   void gen(Module_decl const*);
 
-  void make_branch(llvm::BasicBlock*, llvm::BasicBlock*); 
+  void make_branch(llvm::BasicBlock*, llvm::BasicBlock*);
+  void resolve_illformed_blocks(llvm::Function*);
 
   llvm::LLVMContext cxt;
   llvm::IRBuilder<> build;

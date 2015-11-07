@@ -32,6 +32,38 @@ Generator::make_branch(llvm::BasicBlock* srcBB, llvm::BasicBlock* dstBB)
 }
 
 
+// Resolve illformed blocks within an llvm function
+// These are blocks with no termination instructions.
+//
+// This can be caused by short-curcuiting if-then-stmt like:
+//
+// def foo(x : int) -> int {
+//    if (x == 1)
+//      return x;
+// }
+//
+// The block merging back into the control will have no terminators.
+// Resolve them by inserting the terminator instruction 'unreachable'
+//
+void
+Generator::resolve_illformed_blocks(llvm::Function* fn)
+{
+  // maintain the old insert block
+  auto prev = build.GetInsertBlock();
+
+  for (llvm::Function::iterator i = fn->begin(), e = fn->end(); i != e; ++i) {
+    // if no terminator inject an unreachable instruction
+    if (!i->getTerminator()) {
+      build.SetInsertPoint(i);
+      build.CreateUnreachable();
+    }
+  }
+
+  // reset the old insertion block
+  build.SetInsertPoint(prev);
+}
+
+
 // -------------------------------------------------------------------------- //
 // Mapping of types
 //
@@ -311,7 +343,19 @@ Generator::gen(Not_expr const* e)
 llvm::Value* 
 Generator::gen(Call_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+  if (Id_expr const* id = as<Id_expr>(e->target())) {
+    llvm::Value* fn = stack.lookup(id->declaration())->second;
+
+    std::vector<llvm::Value*> argsV;
+    for (auto arg : e->arguments()) {
+      llvm::Value* argi = gen(arg);
+      argsV.push_back(argi);
+    }
+
+    return build.CreateCall(fn, argsV, "calltmp");
+  } 
+  
+  throw std::runtime_error("unqualified id in call expr");
 }
 
 
@@ -748,9 +792,10 @@ Generator::gen(Function_decl const* d)
   llvm::Value* ret_val = build.CreateLoad(ret_var);
   build.CreateRet(ret_val);
 
+  // handle illformed blocks
+  resolve_illformed_blocks(fn);
 
   // delete the local variable insertion point
-  // locals_insert_pt->eraseFromParent();
   locals_insert_pt = nullptr;
   // erase the pointer to the return value
   ret_var = nullptr;
