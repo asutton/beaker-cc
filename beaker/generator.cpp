@@ -118,7 +118,7 @@ Generator::gen(Expr const* e)
 
 
 // Return the value corresponding to a literal expression.
-llvm::Value* 
+llvm::Value*
 Generator::gen(Literal_expr const* e)
 {
   // TODO: Write better type queries.
@@ -138,14 +138,14 @@ Generator::gen(Literal_expr const* e)
 //
 // TODO: Do we need to do anything different for function
 // identifiers or not?
-llvm::Value* 
+llvm::Value*
 Generator::gen(Id_expr const* e)
 {
   return stack.lookup(e->declaration())->second;
 }
 
 
-llvm::Value* 
+llvm::Value*
 Generator::gen(Add_expr const* e)
 {
   llvm::Value* l = gen(e->left());
@@ -154,112 +154,112 @@ Generator::gen(Add_expr const* e)
 }
 
 
-llvm::Value* 
+llvm::Value*
 Generator::gen(Sub_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-llvm::Value* 
+llvm::Value*
 Generator::gen(Mul_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-llvm::Value* 
+llvm::Value*
 Generator::gen(Div_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-llvm::Value* 
+llvm::Value*
 Generator::gen(Rem_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-llvm::Value* 
+llvm::Value*
 Generator::gen(Neg_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-llvm::Value* 
+llvm::Value*
 Generator::gen(Pos_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-llvm::Value* 
+llvm::Value*
 Generator::gen(Eq_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-llvm::Value* 
+llvm::Value*
 Generator::gen(Ne_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-llvm::Value* 
+llvm::Value*
 Generator::gen(Lt_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-llvm::Value* 
+llvm::Value*
 Generator::gen(Gt_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-llvm::Value* 
+llvm::Value*
 Generator::gen(Le_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-llvm::Value* 
+llvm::Value*
 Generator::gen(Ge_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-llvm::Value* 
+llvm::Value*
 Generator::gen(And_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-llvm::Value* 
+llvm::Value*
 Generator::gen(Or_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-llvm::Value* 
+llvm::Value*
 Generator::gen(Not_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }
 
 
-llvm::Value* 
+llvm::Value*
 Generator::gen(Call_expr const* e)
 {
   throw std::runtime_error("not implemented");
@@ -429,8 +429,6 @@ Generator::gen(Decl const* d)
 void
 Generator::gen_local(Variable_decl const* d)
 {
-  // NOTE: You will need to rebind this declaration to
-  // the allocated local. Use Environment<S, T>::rebind.
   throw std::runtime_error("not implemented");
 }
 
@@ -439,10 +437,16 @@ void
 Generator::gen_global(Variable_decl const* d)
 {
   String const&   name = d->name()->spelling();
-  llvm::Type*     type = build.getInt32Ty();
+  llvm::Type*     type = get_type(d->type());
 
-  // FIXME: Handle initialization correctly.
-  llvm::Constant* init = llvm::ConstantAggregateZero::get(type);
+  // FIXME: Handle initialization correctly. If the
+  // initializer is a literal (or a constant expression),
+  // then we should evaluate that and assign it here.
+  llvm::Constant* init = llvm::ConstantInt::get(type, 0);
+
+  // Note that the aggregate 0 only applies to aggregate
+  // types. We can't apply it to initializers for scalars.
+  // llvm::Constant* init = llvm::ConstantAggregateZero::get(type);
 
   // Build the global variable, automatically adding
   // it to the module.
@@ -496,8 +500,8 @@ Generator::gen(Function_decl const* d)
   // Establish a new binding environment for declarations
   // related to this function.
   Symbol_sentinel scope(*this);
-  
-  // Build the argument list. Note that 
+
+  // Build the argument list. Note that
   {
     auto ai = fn->arg_begin();
     auto pi = d->parameters().begin();
@@ -506,10 +510,9 @@ Generator::gen(Function_decl const* d)
       llvm::Argument* a = &*ai;
       a->setName(p->name()->spelling());
 
-      // Create an initial name binding for the
-      // function parameter. Note that we're
-      // going to overwrite this when we create
-      // locals for each parameter.
+      // Create an initial name binding for the function
+      // parameter. Note that we're going to overwrite
+      // this when we create locals for each parameter.
       stack.top().bind(p, a);
 
       ++ai;
@@ -568,11 +571,10 @@ Generator::gen(Module_decl const* d)
 }
 
 
-llvm::Module* 
+llvm::Module*
 Generator::operator()(Decl const* d)
 {
   assert(is<Module_decl>(d));
   gen(d);
   return mod;
 }
-
