@@ -598,6 +598,8 @@ Elaborator::elaborate(Decl* d)
   {
     Elaborator& elab;
 
+    void operator()(Struct_decl* d) const { return elab.elaborate(d); }
+    void operator()(Member_decl* d) const { return elab.elaborate(d); }
     void operator()(Variable_decl* d) const { return elab.elaborate(d); }
     void operator()(Function_decl* d) const { return elab.elaborate(d); }
     void operator()(Parameter_decl* d) const { return elab.elaborate(d); }
@@ -661,6 +663,20 @@ void
 Elaborator::elaborate(Parameter_decl* d)
 {
   stack.declare(d);
+}
+
+
+void 
+Elaborator::elaborate(Struct_decl* d)
+{
+  // TODO: implement me
+}
+
+
+void 
+Elaborator::elaborate(Member_decl* d)
+{
+  // TODO: implement me
 }
 
 

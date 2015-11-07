@@ -81,7 +81,10 @@ struct Generator
   void gen_local(Variable_decl const*);
   void gen_global(Variable_decl const*);
   void gen(Function_decl const*);
+  void gen(Struct_decl const*);
+  void gen(Member_decl const*);
   void gen(Parameter_decl const*);
+
   void gen(Module_decl const*);
 
   llvm::LLVMContext cxt;

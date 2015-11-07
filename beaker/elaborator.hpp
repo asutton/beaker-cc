@@ -96,6 +96,8 @@ public:
   void elaborate(Variable_decl*);
   void elaborate(Function_decl*);
   void elaborate(Parameter_decl*);
+  void elaborate(Struct_decl*);
+  void elaborate(Member_decl*);
   void elaborate(Module_decl*);
   
   // FIXME: Is there any real reason that these return

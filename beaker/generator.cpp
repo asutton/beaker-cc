@@ -420,6 +420,8 @@ Generator::gen(Decl const* d)
     void operator()(Variable_decl const* d) { return g.gen(d); }
     void operator()(Function_decl const* d) { return g.gen(d); }
     void operator()(Parameter_decl const* d) { return g.gen(d); }
+    void operator()(Struct_decl const* d) { return g.gen(d); }
+    void operator()(Member_decl const* d) { return g.gen(d); }
     void operator()(Module_decl const* d) { return g.gen(d); }
   };
   return apply(d, Fn{*this});
@@ -537,6 +539,8 @@ Generator::gen(Function_decl const* d)
 }
 
 
+
+
 void
 Generator::gen(Parameter_decl const* d)
 {
@@ -545,6 +549,26 @@ Generator::gen(Parameter_decl const* d)
   llvm::Value* v = build.CreateAlloca(t);
   stack.top().rebind(d, v);
   build.CreateStore(a, v);
+}
+
+
+// Generate code for a record decl
+//
+// TODO: implement
+void
+Generator::gen(Struct_decl const* d)
+{
+  // TODO: implement me
+}
+
+
+// Generate code for a member decl
+//
+// TODO: implement
+void
+Generator::gen(Member_decl const* d)
+{
+  // TODO: implement me
 }
 
 

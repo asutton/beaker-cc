@@ -39,6 +39,8 @@ struct Decl
 // The read-only declaration visitor.
 struct Decl::Visitor
 {
+  virtual void visit(Struct_decl const*) = 0;
+  virtual void visit(Member_decl const*) = 0;
   virtual void visit(Variable_decl const*) = 0;
   virtual void visit(Function_decl const*) = 0;
   virtual void visit(Parameter_decl const*) = 0;
@@ -49,6 +51,8 @@ struct Decl::Visitor
 // The read/write declaration visitor.
 struct Decl::Mutator
 {
+  virtual void visit(Struct_decl*) = 0;
+  virtual void visit(Member_decl*) = 0;
   virtual void visit(Variable_decl*) = 0;
   virtual void visit(Function_decl*) = 0;
   virtual void visit(Parameter_decl*) = 0;
@@ -103,6 +107,35 @@ struct Parameter_decl : Decl
 
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
+};
+
+
+
+// A record declaration.
+struct Struct_decl : Decl
+{
+  Struct_decl(Symbol const* n, Type const* t, Decl_seq const& m)
+    : Decl(n, t), mem_(m)
+  { }
+
+  Decl_seq const& members() const { return mem_; }
+  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Mutator& v)       { v.visit(this); }
+
+  Decl_seq mem_;
+};
+
+
+// A member declaration.
+//
+// TODO: Support member initializers.
+struct Member_decl : Decl
+{
+  Member_decl(Symbol const* n, Type const* t)
+    : Decl(n, t)
+  { }
+
+  void accept(Visitor& v) const { v.visit(this); }
 };
 
 
@@ -166,6 +199,8 @@ struct Generic_decl_visitor : Decl::Visitor
     : fn(fn)
   { }
   
+  void visit(Struct_decl const* d) { r = fn(d); }
+  void visit(Member_decl const* d) { r = fn(d); }
   void visit(Variable_decl const* d) { r = fn(d); }
   void visit(Function_decl const* d) { r = fn(d); }
   void visit(Parameter_decl const* d) { r = fn(d); }
@@ -184,6 +219,8 @@ struct Generic_decl_visitor<F, void> : Decl::Visitor
     : fn(fn)
   { }
   
+  void visit(Struct_decl const* d) { fn(d); }
+  void visit(Member_decl const* d) { fn(d); }
   void visit(Variable_decl const* d) { fn(d); }
   void visit(Function_decl const* d) { fn(d); }
   void visit(Parameter_decl const* d) { fn(d); }
@@ -230,6 +267,8 @@ struct Generic_decl_mutator : Decl::Mutator
     : fn(fn)
   { }
   
+  void visit(Struct_decl* d) { r = fn(d); }
+  void visit(Member_decl* d) { r = fn(d); }
   void visit(Variable_decl* d) { r = fn(d); }
   void visit(Function_decl* d) { r = fn(d); }
   void visit(Parameter_decl* d) { r = fn(d); }
@@ -247,7 +286,10 @@ struct Generic_decl_mutator<F, void> : Decl::Mutator
   Generic_decl_mutator(F fn)
     : fn(fn)
   { }
-  
+
+
+  void visit(Struct_decl* d) { fn(d); }
+  void visit(Member_decl* d) { fn(d); }
   void visit(Variable_decl* d) { fn(d); }
   void visit(Function_decl* d) { fn(d); }
   void visit(Parameter_decl* d) { fn(d); }
