@@ -101,6 +101,12 @@ struct Generator
   // so we can insert isntructions here
   llvm::Instruction* locals_insert_pt;
 
+  // maintain the block which contains our one return statement 
+  llvm::BasicBlock* ret_block;
+
+  // points to the current return value
+  llvm::Value* ret_var;
+
   Symbol_stack      stack;
 
   struct Symbol_sentinel;

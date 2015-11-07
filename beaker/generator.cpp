@@ -18,6 +18,20 @@
 
 
 // -------------------------------------------------------------------------- //
+//            Helper functions
+
+
+// Attempt to insert a branch into a block
+// Will not insert anything if the block already
+// has a terminating instruction
+void 
+make_branch(llvm::BasicBlock* srcBB, llvm::BasicBlock* dstBB) 
+{
+
+}
+
+
+// -------------------------------------------------------------------------- //
 // Mapping of types
 //
 // The type generator transforms a beaker type into
@@ -371,19 +385,22 @@ Generator::gen(Assign_stmt const* s)
 }
 
 
+// When we hit a return stmt we
+// 1. generate the code for the return value
+// 2. store the temp value into the return variable
+// 3. branch to the return block
 void
 Generator::gen(Return_stmt const* s)
 {
-  llvm::Function* fn = build.GetInsertBlock()->getParent();
+  // get the current block
+  auto curr_block = build.GetInsertBlock();
 
-  llvm::Function::BasicBlockListType& list = fn->getBasicBlockList();
-
-  // for (auto it = list.begin(); it != list.end(); ++it) {
-  //   llvm::errs() << it->getName();
-  // }
+  // check that this will be the only branch
+  // in the block
 
   llvm::Value* v = gen(s->value());
-  build.CreateRet(v);
+  build.CreateStore(v, ret_var);
+  build.CreateBr(ret_block);
 }
 
 
@@ -667,6 +684,9 @@ Generator::gen(Function_decl const* d)
     name,                            // name
     mod);                            // owning module
 
+  // Create a new binding for the variable.
+  stack.top().bind(d, fn);
+
   // Establish a new binding environment for declarations
   // related to this function.
   Symbol_sentinel scope(*this);
@@ -699,8 +719,16 @@ Generator::gen(Function_decl const* d)
   llvm::BasicBlock* b = llvm::BasicBlock::Create(cxt, "b", fn);
   build.SetInsertPoint(b);
 
-  // build the return point for the function
+  // build the return block for the function
+  // it doesnt matter where the block appears
+  // as long as it is the last thing called
   // llvm::BasicBlock* ret = llvm::BasicBlock::Create(cxt, "return", fn);
+
+  // create a variable to store the return
+  llvm::Type* t = get_type(d->return_type());
+  ret_var = build.CreateAlloca(t);
+  // create the return block
+  ret_block = llvm::BasicBlock::Create(cxt, "return");
 
   // Generate a local variable for each of the variables.
   for (Decl const* p : d->parameters())
@@ -713,9 +741,18 @@ Generator::gen(Function_decl const* d)
   // Generate the body of the function.
   gen(d->body());
 
+  // generate the final return
+  fn->getBasicBlockList().push_back(ret_block);
+  build.SetInsertPoint(ret_block);
+  build.CreateRet(ret_var);
+
+
   // delete the local variable insertion point
   locals_insert_pt->eraseFromParent();
   locals_insert_pt = nullptr;
+  // erase the pointer to the return value
+  ret_var = nullptr;
+  ret_block = nullptr;
 }
 
 
