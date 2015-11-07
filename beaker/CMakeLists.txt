@@ -20,13 +20,18 @@ find_package(Boost 1.55.0 REQUIRED
 # libraries, we need to make separate targets. 
 execute_process(COMMAND llvm-config --includedir OUTPUT_VARIABLE LLVM_INCLUDE_STR)
 execute_process(COMMAND llvm-config --libdir OUTPUT_VARIABLE LLVM_LIBRARY_STR)
-execute_process(COMMAND llvm-config --libfiles OUTPUT_VARIABLE LLVM_LIBS_IN)
+# execute_process(COMMAND llvm-config --libfiles OUTPUT_VARIABLE LLVM_LIBS_IN)
+execute_process(COMMAND llvm-config --libs OUTPUT_VARIABLE LLVM_LIBS_STR)
+
 string(STRIP ${LLVM_INCLUDE_STR} LLVM_INCLUDE_DIR)
 string(STRIP ${LLVM_LIBRARY_STR} LLVM_LIBRARY_DIR)
+string(STRIP ${LLVM_LIBS_STR} LLVM_LIBS_IN)
+
 set(LLVM_LIBS)
 separate_arguments(LLVM_LIBS_ARGS UNIX_COMMAND ${LLVM_LIBS_IN})
 foreach(lib ${LLVM_LIBS_ARGS})
-  list(APPEND LLVM_LIBS ${lib})
+  string(SUBSTRING ${lib} 2 -1 s1)
+  list(APPEND LLVM_LIBS ${s1})
 endforeach()
 
 
