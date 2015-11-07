@@ -85,6 +85,8 @@ struct Generator
   void gen(Parameter_decl const*);
   void gen(Module_decl const*);
 
+  void make_branch(llvm::BasicBlock*, llvm::BasicBlock*); 
+
   llvm::LLVMContext cxt;
   llvm::IRBuilder<> build;
   llvm::Module*     mod;
@@ -105,7 +107,7 @@ struct Generator
   llvm::BasicBlock* ret_block;
 
   // points to the current return value
-  llvm::Value* ret_var;
+  llvm::Instruction* ret_var;
 
   Symbol_stack      stack;
 

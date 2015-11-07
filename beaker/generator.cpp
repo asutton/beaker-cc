@@ -25,9 +25,10 @@
 // Will not insert anything if the block already
 // has a terminating instruction
 void 
-make_branch(llvm::BasicBlock* srcBB, llvm::BasicBlock* dstBB) 
+Generator::make_branch(llvm::BasicBlock* srcBB, llvm::BasicBlock* dstBB) 
 {
-
+  if (!srcBB->getTerminator())
+    build.CreateBr(dstBB);
 }
 
 
@@ -400,7 +401,7 @@ Generator::gen(Return_stmt const* s)
 
   llvm::Value* v = gen(s->value());
   build.CreateStore(v, ret_var);
-  build.CreateBr(ret_block);
+  make_branch(curr_block, ret_block);
 }
 
 
@@ -425,7 +426,7 @@ Generator::gen(If_then_stmt const* s)
   // emit the 'then' block
   build.SetInsertPoint(then);
   gen(s->body());
-  build.CreateBr(merge);
+  make_branch(build.GetInsertBlock(), merge);
   // reset the block back to where it should be
   then = build.GetInsertBlock();
 
@@ -458,7 +459,7 @@ Generator::gen(If_else_stmt const* s)
   // emit the 'then' block
   build.SetInsertPoint(then);
   gen(s->true_branch());
-  build.CreateBr(merge);
+  make_branch(build.GetInsertBlock(), merge);
   // apparently codegen of 'then' can change the current block, update then for the PHI
   then = build.GetInsertBlock();
 
@@ -469,7 +470,7 @@ Generator::gen(If_else_stmt const* s)
 
   build.SetInsertPoint(el);
   gen(s->false_branch());
-  build.CreateBr(merge);
+  make_branch(build.GetInsertBlock(), merge);
   // branch back to merge
   el = build.GetInsertBlock();
 
@@ -497,7 +498,7 @@ Generator::gen(While_stmt const* s)
   loop_exit_stack.push(after_while);
 
   // emit a branch to the loop entry
-  build.CreateBr(before_while);
+  make_branch(build.GetInsertBlock(), before_while);
 
   // emit the block which evaluates the condition
   build.SetInsertPoint(before_while);
@@ -511,7 +512,7 @@ Generator::gen(While_stmt const* s)
   build.SetInsertPoint(while_);
   gen(s->body());
   // generate branch back to condition testing block
-  build.CreateBr(before_while);
+  make_branch(build.GetInsertBlock(), before_while);
   // apparently codegen of 'while' can change the current block, update then for the PHI
   while_ = build.GetInsertBlock();
 
@@ -530,7 +531,7 @@ Generator::gen(Break_stmt const* s)
 {
   if (!loop_entry_stack.empty()) {
     llvm::BasicBlock* exit_ = loop_exit_stack.top();
-    build.CreateBr(exit_);
+    make_branch(build.GetInsertBlock(), exit_);
   }
 }
 
@@ -540,7 +541,7 @@ Generator::gen(Continue_stmt const* s)
 {
   if (!loop_entry_stack.empty()) {
     llvm::BasicBlock* reentry = loop_entry_stack.top();
-    build.CreateBr(reentry);
+    make_branch(build.GetInsertBlock(), reentry);
   }
 }
 
@@ -724,19 +725,19 @@ Generator::gen(Function_decl const* d)
   // as long as it is the last thing called
   // llvm::BasicBlock* ret = llvm::BasicBlock::Create(cxt, "return", fn);
 
+  // Generate a local variable for each of the variables.
+  for (Decl const* p : d->parameters())
+    gen(p);
+
   // create a variable to store the return
   llvm::Type* t = get_type(d->return_type());
   ret_var = build.CreateAlloca(t);
   // create the return block
   ret_block = llvm::BasicBlock::Create(cxt, "return");
 
-  // Generate a local variable for each of the variables.
-  for (Decl const* p : d->parameters())
-    gen(p);
-
   // generate an insertion point for all other local variables
   // this will get deleted later
-  locals_insert_pt = build.CreateRetVoid();
+  locals_insert_pt = ret_var;
 
   // Generate the body of the function.
   gen(d->body());
@@ -744,11 +745,12 @@ Generator::gen(Function_decl const* d)
   // generate the final return
   fn->getBasicBlockList().push_back(ret_block);
   build.SetInsertPoint(ret_block);
-  build.CreateRet(ret_var);
+  llvm::Value* ret_val = build.CreateLoad(ret_var);
+  build.CreateRet(ret_val);
 
 
   // delete the local variable insertion point
-  locals_insert_pt->eraseFromParent();
+  // locals_insert_pt->eraseFromParent();
   locals_insert_pt = nullptr;
   // erase the pointer to the return value
   ret_var = nullptr;
