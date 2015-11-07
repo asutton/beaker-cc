@@ -44,19 +44,19 @@ Symbol::Symbol(int k)
 
 
 // Returns the spelling of the symbol.
-inline String const& 
+inline String const&
 Symbol::spelling() const
 {
   return *str_;
 }
 
 
-// Returns the kind of token classfication of 
+// Returns the kind of token classfication of
 // the symbol.
-inline int 
-Symbol::token() const 
-{ 
-  return tok_; 
+inline int
+Symbol::token() const
+{
+  return tok_;
 }
 
 
@@ -75,7 +75,7 @@ struct Boolean_sym : Symbol
 
 // Represents all integer symbols.
 //
-// TODO: Develop and use a good arbitrary precision 
+// TODO: Develop and use a good arbitrary precision
 // integer for this representation.
 //
 // TOOD: Track the integer base? Technically, that
@@ -88,7 +88,7 @@ struct Integer_sym : Symbol
   { }
 
   int value() const { return value_; }
-  
+
   int value_;
 };
 
@@ -121,7 +121,7 @@ struct Symbol_table : std::unordered_map<std::string, Symbol*>
 
   template<typename T, typename... Args>
   Symbol* put(String const&, Args&&...);
-  
+
   template<typename T, typename... Args>
   Symbol* put(char const*, char const*, Args&&...);
 
@@ -161,16 +161,17 @@ Symbol_table::put(String const& s, Args&&... args)
 {
   auto x = emplace(s, nullptr);
   auto iter = x.first;
+  Symbol*& sym = iter->second;
   if (x.second) {
     // Insertion succeeded, so create a new symbol
     // and bind its string representation.
-    iter->second = new T(std::forward<Args>(args)...);
-    iter->second->str_ = &iter->first;
+    sym = new T(std::forward<Args>(args)...);
+    sym->str_ = &iter->first;
   } else {
     // Insertion did not succeed. Check that we have
     // not redefined the symbol kind.
-    if(typeid(T) != typeid(*iter->second))
-      throw std::runtime_error("lexical symbol redefinition");
+    if (typeid(T) != typeid(*sym))
+      throw std::runtime_error("redefinition of symbol");
   }
   return iter->second;
 
@@ -214,4 +215,3 @@ Symbol_table::get(char const* s) const
 
 
 #endif
-
