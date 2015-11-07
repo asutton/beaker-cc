@@ -8,14 +8,16 @@ project(lingo C CXX)
 enable_testing()
 
 
-# Threading support (for LLVM)
-find_package(Threads REQUIRED)
-
-
 # Boost dependencies
 find_package(Boost 1.55.0 REQUIRED
   COMPONENTS system filesystem)
 
+
+# LLVM Configuration
+find_package(Threads REQUIRED)
+find_package(LLVM REQUIRED CONFIG)
+llvm_map_components_to_libnames(LLVM_LIBRARIES
+  core support)
 
 # Compiler configuration
 set(CMAKE_CXX_FLAGS "-Wall -std=c++1y")
@@ -24,18 +26,16 @@ set(CMAKE_CXX_FLAGS "-Wall -std=c++1y")
 # Configuration for lingo dependencies
 set(LINGO_INCLUDE_DIR ./lingo)
 
-# Configuration for llvm dependencies
-set(LLVM_INCLUDE_DIR ./llvm)
-
 
 # Build configuration
 include_directories(
-  ${Boost_INCLUDE_DIRS} 
-  ${LINGO_INCLUDE_DIR} 
-  ${LLVM_INCLUDE_DIR})
+  ${Boost_INCLUDE_DIRS}
+  ${LLVM_INCLUDE_DIRS}
+  ${LINGO_INCLUDE_DIR})
 
 link_directories(
-  ${Boost_LIBRARY_DIRS})
+  ${Boost_LIBRARY_DIRS}
+  ${LLVM_LIBRARY_DIRS})
 
 
 add_subdirectory(lingo)

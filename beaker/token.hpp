@@ -64,7 +64,7 @@ enum Token_kind
 };
 
 
-char const* 
+char const*
 spelling(Token_kind k);
 
 
@@ -131,7 +131,7 @@ Token::operator bool() const
 
 
 // Returns the token kind.
-inline int 
+inline int
 Token::kind() const
 {
   return kind_;
@@ -139,7 +139,7 @@ Token::kind() const
 
 
 // Returns the token's symbol and attributes.
-inline Symbol const* 
+inline Symbol const*
 Token::symbol() const
 {
   return sym_;
@@ -202,7 +202,7 @@ public:
   Token get();
   void put(Token);
 
-  Position position() const; 
+  Position position() const;
   Location location() const;
 
 private:
@@ -277,6 +277,12 @@ Token_stream::location() const
 {
   return peek().location();
 }
+
+
+// -------------------------------------------------------------------------- //
+// Symbol initialization
+
+void init_symbols(Symbol_table&);
 
 
 #endif

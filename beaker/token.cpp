@@ -3,7 +3,7 @@
 
 #include "token.hpp"
 
-char const* 
+char const*
 spelling(Token_kind k)
 {
   switch (k) {
@@ -44,4 +44,51 @@ spelling(Token_kind k)
 
     default: return "<unspecified>";
   }
+}
+
+// Initialize the symbols of the language.
+void
+init_symbols(Symbol_table& syms)
+{
+  // Create the symbol table and install all of the
+  // default tokens.
+  syms.put<Symbol>("{", lbrace_tok);
+  syms.put<Symbol>("}", rbrace_tok);
+  syms.put<Symbol>("(", lparen_tok);
+  syms.put<Symbol>(")", rparen_tok);
+  syms.put<Symbol>(",", comma_tok);
+  syms.put<Symbol>(":", colon_tok);
+  syms.put<Symbol>(";", semicolon_tok);
+  syms.put<Symbol>("=", equal_tok);
+  syms.put<Symbol>("+", plus_tok);
+  syms.put<Symbol>("-", minus_tok);
+  syms.put<Symbol>("*", star_tok);
+  syms.put<Symbol>("/", slash_tok);
+  syms.put<Symbol>("%", percent_tok);
+  syms.put<Symbol>("==", eq_tok);
+  syms.put<Symbol>("!=", ne_tok);
+  syms.put<Symbol>("<", lt_tok);
+  syms.put<Symbol>(">", gt_tok);
+  syms.put<Symbol>("<=", le_tok);
+  syms.put<Symbol>(">=", ge_tok);
+  syms.put<Symbol>("&&", and_tok);
+  syms.put<Symbol>("||", or_tok);
+  syms.put<Symbol>("!", not_tok);
+  syms.put<Symbol>("->", arrow_tok);
+
+  // Keywords
+  syms.put<Symbol>("bool", bool_kw);
+  syms.put<Symbol>("break", break_kw);
+  syms.put<Symbol>("continue", continue_kw);
+  syms.put<Symbol>("def", def_kw);
+  syms.put<Symbol>("else", else_kw);
+  syms.put<Symbol>("if", if_kw);
+  syms.put<Symbol>("int", int_kw);
+  syms.put<Symbol>("while", while_kw);
+  syms.put<Symbol>("return", return_kw);
+  syms.put<Symbol>("var", var_kw);
+
+  // Reserved names.
+  syms.put<Boolean_sym>("true", boolean_tok, true);
+  syms.put<Boolean_sym>("false", boolean_tok, false);
 }
