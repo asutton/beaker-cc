@@ -33,6 +33,12 @@ Generator::get_type(Type const* t)
     llvm::Type* operator()(Integer_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Function_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Record_type const* t) const { return g.get_type(t); }
+
+    // network specific types
+    llvm::Type* operator()(Table_type const* t) const { return g.get_type(t); }
+    llvm::Type* operator()(Flow_type const* t) const { return g.get_type(t); }
+    llvm::Type* operator()(Port_type const* t) const { return g.get_type(t); }
+
   };
   return apply(t, Fn{*this});
 }
@@ -72,6 +78,31 @@ llvm::Type*
 Generator::get_type(Record_type const* t)
 {
   // TODO: implement me
+  return nullptr;
+}
+
+
+// Generate a table type (?)
+// Is this strictly necessary?
+// I think tables are only for use in semantic checking
+// and just become requests once we move to the runtime
+llvm::Type* 
+Generator::get_type(Table_type const*)
+{
+  return nullptr;
+}
+
+
+llvm::Type* 
+Generator::get_type(Flow_type const*)
+{
+  return nullptr;
+}
+
+
+llvm::Type* 
+Generator::get_type(Port_type const*)
+{
   return nullptr;
 }
 

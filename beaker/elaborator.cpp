@@ -41,11 +41,16 @@ Scope_stack::declare(Decl* d)
   if (auto binding = scope.lookup(d->name())) {
     // check to see if overloading is possible
     // the second member of the pair is an overload set
+    // if it is not possible this call will produce an error
     if (overload_decl(&binding->second, d)) {
       // set the declaration context
       d->cxt_ = context();
       return;
     }
+
+    // FIXME: there should be an error here, but if this
+    // throws then the program will stop execution before
+    // it can resolve the rest of the definition errors
   }
   
   // Create the binding.
