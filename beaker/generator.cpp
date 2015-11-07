@@ -468,6 +468,8 @@ Generator::gen(Decl const* d)
 void
 Generator::gen_local(Variable_decl const* d)
 {
+  // NOTE: You will need to rebind this declaration to
+  // the allocated local. Use Environment<S, T>::rebind.
   throw std::runtime_error("not implemented");
 }
 
@@ -527,8 +529,12 @@ Generator::gen(Function_decl const* d)
     name,                            // name
     mod);                            // owning module
 
+<<<<<<< HEAD
 
   //create new binding for the variable
+=======
+  // Create a new binding for the variable.
+>>>>>>> upstream/master
   stack.top().bind(d, fn);
 
   // Establish a new binding environment for declarations
