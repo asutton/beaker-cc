@@ -141,7 +141,6 @@ Generator::gen(Literal_expr const* e)
 llvm::Value* 
 Generator::gen(Id_expr const* e)
 {
-  std::cout << "id\n";
   return stack.lookup(e->declaration())->second;
 }
 
@@ -292,15 +291,15 @@ Generator::gen(Not_expr const* e)
 llvm::Value* 
 Generator::gen(Call_expr const* e)
 {
-  std::cout << "test\n";
   llvm::Value* callee = gen(e->target());
   if(!callee) throw std::runtime_error("!callee");
+
+
   std::vector<llvm::Value*> args;
-
-
   for(auto a : e->arguments()) {
     args.push_back(gen(a));
   }
+
 
   return build.CreateCall(callee, args);
 }
@@ -528,6 +527,10 @@ Generator::gen(Function_decl const* d)
     name,                            // name
     mod);                            // owning module
 
+
+  //create new binding for the variable
+  stack.top().bind(d, fn);
+
   // Establish a new binding environment for declarations
   // related to this function.
   Symbol_sentinel scope(*this);
@@ -564,8 +567,10 @@ Generator::gen(Function_decl const* d)
   for (Decl const* p : d->parameters())
     gen(p);
 
+  
   // Generate the body of the function.
   gen(d->body());
+
 }
 
 
