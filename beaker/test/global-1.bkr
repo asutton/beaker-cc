@@ -2,3 +2,4 @@
 
 var x : int = 0;
 var y : int = 1;
+var z : int = x + y;

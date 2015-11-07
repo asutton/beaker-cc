@@ -19,7 +19,7 @@ operator<<(std::ostream& os, Value const& v)
       return os << v.get_function()->name()->spelling();
     
     case reference_value:
-      return os << *v.get_reference();
+      return os << *v.get_reference() << '@' << (void*)v.get_reference();
   }
   throw std::runtime_error("unhandled value");
 }

@@ -71,42 +71,42 @@ class Elaborator
 public:
   Elaborator(Location_map&);
 
-  Type const* elaborate(Expr*);
-  Type const* elaborate(Literal_expr*);
-  Type const* elaborate(Id_expr*);
-  Type const* elaborate(Add_expr* e);
-  Type const* elaborate(Sub_expr* e);
-  Type const* elaborate(Mul_expr* e);
-  Type const* elaborate(Div_expr* e);
-  Type const* elaborate(Rem_expr* e);
-  Type const* elaborate(Neg_expr* e);
-  Type const* elaborate(Pos_expr* e);
-  Type const* elaborate(Eq_expr* e);
-  Type const* elaborate(Ne_expr* e);
-  Type const* elaborate(Lt_expr* e);
-  Type const* elaborate(Gt_expr* e);
-  Type const* elaborate(Le_expr* e);
-  Type const* elaborate(Ge_expr* e);
-  Type const* elaborate(And_expr* e);
-  Type const* elaborate(Or_expr* e);
-  Type const* elaborate(Not_expr* e);
-  Type const* elaborate(Call_expr* e);
+  Expr* elaborate(Expr*);
+  Expr* elaborate(Literal_expr*);
+  Expr* elaborate(Id_expr*);
+  Expr* elaborate(Add_expr* e);
+  Expr* elaborate(Sub_expr* e);
+  Expr* elaborate(Mul_expr* e);
+  Expr* elaborate(Div_expr* e);
+  Expr* elaborate(Rem_expr* e);
+  Expr* elaborate(Neg_expr* e);
+  Expr* elaborate(Pos_expr* e);
+  Expr* elaborate(Eq_expr* e);
+  Expr* elaborate(Ne_expr* e);
+  Expr* elaborate(Lt_expr* e);
+  Expr* elaborate(Gt_expr* e);
+  Expr* elaborate(Le_expr* e);
+  Expr* elaborate(Ge_expr* e);
+  Expr* elaborate(And_expr* e);
+  Expr* elaborate(Or_expr* e);
+  Expr* elaborate(Not_expr* e);
+  Expr* elaborate(Call_expr* e);
   
-  Type const* elaborate(Decl*);
-  Type const* elaborate(Record_decl*);
-  Type const* elaborate(Member_decl*);
-  Type const* elaborate(Variable_decl*);
-  Type const* elaborate(Function_decl*);
-  Type const* elaborate(Parameter_decl*);
-  Type const* elaborate(Module_decl*);
+  void elaborate(Decl*);
+  void elaborate(Record_decl*);
+  void elaborate(Member_decl*);
+  void elaborate(Variable_decl*);
+  void elaborate(Function_decl*);
+  void elaborate(Parameter_decl*);
+  void elaborate(Module_decl*);
 
   // network declarations
-  Type const* elaborate(Decode_decl*);
-  Type const* elaborate(Table_decl*);
-  Type const* elaborate(Flow_decl*);
-  Type const* elaborate(Port_decl*);
-  Type const* elaborate(Extracts_decl*);
-  Type const* elaborate(Rebind_decl*);
+  void elaborate(Decode_decl*);
+  void elaborate(Table_decl*);
+  void elaborate(Flow_decl*);
+  void elaborate(Port_decl*);
+  void elaborate(Extracts_decl*);
+  void elaborate(Rebind_decl*);
 
   // FIXME: Is there any real reason that these return
   // types? What is the type of an if statement?
@@ -122,7 +122,6 @@ public:
   void elaborate(Continue_stmt*);
   void elaborate(Expression_stmt*);
   void elaborate(Declaration_stmt*);
-
 
   // Found symbols.
   Function_decl* main = nullptr;

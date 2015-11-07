@@ -7,6 +7,8 @@
 #include <algorithm>
 
 
+// TODO: Rewrite this to use the lingo node concepts.
+
 template<typename T>
 inline bool
 is_equal(std::vector<T*> const& a, std::vector<T*> const& b)
@@ -55,6 +57,13 @@ is_equal(Flow_type const* a, Flow_type const* b)
 }
 
 
+inline bool
+is_equal(Reference_type const* a, Reference_type const* b)
+{
+  return is_equal(a->first, b->first);
+}
+
+
 bool
 is_equal(Type const* a, Type const* b)
 {
@@ -80,6 +89,11 @@ is_equal(Type const* a, Type const* b)
     bool operator()(Record_type const* a)
     {
       return is_equal(a, cast<Record_type>(b));
+    }
+   
+    bool operator()(Reference_type const* a)
+    {
+      return is_equal(a, cast<Reference_type>(b));
     }
 
     // network specific types

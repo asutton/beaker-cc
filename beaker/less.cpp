@@ -8,6 +8,9 @@
 #include <typeindex>
 
 
+// TODO: Rewrite using lingo node concepts.
+
+
 template<typename T>
 inline bool
 is_less(std::vector<T> const& a, std::vector<T> const& b)
@@ -21,18 +24,17 @@ is_less(std::vector<T> const& a, std::vector<T> const& b)
 inline bool
 is_less(Function_type const* a, Function_type const* b)
 {
-  if(is_less(a->parameter_types(), b->parameter_types()))
+  if (is_less(a->parameter_types(), b->parameter_types()))
     return true;
-  if(is_less(b->parameter_types(), a->parameter_types()))
+  if (is_less(b->parameter_types(), a->parameter_types()))
     return false;
   return is_less(a->return_type(), b->return_type());
 }
 
 
 // A record type is less if the decl they point to are less
-// Even if two record types have the same field types, this is meaningless
-// as they still represent two different types if the declarations are
-// not the same.
+// All record declarations are unique and thus all record types
+// depend on those record declarations to determine if they are less/equal
 inline bool
 is_less(Record_type const* a, Record_type const* b)
 {
@@ -63,6 +65,13 @@ is_less(Flow_type const* a, Flow_type const* b)
 }
 
 
+inline bool
+is_less(Reference_type const* a, Reference_type const* b)
+{
+  return is_less(a->first, b->first);
+}
+
+
 bool
 is_less(Type const* a, Type const* b)
 {
@@ -83,6 +92,11 @@ is_less(Type const* a, Type const* b)
       return is_less(a, cast<Record_type>(b));
     }
 
+    bool operator()(Reference_type const* a)
+    {
+      return is_less(a, cast<Reference_type>(b));
+    }
+
     // network specific types
     bool operator()(Table_type const* a)
     {
@@ -99,7 +113,6 @@ is_less(Type const* a, Type const* b)
     {
       return false;
     }
-
   };
 
   std::type_index t1 = typeid(*a);

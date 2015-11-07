@@ -14,6 +14,7 @@
 //    t ::= bool                -- boolean type
 //          int                 -- integer type
 //          (t1, ..., tn) -> t  -- function types
+//          ref t               -- reference types
 //
 // Note that types are not mutable. Once created, a type
 // cannot be changed. The reason for this is that we
@@ -31,6 +32,9 @@ struct Type
   virtual ~Type() { }
 
   virtual void accept(Visitor&) const = 0;
+
+  virtual Type const* ref() const;
+  virtual Type const* nonref() const;
 };
 
 
@@ -40,6 +44,7 @@ struct Type::Visitor
   virtual void visit(Boolean_type const*) = 0;
   virtual void visit(Integer_type const*) = 0;
   virtual void visit(Function_type const*) = 0;
+  virtual void visit(Reference_type const*) = 0;
 
   // network specific types
   virtual void visit(Table_type const*) = 0;
@@ -111,6 +116,25 @@ struct Function_type : Type
 
 
 
+// The type of an expression that refers to an object.
+struct Reference_type : Type
+{
+  Reference_type(Type const* t)
+    : first(t)
+  { }
+
+  void accept(Visitor& v) const { v.visit(this); };
+
+  virtual Type const* ref() const;
+  virtual Type const* nonref() const;
+  
+  Type const* type() const { return first; }
+  
+
+  Type const* first;
+};
+
+
 // -------------------------------------------------------------------------- //
 //          Network specific types
 
@@ -163,6 +187,7 @@ Type const* get_integer_type();
 Type const* get_function_type(Type_seq const&, Type const*);
 Type const* get_function_type(Decl_seq const&, Type const*);
 Type const* get_record_type(Decl const*);
+Type const* get_reference_type(Type const*);
 
 // network specific types
 Type const* get_table_type(Decl_seq const&);
@@ -173,78 +198,35 @@ Type const* get_port_type();
 // -------------------------------------------------------------------------- //
 //                              Generic visitors
 
-template<typename F, typename R>
-struct Generic_type_visitor : Type::Visitor
+
+template<typename F, typename T>
+struct Generic_type_visitor : Type::Visitor, lingo::Generic_visitor<F, T>
 {
   Generic_type_visitor(F fn)
-    : fn(fn)
+    : lingo::Generic_visitor<F, T>(fn)
   { }
   
-  void visit(Record_type const* t) { r = fn(t); }
-  void visit(Boolean_type const* t) { r = fn(t); }
-  void visit(Integer_type const* t) { r = fn(t); }
-  void visit(Function_type const* t) { r = fn(t); }
-
-    // network specific types
-  void visit(Table_type const* t) { r = fn(t); }
-  void visit(Flow_type const* t) { r = fn(t); }
-  void visit(Port_type const* t) { r = fn(t); }
-
-  F fn;
-  R r;
-};
-
-
-// A specialization for functions returning void.
-template<typename F>
-struct Generic_type_visitor<F, void> : Type::Visitor
-{
-  Generic_type_visitor(F fn)
-    : fn(fn)
-  { }
-  
-  void visit(Record_type const* t) { fn(t); }
-  void visit(Boolean_type const* t) { fn(t); }
-  void visit(Integer_type const* t) { fn(t); }
-  void visit(Function_type const* t) { fn(t); }
+  void visit(Boolean_type const* t) { this->invoke(t); }
+  void visit(Integer_type const* t) { this->invoke(t); }
+  void visit(Function_type const* t) { this->invoke(t); }
+  void visit(Record_type const* t) { this->invoke(t); }
+  void visit(Reference_type const* t) { this->invoke(t); }
 
   // network specific types
-  void visit(Table_type const* t) { fn(t); }
-  void visit(Flow_type const* t) { fn(t); }
-  void visit(Port_type const* t) { fn(t); }
-
-  F fn;
+  void visit(Table_type const* t) { this->invoke(t); }
+  void visit(Flow_type const* t) { this->invoke(t); }
+  void visit(Port_type const* t) { this->invoke(t); }
 };
 
 
-// Dispatch visitor to a void visitor.
-template<typename F, typename R = typename std::result_of<F(Boolean_type const*)>::type>
-inline typename std::enable_if<std::is_void<R>::value, void>::type
-dispatch(Type const* p, F fn)
+template<typename F, typename T = typename std::result_of<F(Boolean_type const*)>::type>
+inline T
+apply(Type const* t, F fn)
 {
-  Generic_type_visitor<F, void> v(fn);
-  p->accept(v);
+  Generic_type_visitor<F, T> v(fn);
+  return accept(t, v);
 }
 
-
-// Dispatch to a non-void visitor.
-template<typename F, typename R = typename std::result_of<F(Boolean_type const*)>::type>
-inline typename std::enable_if<!std::is_void<R>::value, R>::type
-dispatch(Type const* p, F fn)
-{
-  Generic_type_visitor<F, R> v(fn);
-  p->accept(v);
-  return v.r;
-}
-
-
-// Apply fn to the propositoin p.
-template<typename F, typename R = typename std::result_of<F(Boolean_type const*)>::type>
-inline R
-apply(Type const* p, F fn)
-{
-  return dispatch(p, fn);
-}
 
 
 #endif

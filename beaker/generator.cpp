@@ -33,12 +33,12 @@ Generator::get_type(Type const* t)
     llvm::Type* operator()(Integer_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Function_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Record_type const* t) const { return g.get_type(t); }
+    llvm::Type* operator()(Reference_type const* t) const { return g.get_type(t); }
 
     // network specific types
     llvm::Type* operator()(Table_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Flow_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Port_type const* t) const { return g.get_type(t); }
-
   };
   return apply(t, Fn{*this});
 }
@@ -106,6 +106,17 @@ Generator::get_type(Port_type const*)
   return nullptr;
 }
 
+// Translate reference types into pointer types in the
+// generic address space.
+//
+// TODO: Actually do this?
+llvm::Type*
+Generator::get_type(Reference_type const* t)
+{
+  llvm::Type* t1 = get_type(t->type());
+  return llvm::PointerType::getUnqual(t1);
+}
+
 
 // -------------------------------------------------------------------------- //
 // Code generation for expressions
@@ -138,6 +149,7 @@ Generator::gen(Expr const* e)
     llvm::Value* operator()(Or_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Not_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Call_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Value_conv const* e) const { return g.gen(e); }
   };
 
   return apply(e, Fn{*this});
@@ -161,17 +173,23 @@ Generator::gen(Literal_expr const* e)
 }
 
 
+// Returns the value associated with the declaration.
+//
+// TODO: Do we need to do anything different for function
+// identifiers or not?
 llvm::Value* 
 Generator::gen(Id_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+  return stack.lookup(e->declaration())->second;
 }
 
 
 llvm::Value* 
 Generator::gen(Add_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* l = gen(e->left());
+  llvm::Value* r = gen(e->right());
+  return build.CreateAdd(l, r);
 }
 
 
@@ -287,6 +305,14 @@ Generator::gen(Call_expr const* e)
 }
 
 
+llvm::Value*
+Generator::gen(Value_conv const* e)
+{
+  llvm::Value* v = gen(e->source());
+  return build.CreateLoad(v);
+}
+
+
 // -------------------------------------------------------------------------- //
 // Code generation for statements
 //
@@ -344,7 +370,9 @@ Generator::gen(Block_stmt const* s)
 void
 Generator::gen(Assign_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* lhs = gen(s->object());
+  llvm::Value* rhs = gen(s->value());
+  build.CreateStore(rhs, lhs);
 }
 
 
@@ -394,14 +422,14 @@ Generator::gen(Continue_stmt const* s)
 void
 Generator::gen(Expression_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  gen(s->expression());
 }
 
 
 void
 Generator::gen(Declaration_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  gen(s->declaration());
 }
 
 
@@ -449,6 +477,8 @@ Generator::gen(Decl const* d)
 void
 Generator::gen_local(Variable_decl const* d)
 {
+  // NOTE: You will need to rebind this declaration to
+  // the allocated local. Use Environment<S, T>::rebind.
   throw std::runtime_error("not implemented");
 }
 
@@ -458,6 +488,8 @@ Generator::gen_global(Variable_decl const* d)
 {
   String const&   name = d->name()->spelling();
   llvm::Type*     type = build.getInt32Ty();
+
+  // FIXME: Handle initialization correctly.
   llvm::Constant* init = llvm::ConstantAggregateZero::get(type);
 
   // Build the global variable, automatically adding
@@ -509,7 +541,7 @@ Generator::gen(Variable_decl const* d)
     return gen_global(d);
   else
     return gen_local(d);
-} 
+}
 
 
 void
@@ -526,12 +558,14 @@ Generator::gen(Function_decl const* d)
     name,                            // name
     mod);                            // owning module
 
+  // Create a new binding for the variable.
+  stack.top().bind(d, fn);
+
   // Establish a new binding environment for declarations
   // related to this function.
   Symbol_sentinel scope(*this);
   
-  // Set the names of function arguments and establish
-  // bindings for all of them.
+  // Build the argument list. Note that 
   {
     auto ai = fn->arg_begin();
     auto pi = d->parameters().begin();
@@ -540,7 +574,10 @@ Generator::gen(Function_decl const* d)
       llvm::Argument* a = &*ai;
       a->setName(p->name()->spelling());
 
-      // Establish the symbol binding for the parameter.
+      // Create an initial name binding for the
+      // function parameter. Note that we're
+      // going to overwrite this when we create
+      // locals for each parameter.
       stack.top().bind(p, a);
 
       ++ai;
@@ -555,17 +592,24 @@ Generator::gen(Function_decl const* d)
   // so that we know where we are.
   llvm::BasicBlock* b = llvm::BasicBlock::Create(cxt, "b", fn);
   build.SetInsertPoint(b);
+
+  // Generate a local variable for each of the variables.
+  for (Decl const* p : d->parameters())
+    gen(p);
+
+  // Generate the body of the function.
   gen(d->body());
 }
 
 
 void
-Generator::gen(Parameter_decl const*)
+Generator::gen(Parameter_decl const* d)
 {
-  // NOTE: We don't visit parameters independently
-  // of function declarations, so we should never
-  // reach here.
-  throw std::runtime_error("unreachable");
+  llvm::Type* t = get_type(d->type());
+  llvm::Value* a = stack.top().get(d).second;
+  llvm::Value* v = build.CreateAlloca(t);
+  stack.top().rebind(d, v);
+  build.CreateStore(a, v);
 }
 
 

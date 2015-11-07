@@ -1,7 +1,7 @@
 
 def f(n : int, b : bool) -> int 
 { 
-  return 0;
+  return n;
 }
 
 
