@@ -22,8 +22,8 @@ namespace
 bool
 diagnose_error(Decl const* d1, Decl const* d2, std::string const& reason)
 {
-  std::cerr << "Cannot overload " << *d1->name() << " of type " << d1->type()
-            << " with " << *d2->name() << " of type " << d2->type() << '\n'
+  std::cerr << "Cannot overload " << *d1->name() << " of type " << *d1->type()
+            << " with " << *d2->name() << " of type " << *d2->type() << '\n'
             << "Reason: " << reason << '\n';
 
   return false;

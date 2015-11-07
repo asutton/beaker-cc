@@ -46,9 +46,10 @@ Scope_stack::declare(Decl* d)
       return;
     }
 
-    // FIXME: there should be an error here, but if this
-    // throws then the program will stop execution before
-    // it can resolve the rest of the definition errors
+    // TODO: Add a note that points to the previous definition
+    std::stringstream ss;
+    ss << "redefinition of '" << *d->name() << "'\n";
+    throw Lookup_error({}, ss.str());
   }
   
   // Create the binding.
