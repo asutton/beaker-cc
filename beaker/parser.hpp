@@ -41,6 +41,8 @@ public:
   Decl* variable_decl();
   Decl* parameter_decl();
   Decl* function_decl();
+  Decl* record_decl();
+  Decl* field_decl();
 
   // Statement parsers
   Stmt* stmt();
@@ -88,6 +90,8 @@ private:
   Decl* on_variable_decl(Token, Type const*, Expr*);
   Decl* on_parameter_decl(Token, Type const*);
   Decl* on_function_decl(Token, Decl_seq const&, Type const*, Stmt*);
+  Decl* on_record(Token, Decl_seq const&);
+  Decl* on_field(Token, Type const*);
   Decl* on_module_decl(Decl_seq const&);
 
   // FIXME: Remove _stmt from handlers.
@@ -157,7 +161,7 @@ Parser::lookahead() const
 //
 // TODO: Put this in the .cpp file? It is private.
 template<typename T, typename... Args>
-inline T* 
+inline T*
 Parser::init(Location loc, Args&&... args)
 {
   T* t = new T(std::forward<Args>(args)...);

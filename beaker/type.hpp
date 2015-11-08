@@ -17,17 +17,17 @@
 //
 // Note that types are not mutable. Once created, a type
 // cannot be changed. The reason for this is that we
-// internally canonicalize (most) types when they are 
+// internally canonicalize (most) types when they are
 // created.
 //
 // The "type" type (or kind) denotes the type user-defined
 // types. Although it describes the higher-level kind
-// system, we include it with the type system for 
+// system, we include it with the type system for
 // convenience.
 struct Type
 {
   struct Visitor;
-  
+
   virtual ~Type() { }
 
   virtual void accept(Visitor&) const = 0;
@@ -43,6 +43,7 @@ struct Type::Visitor
   virtual void visit(Integer_type const*) = 0;
   virtual void visit(Function_type const*) = 0;
   virtual void visit(Reference_type const*) = 0;
+  virtual void visit(Record_type const*) = 0;
 };
 
 
@@ -88,11 +89,25 @@ struct Reference_type : Type
 
   virtual Type const* ref() const;
   virtual Type const* nonref() const;
-  
+
   Type const* type() const { return first; }
-  
+
 
   Type const* first;
+};
+
+
+// A record type is the type introduced by a
+// record declaration.
+struct Record_type : Type
+{
+  Record_type(Decl const* d)
+    : decl_(d)
+  { }
+
+  Record_decl const* decl() const;
+
+  Decl const* decl_;
 };
 
 
@@ -116,11 +131,12 @@ struct Generic_type_visitor : Type::Visitor, lingo::Generic_visitor<F, T>
   Generic_type_visitor(F fn)
     : lingo::Generic_visitor<F, T>(fn)
   { }
-  
+
   void visit(Boolean_type const* t) { this->invoke(t); }
   void visit(Integer_type const* t) { this->invoke(t); }
   void visit(Function_type const* t) { this->invoke(t); }
   void visit(Reference_type const* t) { this->invoke(t); }
+  void visit(Record_type const* t) { this->invoke(t); }
 };
 
 
@@ -135,4 +151,3 @@ apply(Type const* t, F fn)
 
 
 #endif
-

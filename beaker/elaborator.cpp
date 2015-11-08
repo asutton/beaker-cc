@@ -17,7 +17,7 @@
 
 
 // Create a declarative binding for d. This also checks
-// that the we are not redefining a symbol in the current 
+// that the we are not redefining a symbol in the current
 // scope.
 void
 Scope_stack::declare(Decl* d)
@@ -33,7 +33,7 @@ Scope_stack::declare(Decl* d)
     ss << "redefinition of '" << *d->name() << "'\n";
     throw Lookup_error({}, ss.str());
   }
-  
+
   // Create the binding.
   scope.bind(d->name(), d);
 
@@ -57,9 +57,9 @@ Scope_stack::context() const
 
 // Returns the current module. This always the bottom
 // of the stack.
-Module_decl* 
-Scope_stack::module() const 
-{ 
+Module_decl*
+Scope_stack::module() const
+{
   return cast<Module_decl>(bottom().decl);
 }
 
@@ -111,7 +111,7 @@ Elaborator::elaborate(Expr* e)
     Expr* operator()(Or_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Not_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Call_expr* e) const { return elab.elaborate(e); }
-    
+
     // Conversions are created as needed and do not
     // need to be elaborated.
     Expr* operator()(Conversion* e) const { return e; }
@@ -183,7 +183,7 @@ namespace
 // needed.
 //
 // Note that after completion, the pointer e is modified
-// so that it is the same as the return value. 
+// so that it is the same as the return value.
 Expr*
 require_value(Elaborator& elab, Expr*& e)
 {
@@ -193,10 +193,10 @@ require_value(Elaborator& elab, Expr*& e)
 
 
 // Used to require the conversion of an expression
-// to a given type. 
+// to a given type.
 //
-// Note that after succesful completion, the pointer 
-// e is modified so that it is the same as the return 
+// Note that after succesful completion, the pointer
+// e is modified so that it is the same as the return
 // value.
 //
 // This returns nullptr if the convesion fails.
@@ -204,27 +204,27 @@ Expr*
 require_converted(Elaborator& elab, Expr*& e, Type const* t)
 {
   elab.elaborate(e);
-  
+
   // Try a conversion. If it succeeds, update
   // the original expression.
   Expr* c = convert(e, t);
   if (c)
     e = c;
-  
+
   return c;
 }
 
 
-// The operands of a binary arithmetic expression are 
-// converted to rvalues. The converted operands shall have 
-// type int. The result of an arithmetic expression is an 
+// The operands of a binary arithmetic expression are
+// converted to rvalues. The converted operands shall have
+// type int. The result of an arithmetic expression is an
 // rvalue with type int.
 Expr*
 check_binary_arithmetic_expr(Elaborator& elab, Binary_expr* e)
 {
   Type const* z = get_integer_type();
-  Expr* c1 = require_converted(elab, e->first, z); 
-  Expr* c2 = require_converted(elab, e->second, z); 
+  Expr* c1 = require_converted(elab, e->first, z);
+  Expr* c2 = require_converted(elab, e->second, z);
   if (!c1)
     throw Type_error({}, "left operand cannot be converted to 'int'");
   if (!c2)
@@ -234,9 +234,9 @@ check_binary_arithmetic_expr(Elaborator& elab, Binary_expr* e)
 }
 
 
-// The operands of a unary arithmetic expression are 
-// converted to rvalues. The converted operands shall 
-// have type int. The result of an arithmetic expression 
+// The operands of a unary arithmetic expression are
+// converted to rvalues. The converted operands shall
+// have type int. The result of an arithmetic expression
 // is an rvalue of type int.
 Expr*
 check_unary_arithmetic_expr(Elaborator& elab, Unary_expr* e)
@@ -289,7 +289,7 @@ Elaborator::elaborate(Rem_expr* e)
 }
 
 
-// 
+//
 Expr*
 Elaborator::elaborate(Neg_expr* e)
 {
@@ -448,7 +448,7 @@ Elaborator::elaborate(Or_expr* e)
 }
 
 
-Expr* 
+Expr*
 Elaborator::elaborate(Not_expr* e)
 {
   return check_unary_logical_expr(*this, e);
@@ -467,7 +467,7 @@ Elaborator::elaborate(Call_expr* e)
   if (!is<Function_type>(t1))
     throw Type_error({}, "cannot call to non-function");
   Function_type const* t = cast<Function_type>(t1);
-  
+
   // Check for basic function arity.
   Type_seq const& parms = t->parameter_types();
   Expr_seq& args = e->arguments();
@@ -477,7 +477,7 @@ Elaborator::elaborate(Call_expr* e)
     throw Type_error({}, "too many arguments");
 
   // Check that each argument conforms to the the
-  // parameter. 
+  // parameter.
   for (std::size_t i = 0; i < parms.size(); ++i) {
     Type const* p = parms[i];
     Expr* a = require_converted(*this, args[i], p);
@@ -511,6 +511,8 @@ Elaborator::elaborate(Decl* d)
     void operator()(Variable_decl* d) const { return elab.elaborate(d); }
     void operator()(Function_decl* d) const { return elab.elaborate(d); }
     void operator()(Parameter_decl* d) const { return elab.elaborate(d); }
+    void operator()(Record_decl* d) const { return elab.elaborate(d); }
+    void operator()(Field_decl* d) const { return elab.elaborate(d); }
     void operator()(Module_decl* d) const { return elab.elaborate(d); }
   };
 
@@ -569,6 +571,23 @@ Elaborator::elaborate(Function_decl* d)
 // the parameter in the current scope.
 void
 Elaborator::elaborate(Parameter_decl* d)
+{
+  stack.declare(d);
+}
+
+
+void
+Elaborator::elaborate(Record_decl* d)
+{
+  stack.declare(d);
+  Scope_sentinel scope(*this, d);
+  for (Decl* d1 : d->fields())
+    elaborate(d1);
+}
+
+
+void
+Elaborator::elaborate(Field_decl* d)
 {
   stack.declare(d);
 }
@@ -717,7 +736,7 @@ Elaborator::elaborate(Break_stmt* s)
 void
 Elaborator::elaborate(Continue_stmt* s)
 {
-  // TODO: Verify that a continue occurs within an 
+  // TODO: Verify that a continue occurs within an
   // appropriate context.
 }
 

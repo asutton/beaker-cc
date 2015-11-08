@@ -33,6 +33,7 @@ Generator::get_type(Type const* t)
     llvm::Type* operator()(Integer_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Function_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Reference_type const* t) const { return g.get_type(t); }
+    llvm::Type* operator()(Record_type const* t) const { return g.get_type(t); }
   };
   return apply(t, Fn{*this});
 }
@@ -76,6 +77,15 @@ Generator::get_type(Reference_type const* t)
 {
   llvm::Type* t1 = get_type(t->type());
   return llvm::PointerType::getUnqual(t1);
+}
+
+
+// Emit a global alias for the type and return
+// that name.
+llvm::Type*
+Generator::get_type(Record_type const* t)
+{
+  throw std::runtime_error("not implemented");
 }
 
 
@@ -420,6 +430,8 @@ Generator::gen(Decl const* d)
     void operator()(Variable_decl const* d) { return g.gen(d); }
     void operator()(Function_decl const* d) { return g.gen(d); }
     void operator()(Parameter_decl const* d) { return g.gen(d); }
+    void operator()(Record_decl const* d) { return g.gen(d); }
+    void operator()(Field_decl const* d) { return g.gen(d); }
     void operator()(Module_decl const* d) { return g.gen(d); }
   };
   return apply(d, Fn{*this});
@@ -545,6 +557,34 @@ Generator::gen(Parameter_decl const* d)
   llvm::Value* v = build.CreateAlloca(t);
   stack.top().rebind(d, v);
   build.CreateStore(a, v);
+}
+
+
+// Generate a new struct type.
+void
+Generator::gen(Record_decl const* d)
+{
+  // If the record is empty, generate a struct
+  // with exactly one byte so that we never have
+  // a type with 0 size.
+  std::vector<llvm::Type*> ts;
+  if (d->fields().empty()) {
+    ts.push_back(build.getInt8Ty());
+  } else {
+    for (Decl const* f : d->fields())
+      ts.push_back(get_type(f->type()));
+  }
+
+  // This will automatically be added to the module,
+  // but if it's not used, then it won't be generated.
+  llvm::StructType::create(cxt, ts, d->name()->spelling());
+}
+
+
+void
+Generator::gen(Field_decl const* d)
+{
+  // NOTE: We should never actually get here.
 }
 
 

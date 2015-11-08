@@ -35,7 +35,7 @@ struct Scope : Environment<Symbol const*, Decl*>
   Scope(Decl* d)
     : decl(d)
   { }
-  
+
   Decl* decl;
 };
 
@@ -88,13 +88,15 @@ public:
   Expr* elaborate(Or_expr* e);
   Expr* elaborate(Not_expr* e);
   Expr* elaborate(Call_expr* e);
-  
+
   void elaborate(Decl*);
   void elaborate(Variable_decl*);
   void elaborate(Function_decl*);
   void elaborate(Parameter_decl*);
+  void elaborate(Record_decl*);
+  void elaborate(Field_decl*);
   void elaborate(Module_decl*);
-  
+
   // FIXME: Is there any real reason that these return
   // types? What is the type of an if statement?
   void elaborate(Stmt*);

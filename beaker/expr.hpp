@@ -127,8 +127,8 @@ struct Id_expr : Expr
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
 
-  Symbol const* symbol() const             { return sym; }
-  String const& spelling() const           { return sym->spelling(); }
+  Symbol const* symbol() const   { return sym; }
+  String const& spelling() const { return sym->spelling(); }
 
   Decl const*   declaration() const        { return decl; }
   void          declaration(Decl const* d) { decl = d; }
@@ -384,7 +384,7 @@ struct Generic_expr_visitor : Expr::Visitor, lingo::Generic_visitor<F, T>
   Generic_expr_visitor(F fn)
     : lingo::Generic_visitor<F, T>(fn)
   { }
-  
+
   void visit(Literal_expr const* e) { this->invoke(e); }
   void visit(Id_expr const* e) { this->invoke(e); }
   void visit(Add_expr const* e) { this->invoke(e); }
@@ -427,7 +427,7 @@ struct Generic_expr_mutator : Expr::Mutator, lingo::Generic_mutator<F, T>
   Generic_expr_mutator(F fn)
     : lingo::Generic_mutator<F, T>(fn)
   { }
-  
+
   void visit(Literal_expr* e) { this->invoke(e); }
   void visit(Id_expr* e) { this->invoke(e); }
   void visit(Add_expr* e) { this->invoke(e); }

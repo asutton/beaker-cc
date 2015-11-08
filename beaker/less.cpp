@@ -16,7 +16,7 @@ inline bool
 is_less(std::vector<T> const& a, std::vector<T> const& b)
 {
   auto cmp = [](T const& x, T const& y) { return is_less(x, y); };
-  return std::lexicographical_compare(a.begin(), a.end(), 
+  return std::lexicographical_compare(a.begin(), a.end(),
                                       b.begin(), b.end(), cmp);
 }
 
@@ -39,6 +39,14 @@ is_less(Reference_type const* a, Reference_type const* b)
 }
 
 
+inline bool
+is_less(Record_type const* a, Record_type const* b)
+{
+  std::less<void const*> cmp;
+  return cmp(a->decl(), b->decl());
+}
+
+
 bool
 is_less(Type const* a, Type const* b)
 {
@@ -57,6 +65,11 @@ is_less(Type const* a, Type const* b)
     bool operator()(Reference_type const* a)
     {
       return is_less(a, cast<Reference_type>(b));
+    }
+
+    bool operator()(Record_type const* a)
+    {
+      return is_less(a, cast<Record_type>(b));
     }
   };
 

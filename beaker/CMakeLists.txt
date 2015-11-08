@@ -19,7 +19,6 @@ add_library(beaker STATIC
   decl.cpp
   value.cpp
   print.cpp
-  equal.cpp
   less.cpp
   convert.cpp
   error.cpp

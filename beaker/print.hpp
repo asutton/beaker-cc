@@ -13,7 +13,7 @@ std::ostream& operator<<(std::ostream&, Boolean_type const&);
 std::ostream& operator<<(std::ostream&, Integer_type const&);
 std::ostream& operator<<(std::ostream&, Function_type const&);
 std::ostream& operator<<(std::ostream&, Reference_type const&);
-
+std::ostream& operator<<(std::ostream&, Record_type const&);
 
 std::ostream& operator<<(std::ostream&, Expr const&);
 std::ostream& operator<<(std::ostream&, Literal_expr const&);

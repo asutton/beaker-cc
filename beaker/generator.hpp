@@ -17,8 +17,8 @@
 // to their corresponding LLVM declarations. This is
 // used to track the names of globals and parameters.
 //
-// TODO: If we support local variables, this will not be 
-// sufficient for code generation. We would need to bind 
+// TODO: If we support local variables, this will not be
+// sufficient for code generation. We would need to bind
 // local variable names to their adresses --- the results
 // returned by their alloca instructions. Of course,
 // alloca instructions are inherently values, so maybe
@@ -40,6 +40,7 @@ struct Generator
   llvm::Type* get_type(Integer_type const*);
   llvm::Type* get_type(Function_type const*);
   llvm::Type* get_type(Reference_type const*);
+  llvm::Type* get_type(Record_type const*);
 
   llvm::Value* gen(Expr const*);
   llvm::Value* gen(Literal_expr const*);
@@ -62,7 +63,7 @@ struct Generator
   llvm::Value* gen(Not_expr const*);
   llvm::Value* gen(Call_expr const*);
   llvm::Value* gen(Value_conv const*);
-  
+
   void gen(Stmt const*);
   void gen(Empty_stmt const*);
   void gen(Block_stmt const*);
@@ -78,11 +79,14 @@ struct Generator
 
   void gen(Decl const*);
   void gen(Variable_decl const*);
-  void gen_local(Variable_decl const*);
-  void gen_global(Variable_decl const*);
   void gen(Function_decl const*);
   void gen(Parameter_decl const*);
+  void gen(Record_decl const*);
+  void gen(Field_decl const*);
   void gen(Module_decl const*);
+
+  void gen_local(Variable_decl const*);
+  void gen_global(Variable_decl const*);
 
   llvm::LLVMContext cxt;
   llvm::IRBuilder<> build;

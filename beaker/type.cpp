@@ -24,17 +24,24 @@ Type::nonref() const
 }
 
 
-Type const* 
-Reference_type::ref() const 
-{ 
-  return this; 
+Type const*
+Reference_type::ref() const
+{
+  return this;
 }
 
 
-Type const* 
-Reference_type::nonref() const 
-{ 
-  return first; 
+Type const*
+Reference_type::nonref() const
+{
+  return first;
+}
+
+
+Record_decl const*
+Record_type::decl() const
+{
+  return cast<Record_decl>(decl_);
 }
 
 

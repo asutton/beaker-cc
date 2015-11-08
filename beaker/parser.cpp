@@ -285,7 +285,7 @@ Parser::type()
     match(arrow_tok);
     Type const* t = type();
     return get_function_type(ts, t);
-  } 
+  }
 
   // error
   //
@@ -309,7 +309,7 @@ Parser::variable_decl()
 {
   require(var_kw);
   Token n = match(identifier_tok);
-  
+
   // object-type
   match(colon_tok);
   Type const* t = type();
@@ -381,6 +381,43 @@ Parser::parameter_decl()
 }
 
 
+// Parse a record declaration.
+//
+//    record-decl -> 'struct' identifier record-body
+//
+//    record-body -> '{' field-seq '}'
+//
+//    field-seq -> field-seq | field-seq field-seq
+Decl*
+Parser::record_decl()
+{
+  require(struct_kw);
+  Token n = match(identifier_tok);
+
+  // record-body and field-seq
+  require(lbrace_tok);
+  Decl_seq fs;
+  while (lookahead() != rbrace_tok)
+    fs.push_back(field_decl());
+  match(rbrace_tok);
+  return on_record(n, fs);
+}
+
+
+// Parse a field declaration.
+//
+//    field-decl -> identifier object-type
+Decl*
+Parser::field_decl()
+{
+  Token n = match(identifier_tok);
+  match(colon_tok);
+  Type const* t = type();
+  match(semicolon_tok);
+  return on_field(n, t);
+}
+
+
 // Parse a declaration.
 //
 //    decl -> variable-decl
@@ -393,6 +430,8 @@ Parser::decl()
       return variable_decl();
     case def_kw:
       return function_decl();
+    case struct_kw:
+      return record_decl();
     default:
       // TODO: Is this a recoverable error?
       error("invalid declaration");
@@ -423,7 +462,7 @@ Parser::empty_stmt()
 Stmt*
 Parser::block_stmt()
 {
-  std::vector<Stmt*> stmts;
+  Stmt_seq stmts;
   require(lbrace_tok);
   while (lookahead() != rbrace_tok) {
     try {
@@ -583,10 +622,10 @@ Parser::stmt()
     case continue_kw:
       return continue_stmt();
 
-    case var_kw: 
+    case var_kw:
     case def_kw:
       return declaration_stmt();
-    
+
     default:
       return expression_stmt();
   }
@@ -629,9 +668,9 @@ Parser::match(Token_kind k)
 {
   if (lookahead() == k)
     return ts_.get();
-  
+
   std::stringstream ss;
-  ss << "expected '" << spelling(k) 
+  ss << "expected '" << spelling(k)
      << "' but got '" <<  ts_.peek().spelling() << "'";
   error(ss.str());
 }
@@ -850,21 +889,21 @@ Parser::on_call(Expr* e, Expr_seq const& a)
 }
 
 
-Decl* 
+Decl*
 Parser::on_variable_decl(Token tok, Type const* t, Expr* e)
 {
   return new Variable_decl(tok.symbol(), t, e);
 }
 
 
-Decl* 
+Decl*
 Parser::on_parameter_decl(Token tok, Type const* t)
 {
   return new Parameter_decl(tok.symbol(), t);
 }
 
 
-Decl* 
+Decl*
 Parser::on_function_decl(Token tok, Decl_seq const& p, Type const* t, Stmt* b)
 {
   Type const* f = get_function_type(p, t);
@@ -872,9 +911,23 @@ Parser::on_function_decl(Token tok, Decl_seq const& p, Type const* t, Stmt* b)
 }
 
 
+Decl*
+Parser::on_record(Token n, Decl_seq const& fs)
+{
+  return new Record_decl(n.symbol(), fs);
+}
+
+
+Decl*
+Parser::on_field(Token n, Type const* t)
+{
+  return new Field_decl(n.symbol(), t);
+}
+
+
 // FIXME: The name of the module should be the name of the
 // file, or maybe even the absolute path of the file.
-Decl* 
+Decl*
 Parser::on_module_decl(Decl_seq const& d)
 {
   Symbol const* sym = syms_.get("<input>");
@@ -889,7 +942,7 @@ Parser::on_empty()
 }
 
 
-Stmt* 
+Stmt*
 Parser::on_block(std::vector<Stmt*> const& s)
 {
   return new Block_stmt(s);
@@ -945,17 +998,15 @@ Parser::on_continue()
 }
 
 
-Stmt* 
+Stmt*
 Parser::on_expression(Expr* e)
 {
   return new Expression_stmt(e);
 }
 
 
-Stmt* 
+Stmt*
 Parser::on_declaration(Decl* d)
 {
   return new Declaration_stmt(d);
 }
-
-
