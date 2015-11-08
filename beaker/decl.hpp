@@ -329,4 +329,50 @@ apply(Decl* p, F fn)
 }
 
 
+// -------------------------------------------------------------------------- //
+//                                  Queries
+
+// Returns true if the record `r` contains the member `m`.
+//
+// TODO: This is currently a linear search. We could optimize
+// this by equipping the class with a hash set that stores
+// know declrations.
+//
+// This function is used to guarntee compiler consistency
+// in the checking of member expressions.
+inline bool 
+has_member(Struct_decl const* r, Member_decl const* m)
+{
+  Decl_seq const& mem = r->members();
+  return std::find(mem.begin(), mem.end(), m) != mem.end();
+}
+
+
+// Returns the member decl with a specific name within a Struct_decl
+// or nullptr if no member declaration with the given name can
+// be found.
+inline Member_decl const*
+find_member(Struct_decl const* r, Symbol const* name)
+{
+  Decl_seq const& mems = r->members();
+  for (auto member : mems) {
+    if (member->name() == name)
+      return as<Member_decl>(member);
+  }
+
+  return nullptr;
+}
+
+
+// Returns the index of the member `m` in the record 
+// declaration `r`.
+inline int
+member_index(Struct_decl const* r, Member_decl const* m)
+{
+  Decl_seq const& mem = r->members();
+  auto iter = std::find(mem.begin(), mem.end(), m);
+  return iter - mem.begin();
+}
+
+
 #endif

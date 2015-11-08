@@ -491,7 +491,7 @@ Elaborator::elaborate(Call_expr* e)
     Decl_seq candidates;
     Overload const& ovl = stack.lookup(id->symbol())->second;
     for (auto decl : ovl) {
-      if (Function_type const* t = cast<Function_type>(decl->type())) {
+      if (Function_type const* t = as<Function_type>(decl->type())) {
         // push on as potential candidate
         candidates.push_back(decl);
 
