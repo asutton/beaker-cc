@@ -42,6 +42,8 @@ struct Decl::Visitor
   virtual void visit(Variable_decl const*) = 0;
   virtual void visit(Function_decl const*) = 0;
   virtual void visit(Parameter_decl const*) = 0;
+  virtual void visit(Record_decl const*) = 0;
+  virtual void visit(Field_decl const*) = 0;
   virtual void visit(Module_decl const*) = 0;
 };
 
@@ -52,6 +54,8 @@ struct Decl::Mutator
   virtual void visit(Variable_decl*) = 0;
   virtual void visit(Function_decl*) = 0;
   virtual void visit(Parameter_decl*) = 0;
+  virtual void visit(Record_decl*) = 0;
+  virtual void visit(Field_decl*) = 0;
   virtual void visit(Module_decl*) = 0;
 };
 
@@ -84,7 +88,7 @@ struct Function_decl : Decl
   void accept(Mutator& v)       { v.visit(this); }
 
   Decl_seq const&      parameters() const { return parms_; }
-  
+
   Function_type const* type() const;
   Type const*          return_type() const;
 
@@ -98,6 +102,32 @@ struct Function_decl : Decl
 
 // Represents parameter declarations.
 struct Parameter_decl : Decl
+{
+  using Decl::Decl;
+
+  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Mutator& v)       { v.visit(this); }
+};
+
+
+// Declares a user-defined record type.
+struct Record_decl : Decl
+{
+  Record_decl(Symbol const* n, Decl_seq const& f)
+    : Decl(n, nullptr), fields_(f)
+  { }
+
+  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Mutator& v)       { v.visit(this); }
+
+  Decl_seq const& fields() const { return fields_; }
+
+  Decl_seq fields_;
+};
+
+
+// A member of a record.
+struct Field_decl : Decl
 {
   using Decl::Decl;
 
@@ -149,7 +179,7 @@ is_local_variable(Variable_decl const* v)
 
 // Returns true if the declaration defines an object.
 // Only variables and parameters define objects.
-inline bool 
+inline bool
 defines_object(Decl const* d)
 {
   return is<Variable_decl>(d) || is<Parameter_decl>(d);
@@ -159,131 +189,55 @@ defines_object(Decl const* d)
 // -------------------------------------------------------------------------- //
 //                              Generic visitors
 
-template<typename F, typename R>
-struct Generic_decl_visitor : Decl::Visitor
+template<typename F, typename T>
+struct Generic_decl_visitor : Decl::Visitor, lingo::Generic_visitor<F, T>
 {
   Generic_decl_visitor(F fn)
-    : fn(fn)
+    : lingo::Generic_visitor<F, T>(fn)
   { }
-  
-  void visit(Variable_decl const* d) { r = fn(d); }
-  void visit(Function_decl const* d) { r = fn(d); }
-  void visit(Parameter_decl const* d) { r = fn(d); }
-  void visit(Module_decl const* d) { r = fn(d); }
 
-  F fn;
-  R r;
+  void visit(Variable_decl const* d) { this->invoke(d); }
+  void visit(Function_decl const* d) { this->invoke(d); }
+  void visit(Parameter_decl const* d) { this->invoke(d); }
+  void visit(Record_decl const* d) { this->invoke(d); }
+  void visit(Field_decl const* d) { this->invoke(d); }
+  void visit(Module_decl const* d) { this->invoke(d); }
 };
 
 
-// A specialization for functions returning void.
-template<typename F>
-struct Generic_decl_visitor<F, void> : Decl::Visitor
+// Apply fn to the declaration d.
+template<typename F, typename T = typename std::result_of<F(Variable_decl const*)>::type>
+inline T
+apply(Decl const* d, F fn)
 {
-  Generic_decl_visitor(F fn)
-    : fn(fn)
+  Generic_decl_visitor<F, T> v = fn;
+  return accept(d, v);
+}
+
+
+template<typename F, typename T>
+struct Generic_decl_mutator : Decl::Mutator, lingo::Generic_mutator<F, T>
+{
+  Generic_decl_mutator(F fn)
+    : lingo::Generic_mutator<F, T>(fn)
   { }
-  
-  void visit(Variable_decl const* d) { fn(d); }
-  void visit(Function_decl const* d) { fn(d); }
-  void visit(Parameter_decl const* d) { fn(d); }
-  void visit(Module_decl const* d) { fn(d); }
 
-  F fn;
+  void visit(Variable_decl* d) { this->invoke(d); }
+  void visit(Function_decl* d) { this->invoke(d); }
+  void visit(Parameter_decl* d) { this->invoke(d); }
+  void visit(Record_decl* d) { this->invoke(d); }
+  void visit(Field_decl* d) { this->invoke(d); }
+  void visit(Module_decl* d) { this->invoke(d); }
 };
-
-
-// Dispatch visitor to a void visitor.
-template<typename F, typename R = typename std::result_of<F(Variable_decl const*)>::type>
-inline typename std::enable_if<std::is_void<R>::value, void>::type
-dispatch(Decl const* d, F fn)
-{
-  Generic_decl_visitor<F, void> v(fn);
-  d->accept(v);
-}
-
-
-// Dispatch to a non-void visitor.
-template<typename F, typename R = typename std::result_of<F(Variable_decl const*)>::type>
-inline typename std::enable_if<!std::is_void<R>::value, R>::type
-dispatch(Decl const* p, F fn)
-{
-  Generic_decl_visitor<F, R> v(fn);
-  p->accept(v);
-  return v.r;
-}
 
 
 // Apply fn to the propositoin p.
-template<typename F, typename R = typename std::result_of<F(Variable_decl const*)>::type>
-inline R
-apply(Decl const* p, F fn)
+template<typename F, typename T = typename std::result_of<F(Variable_decl*)>::type>
+inline T
+apply(Decl* d, F fn)
 {
-  return dispatch(p, fn);
-}
-
-
-template<typename F, typename R>
-struct Generic_decl_mutator : Decl::Mutator
-{
-  Generic_decl_mutator(F fn)
-    : fn(fn)
-  { }
-  
-  void visit(Variable_decl* d) { r = fn(d); }
-  void visit(Function_decl* d) { r = fn(d); }
-  void visit(Parameter_decl* d) { r = fn(d); }
-  void visit(Module_decl* d) { r = fn(d); }
-
-  F fn;
-  R r;
-};
-
-
-// A specialization for functions returning void.
-template<typename F>
-struct Generic_decl_mutator<F, void> : Decl::Mutator
-{
-  Generic_decl_mutator(F fn)
-    : fn(fn)
-  { }
-  
-  void visit(Variable_decl* d) { fn(d); }
-  void visit(Function_decl* d) { fn(d); }
-  void visit(Parameter_decl* d) { fn(d); }
-  void visit(Module_decl* d) { fn(d); }
-
-  F fn;
-};
-
-
-// Dispatch visitor to a void visitor.
-template<typename F, typename R = typename std::result_of<F(Variable_decl*)>::type>
-inline typename std::enable_if<std::is_void<R>::value, void>::type
-dispatch(Decl* d, F fn)
-{
-  Generic_decl_mutator<F, void> v(fn);
-  d->accept(v);
-}
-
-
-// Dispatch to a non-void visitor.
-template<typename F, typename R = typename std::result_of<F(Variable_decl*)>::type>
-inline typename std::enable_if<!std::is_void<R>::value, R>::type
-dispatch(Decl* p, F fn)
-{
-  Generic_decl_mutator<F, R> v(fn);
-  p->accept(v);
-  return v.r;
-}
-
-
-// Apply fn to the propositoin p.
-template<typename F, typename R = typename std::result_of<F(Variable_decl*)>::type>
-inline R
-apply(Decl* p, F fn)
-{
-  return dispatch(p, fn);
+  Generic_decl_mutator<F, T> v = fn;
+  return accept(d, v);
 }
 
 

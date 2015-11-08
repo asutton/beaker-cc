@@ -24,17 +24,24 @@ Type::nonref() const
 }
 
 
-Type const* 
-Reference_type::ref() const 
-{ 
-  return this; 
+Type const*
+Reference_type::ref() const
+{
+  return this;
 }
 
 
-Type const* 
-Reference_type::nonref() const 
-{ 
-  return first; 
+Type const*
+Reference_type::nonref() const
+{
+  return first;
+}
+
+
+Record_decl const*
+Record_type::declaration() const
+{
+  return cast<Record_decl>(decl_);
 }
 
 
@@ -54,6 +61,15 @@ struct Type_less
 template<typename T>
 using Type_set = std::set<T, Type_less<T>>;
 
+
+// Note that id types are not canonicalized.
+// They don't need to be since they never
+// escape elaboration.
+Type const*
+get_id_type(Symbol const* s)
+{
+  return new Id_type(s);
+}
 
 Type const*
 get_boolean_type()
@@ -97,5 +113,14 @@ get_reference_type(Type const* t)
 {
   static Type_set<Reference_type> ts;
   auto ins = ts.emplace(t);
+  return &*ins.first;
+}
+
+
+Type const*
+get_record_type(Record_decl const* r)
+{
+  static Type_set<Record_type> ts;
+  auto ins = ts.emplace(r);
   return &*ins.first;
 }

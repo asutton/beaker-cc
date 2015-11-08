@@ -12,21 +12,30 @@
 // -------------------------------------------------------------------------- //
 // Types
 
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, Type const& t)
 {
   struct Fn
   {
     std::ostream& os;
 
+    void operator()(Id_type const* t) { os << *t; }
     void operator()(Boolean_type const* t) { os << *t; }
     void operator()(Integer_type const* t) { os << *t; }
     void operator()(Function_type const* t) { os << *t; }
     void operator()(Reference_type const* t) { os << *t; }
+    void operator()(Record_type const* t) { os << *t; }
   };
 
   apply(&t, Fn{os});
   return os;
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Id_type const& t)
+{
+  return os << "unresolved:" << *t.symbol();
 }
 
 
@@ -67,10 +76,18 @@ operator<<(std::ostream& os, Reference_type const& t)
 }
 
 
+// Just print the name of the type.
+std::ostream&
+operator<<(std::ostream& os, Record_type const& t)
+{
+  return os << *t.declaration()->name();
+}
+
+
 // -------------------------------------------------------------------------- //
 // Expressions
 
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, Expr const& e)
 {
   struct Fn
@@ -97,146 +114,148 @@ operator<<(std::ostream& os, Expr const& e)
     void operator()(Not_expr const* e) { os << *e; }
     void operator()(Call_expr const* e) { os << *e; }
     void operator()(Value_conv const* e) { os << *e; }
+    void operator()(Default_init const* e) { os << *e; }
+    void operator()(Copy_init const* e) { os << *e; }
   };
   apply(&e, Fn{os});
   return os;
 }
 
 
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, Literal_expr const& e)
 {
   return os << e.spelling();
 }
 
 
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, Id_expr const& e)
 {
   return os << e.spelling();
 }
 
 
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, Add_expr const&)
 {
   return os;
 }
 
 
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, Sub_expr const&)
 {
   return os;
 }
 
 
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, Mul_expr const&)
 {
   return os;
 }
 
 
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, Div_expr const&)
 {
   return os;
 }
 
 
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, Rem_expr const&)
 {
   return os;
 }
 
 
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, Neg_expr const&)
 {
   return os;
 }
 
 
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, Pos_expr const&)
 {
   return os;
 }
 
 
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, Eq_expr const&)
 {
   return os;
 }
 
 
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, Ne_expr const&)
 {
   return os;
 }
 
 
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, Lt_expr const&)
 {
   return os;
 }
 
 
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, Gt_expr const&)
 {
   return os;
 }
 
 
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, Le_expr const&)
 {
   return os;
 }
 
 
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, Ge_expr const&)
 {
   return os;
 }
 
 
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, And_expr const&)
 {
   return os;
 }
 
 
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, Or_expr const&)
 {
   return os;
 }
 
 
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, Not_expr const&)
 {
   return os;
 }
 
 
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, Call_expr const&)
 {
   return os;
 }
 
 
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, Value_conv const& e)
 {
   return os << "__to_value("
@@ -245,3 +264,17 @@ operator<<(std::ostream& os, Value_conv const& e)
 }
 
 
+std::ostream&
+operator<<(std::ostream& os, Default_init const& e)
+{
+  // return os;
+  return os << "__default_init(" << *e.type() << ")";
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Copy_init const& e)
+{
+  return os << "__copy_init(" << *e.type() << ',' << *e.value() << ")";
+  // return os << *e.value();
+}

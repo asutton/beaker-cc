@@ -1,0 +1,9 @@
+
+struct S0 { }
+
+// struct S1 {
+//   x : int;
+//   y : int;
+// }
+
+var v1 : S0;
