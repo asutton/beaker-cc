@@ -43,13 +43,22 @@ Parser::primary_expr()
 // Parse a postfix expression.
 //
 //    postfix-expression -> postfix-expression '(' argument-list ')'
+//                       | postfix-expression . identifier
 //                       -> primary-expression
 Expr*
 Parser::postfix_expr()
 {
   Expr* e1 = primary_expr();
   while (true) {
-    if (match_if(lparen_tok)) {
+    // dot-expr
+    if (match_if(dot_tok)) {
+      Token tok = match(identifier_tok);
+      Expr* e2 = on_id(tok);
+      e1 = on_dot(e1, e2);
+    }
+
+    // call-expr
+    else if (match_if(lparen_tok)) {
       Expr_seq args;
       while (lookahead() != rparen_tok) {
         args.push_back(expr());
@@ -60,7 +69,10 @@ Parser::postfix_expr()
       }
       match(rparen_tok);
       e1 = on_call(e1, args);
-    } else {
+    }
+
+    // anything else
+    else {
       break;
     }
   }
@@ -904,6 +916,13 @@ Expr*
 Parser::on_call(Expr* e, Expr_seq const& a)
 {
   return new Call_expr(e, a);
+}
+
+
+Expr*
+Parser::on_dot(Expr* e1, Expr* e2)
+{
+  return new Member_expr(e1, e2);
 }
 
 

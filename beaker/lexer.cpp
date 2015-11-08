@@ -28,12 +28,12 @@ Input_buffer::get()
 {
   if (eof())
     return 0;
-  
+
   if (*pos_ == '\n') {
     lines_.emplace(offset(), Line(lines_.size() + 1, last_, pos_));
     last_ = pos_ + 1;
   }
-  
+
   return *pos_++;
 }
 
@@ -48,7 +48,7 @@ Token
 Lexer::scan()
 {
   // Keep consuming characters until we find
-  // a token. 
+  // a token.
   while (true) {
     space();
 
@@ -66,11 +66,12 @@ Lexer::scan()
       case ',': return comma();
       case ':': return colon();
       case ';': return semicolon();
+      case '.': return dot();
       case '+': return plus();
       case '-': return minus();
       case '*': return star();
-      
-      case '/': 
+
+      case '/':
         get();
         if (peek() == '/') {
           comment();
@@ -78,7 +79,7 @@ Lexer::scan()
         } else {
           return slash();
         }
-      
+
       case '%': return percent();
       case '=': return equal();
       case '!': return bang();
@@ -134,7 +135,7 @@ Lexer::on_word()
   Symbol const* sym = syms_.get(str);
   if (!sym)
     sym = syms_.put<Identifier_sym>(str, identifier_tok);
- 
+
   return Token(loc_, sym->token(), sym);
 }
 
@@ -160,7 +161,7 @@ Lexer::comment()
       break;
     get();
   }
-  
+
   // TODO: Do something interesting with comments
   // instead of just discarding them.
   build_.clear();

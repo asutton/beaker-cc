@@ -14,6 +14,7 @@ spelling(Token_kind k)
     case comma_tok: return ",";
     case colon_tok: return ":";
     case semicolon_tok: return ";";
+    case dot_tok: return ".";
     case equal_tok: return "=";
     case plus_tok: return "+";
     case minus_tok: return "-";
@@ -60,6 +61,7 @@ init_symbols(Symbol_table& syms)
   syms.put<Symbol>(",", comma_tok);
   syms.put<Symbol>(":", colon_tok);
   syms.put<Symbol>(";", semicolon_tok);
+  syms.put<Symbol>(".", dot_tok);
   syms.put<Symbol>("=", equal_tok);
   syms.put<Symbol>("+", plus_tok);
   syms.put<Symbol>("-", minus_tok);

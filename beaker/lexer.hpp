@@ -17,7 +17,7 @@
 // -------------------------------------------------------------------------- //
 // Input buffer
 
-// The Input_buffer class provides a stream abstraction on top 
+// The Input_buffer class provides a stream abstraction on top
 // of an underlying string buffer and also a lexical
 // view of the file (i.e., a line map) and source file
 // object.
@@ -49,7 +49,7 @@ public:
   Input_buffer(File const&);
 
   bool eof() const;
-  
+
   char peek() const;
   char peek(int) const;
   char get();
@@ -57,7 +57,7 @@ public:
   File const* file() const     { return file_; }
   Position    position() const { return pos_; }
   int         offset() const   { return pos_ - buf_.begin(); }
-  
+
   int         line_no() const;
   int         column_no() const;
   Location    location() const;
@@ -160,6 +160,7 @@ public:
   Token comma();
   Token colon();
   Token semicolon();
+  Token dot();
   Token plus();
   Token minus();
   Token star();
@@ -174,7 +175,7 @@ public:
 
   Token integer();
   Token word();
-  
+
   Token eof();
   Token error();
 
@@ -192,8 +193,8 @@ private:
   void ignore();
 
   // Token constructors
-  Token symbol0(); 
-  Token symbol1(); 
+  Token symbol0();
+  Token symbol1();
 
   // Lexers
   void comment();
@@ -268,7 +269,7 @@ Lexer::symbol0()
 }
 
 
-// Consume all 1-character symbols and call the 
+// Consume all 1-character symbols and call the
 // corresponding semantic action.
 inline Token
 Lexer::symbol1()
@@ -322,6 +323,13 @@ Lexer::colon()
 
 inline Token
 Lexer::semicolon()
+{
+  return symbol1();
+}
+
+
+inline Token
+Lexer::dot()
 {
   return symbol1();
 }
@@ -486,24 +494,24 @@ Lexer::eof()
 }
 
 
-inline char 
-Lexer::peek() const 
-{ 
-  return in_.peek(); 
+inline char
+Lexer::peek() const
+{
+  return in_.peek();
 }
 
 
-inline char 
-Lexer::peek(int n) const 
-{ 
-  return in_.peek(n); 
+inline char
+Lexer::peek(int n) const
+{
+  return in_.peek(n);
 }
 
 
-inline char 
+inline char
 Lexer::get()
-{ 
-  char c = in_.get(); 
+{
+  char c = in_.get();
   build_.put(c);
   return c;
 }
@@ -511,7 +519,7 @@ Lexer::get()
 
 inline void
 Lexer::get(int n)
-{ 
+{
   while (n) {
     char c = get();
     --n;
@@ -522,8 +530,8 @@ Lexer::get(int n)
 
 inline void
 Lexer::ignore()
-{ 
-  in_.get(); 
+{
+  in_.get();
 }
 
 

@@ -87,6 +87,7 @@ private:
   Expr* on_or(Expr*, Expr*);
   Expr* on_not(Expr*);
   Expr* on_call(Expr*, Expr_seq const&);
+  Expr* on_dot(Expr*, Expr*);
 
   Decl* on_variable(Token, Type const*);
   Decl* on_variable(Token, Type const*, Expr*);

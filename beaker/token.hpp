@@ -28,6 +28,7 @@ enum Token_kind
   comma_tok,
   colon_tok,
   semicolon_tok,
+  dot_tok,
   equal_tok,
   plus_tok,
   minus_tok,
