@@ -44,9 +44,11 @@ Generator::get_type(Type const* t)
 // function. Id-types are replaced with their
 // referenced declarations during elaboration.
 llvm::Type*
-Generator::get_type(Id_type const*)
+Generator::get_type(Id_type const* t)
 {
-  throw std::runtime_error("unresolved id-type");
+  std::stringstream ss;
+  ss << "unresolved id-type '" << *t->symbol() << '\'';
+  throw std::runtime_error(ss.str());
 }
 
 
@@ -91,12 +93,12 @@ Generator::get_type(Reference_type const* t)
 }
 
 
-// Emit a global alias for the type and return
-// that name.
+// Return the structure type corresponding to the
+// declaration of t.
 llvm::Type*
 Generator::get_type(Record_type const* t)
 {
-  throw std::runtime_error("not implemented");
+  return types.lookup(t->declaration())->second;
 }
 
 
@@ -133,6 +135,7 @@ Generator::gen(Expr const* e)
     llvm::Value* operator()(Call_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Value_conv const* e) const { return g.gen(e); }
     llvm::Value* operator()(Default_init const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Copy_init const* e) const { return g.gen(e); }
   };
 
   return apply(e, Fn{*this});
@@ -296,14 +299,32 @@ Generator::gen(Value_conv const* e)
 }
 
 
-// Store the default value for T into a declared
-// object.
+// TODO: Return the value or store it?
 llvm::Value*
 Generator::gen(Default_init const* e)
 {
-  // FIXME: Either generate a 0 or a zeroinitializer for
-  // the object.
-  throw std::runtime_error("not implemented");
+  Type const* t = e->type();
+  llvm::Type* type = get_type(t);
+
+  // TODO: Scalar types should get a 0 value in the
+  // appropriate type.
+
+  // Aggregate types are zero initialized.
+  //
+  // NOTE: This isn't actually correct. Aggregate types
+  // should be memberwise default initialized.
+  if (is<Record_type>(t))
+    return llvm::ConstantAggregateZero::get(type);
+
+  throw std::runtime_error("unhahndled default initializer");
+}
+
+
+// TODO: Return the value or store it?
+llvm::Value*
+Generator::gen(Copy_init const* e)
+{
+  return gen(e->value());
 }
 
 
@@ -477,7 +498,12 @@ Generator::gen_global(Variable_decl const* d)
   // FIXME: Handle initialization correctly. If the
   // initializer is a literal (or a constant expression),
   // then we should evaluate that and assign it here.
-  llvm::Constant* init = llvm::ConstantInt::get(type, 0);
+  llvm::Value* val = gen(d->init());
+  llvm::Constant* init;
+  if (llvm::Constant* c = llvm::dyn_cast<llvm::Constant>(val))
+    init = c;
+  else
+    init = llvm::ConstantInt::get(type, 0);
 
   // Note that the aggregate 0 only applies to aggregate
   // types. We can't apply it to initializers for scalars.
@@ -600,7 +626,8 @@ Generator::gen(Record_decl const* d)
 
   // This will automatically be added to the module,
   // but if it's not used, then it won't be generated.
-  llvm::StructType::create(cxt, ts, d->name()->spelling());
+  llvm::Type* t = llvm::StructType::create(cxt, ts, d->name()->spelling());
+  types.bind(d, t);
 }
 
 

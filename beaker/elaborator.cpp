@@ -80,6 +80,94 @@ Scope_stack::function() const
 
 
 // -------------------------------------------------------------------------- //
+// Elaboration of types
+
+
+Type const*
+Elaborator::elaborate(Type const* t)
+{
+  struct Fn
+  {
+    Elaborator& elab;
+
+    Type const* operator()(Id_type const* t) { return elab.elaborate(t); }
+    Type const* operator()(Boolean_type const* t) { return elab.elaborate(t); }
+    Type const* operator()(Integer_type const* t) { return elab.elaborate(t); }
+    Type const* operator()(Function_type const* t) { return elab.elaborate(t); }
+    Type const* operator()(Reference_type const* t) { return elab.elaborate(t); }
+    Type const* operator()(Record_type const* t) { return elab.elaborate(t); }
+  };
+  return apply(t, Fn{*this});
+}
+
+
+Type const*
+Elaborator::elaborate(Id_type const* t)
+{
+  Scope::Binding const* b = stack.lookup(t->symbol());
+  if (!b) {
+    std::stringstream ss;
+    ss << "no matching declaration for '" << *t->symbol() << '\'';
+    throw Lookup_error(locs.get(t), ss.str());
+  }
+
+  // Determine if the name is a type declaration.
+  Decl* d = b->second;
+  if (Record_decl* r = as<Record_decl>(d)) {
+    return get_record_type(r);
+  }
+  else {
+    std::stringstream ss;
+    ss << '\'' << *t->symbol() << "' does not name a type";
+    throw Lookup_error(locs.get(t), ss.str());
+  }
+}
+
+
+Type const*
+Elaborator::elaborate(Boolean_type const* t)
+{
+  return t;
+}
+
+
+Type const*
+Elaborator::elaborate(Integer_type const* t)
+{
+  return t;
+}
+
+
+// Elaborate each type in the function type.
+Type const*
+Elaborator::elaborate(Function_type const* t)
+{
+  Type_seq ts;
+  ts.reserve(t->parameter_types().size());
+  for (Type const* t1 : t->parameter_types())
+    ts.push_back(elaborate(t1));
+  Type const* r = elaborate(t->return_type());
+  return get_function_type(ts, r);
+}
+
+
+Type const*
+Elaborator::elaborate(Reference_type const* t)
+{
+  Type const* t1 = elaborate(t->type());
+  return get_reference_type(t1);
+}
+
+
+// No further elaboration is needed.
+Type const*
+Elaborator::elaborate(Record_type const* t)
+{
+  return t;
+}
+
+
+// -------------------------------------------------------------------------- //
 // Elaboration of expressions
 
 // Returns the type of an expression. This also annotates
@@ -113,14 +201,10 @@ Elaborator::elaborate(Expr* e)
     Expr* operator()(Call_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Value_conv* e) const { return elab.elaborate(e); }
     Expr* operator()(Default_init* e) const { return elab.elaborate(e); }
+    Expr* operator()(Copy_init* e) const { return elab.elaborate(e); }
   };
 
-  // If the expression has no type, then we need to
-  // elaborate it and annotate the object.
-  if (!e->type())
-    return apply(e, Fn{*this});
-  else
-    return e;
+  return apply(e, Fn{*this});
 }
 
 
@@ -174,7 +258,6 @@ Elaborator::elaborate(Id_expr* e)
 
 namespace
 {
-
 
 // Used to require the conversion of a reference to a
 // value. Essentially, this unwraps the reference if
@@ -508,6 +591,26 @@ Elaborator::elaborate(Value_conv* e)
 Expr*
 Elaborator::elaborate(Default_init* e)
 {
+  e->type_ = elaborate(e->type_);
+  return e;
+}
+
+
+Expr*
+Elaborator::elaborate(Copy_init* e)
+{
+  // Elaborate the type.
+  e->type_ = elaborate(e->type_);
+
+  // Convert the value to the resulting type.
+  Expr* c = require_converted(*this, e->first, e->type_);
+  if (!c) {
+    std::stringstream ss;
+    ss << "type mismatch in copy initializer (expected "
+       << e->value() << " but got " << e->value()->type() << ')';
+    throw Type_error({}, ss.str());
+  }
+
   return e;
 }
 
@@ -544,21 +647,21 @@ Elaborator::elaborate(Decl* d)
 void
 Elaborator::elaborate(Variable_decl* d)
 {
+  d->type_ = elaborate(d->type_);
+
+  // Declare the variable.
   stack.declare(d);
 
-  // Apply conversions to the initializer.
-  Expr* c = require_converted(*this, d->init_, d->type_);
-  if (!c) {
-    std::stringstream ss;
-    ss << "type mismatch in initializer (expected "
-       << *d->type() << " but got " << *d->init()->type() << ')';
-    throw Type_error({}, ss.str());
-  }
+  // Elaborate the initializer. Note that the initializers
+  // type must be the same as that of the declaration.
+  elaborate(d->init());
 
-  // Annotate the initializer with the
-  // declared object.
-  if (Initializer* init = as<Initializer>(d->init_))
-    init->decl_ = d;
+  // Annotate the initializer with the declared
+  // object.
+  //
+  // TODO: This will probably be an expression in
+  // the future.
+  cast<Initializer>(d->init())->decl_ = d;
 }
 
 
@@ -567,6 +670,9 @@ Elaborator::elaborate(Variable_decl* d)
 void
 Elaborator::elaborate(Function_decl* d)
 {
+  d->type_ = elaborate(d->type_);
+
+  // Declare the function.
   stack.declare(d);
 
   // Remember if we've seen a function named main().
@@ -596,6 +702,7 @@ Elaborator::elaborate(Function_decl* d)
 void
 Elaborator::elaborate(Parameter_decl* d)
 {
+  d->type_ = elaborate(d->type_);
   stack.declare(d);
 }
 
@@ -613,6 +720,7 @@ Elaborator::elaborate(Record_decl* d)
 void
 Elaborator::elaborate(Field_decl* d)
 {
+  d->type_ = elaborate(d->type_);
   stack.declare(d);
 }
 

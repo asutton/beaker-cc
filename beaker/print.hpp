@@ -38,6 +38,7 @@ std::ostream& operator<<(std::ostream&, Not_expr const&);
 std::ostream& operator<<(std::ostream&, Call_expr const&);
 std::ostream& operator<<(std::ostream&, Value_conv const&);
 std::ostream& operator<<(std::ostream&, Default_init const&);
+std::ostream& operator<<(std::ostream&, Copy_init const&);
 
 
 #endif

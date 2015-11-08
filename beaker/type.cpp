@@ -39,7 +39,7 @@ Reference_type::nonref() const
 
 
 Record_decl const*
-Record_type::decl() const
+Record_type::declaration() const
 {
   return cast<Record_decl>(decl_);
 }
@@ -62,12 +62,13 @@ template<typename T>
 using Type_set = std::set<T, Type_less<T>>;
 
 
+// Note that id types are not canonicalized.
+// They don't need to be since they never
+// escape elaboration.
 Type const*
 get_id_type(Symbol const* s)
 {
-  static Type_set<Id_type> fn;
-  auto ins = fn.emplace(s);
-  return &*ins.first;
+  return new Id_type(s);
 }
 
 Type const*

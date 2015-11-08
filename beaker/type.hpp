@@ -124,7 +124,7 @@ struct Record_type : Type
 
   void accept(Visitor& v) const { v.visit(this); };
 
-  Record_decl const* decl() const;
+  Record_decl const* declaration() const;
 
   Decl const* decl_;
 };
@@ -140,7 +140,7 @@ Type const* get_integer_type();
 Type const* get_function_type(Type_seq const&, Type const*);
 Type const* get_function_type(Decl_seq const&, Type const*);
 Type const* get_reference_type(Type const*);
-Type const* get_record_type(Decl*);
+Type const* get_record_type(Record_decl const*);
 
 
 // -------------------------------------------------------------------------- //

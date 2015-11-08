@@ -28,6 +28,9 @@
 using Symbol_env = Environment<Decl const*, llvm::Value*>;
 using Symbol_stack = Stack<Symbol_env>;
 
+// Like the symbol environment, except that all
+// type annotations are global.
+using Type_env = Environment<Decl const*, llvm::Type*>;
 
 struct Generator
 {
@@ -65,6 +68,7 @@ struct Generator
   llvm::Value* gen(Call_expr const*);
   llvm::Value* gen(Value_conv const*);
   llvm::Value* gen(Default_init const*);
+  llvm::Value* gen(Copy_init const*);
 
   void gen(Stmt const*);
   void gen(Empty_stmt const*);
@@ -95,6 +99,7 @@ struct Generator
   llvm::Module*     mod;
 
   Symbol_stack      stack;
+  Type_env          types;
 
   struct Symbol_sentinel;
 };

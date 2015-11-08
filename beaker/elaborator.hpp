@@ -68,6 +68,14 @@ class Elaborator
 public:
   Elaborator(Location_map&);
 
+  Type const* elaborate(Type const*);
+  Type const* elaborate(Id_type const*);
+  Type const* elaborate(Boolean_type const*);
+  Type const* elaborate(Integer_type const*);
+  Type const* elaborate(Function_type const*);
+  Type const* elaborate(Reference_type const*);
+  Type const* elaborate(Record_type const*);
+
   Expr* elaborate(Expr*);
   Expr* elaborate(Literal_expr*);
   Expr* elaborate(Id_expr*);
@@ -90,6 +98,7 @@ public:
   Expr* elaborate(Call_expr* e);
   Expr* elaborate(Value_conv* e);
   Expr* elaborate(Default_init* e);
+  Expr* elaborate(Copy_init* e);
 
   void elaborate(Decl*);
   void elaborate(Variable_decl*);

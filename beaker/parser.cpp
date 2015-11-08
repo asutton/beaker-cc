@@ -265,7 +265,7 @@ Parser::type()
 {
   // id-type
   if (Token tok = match_if(identifier_tok))
-    return get_id_type(tok.symbol());
+    return on_id_type(tok);
 
   // bool
   if (match_if(bool_kw))
@@ -757,6 +757,17 @@ Parser::error(String const& msg)
 // -------------------------------------------------------------------------- //
 // Semantic actions
 
+
+// Build a placeholder for a type name. Note that
+// we can map these into
+Type const*
+Parser::on_id_type(Token tok)
+{
+  Type const* t = get_id_type(tok.symbol());
+  locs_->emplace(t, tok.location());
+  return t;
+}
+
 Expr*
 Parser::on_id(Token tok)
 {
@@ -899,14 +910,16 @@ Parser::on_call(Expr* e, Expr_seq const& a)
 Decl*
 Parser::on_variable(Token tok, Type const* t)
 {
-  return on_variable(tok, t, new Default_init(t));
+  Expr* init = new Default_init(t);
+  return new Variable_decl(tok.symbol(), t, init);
 }
 
 
 Decl*
 Parser::on_variable(Token tok, Type const* t, Expr* e)
 {
-  return new Variable_decl(tok.symbol(), t, e);
+  Expr* init = new Copy_init(t, e);
+  return new Variable_decl(tok.symbol(), t, init);
 }
 
 

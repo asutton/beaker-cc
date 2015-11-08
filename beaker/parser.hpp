@@ -66,6 +66,7 @@ public:
 
 private:
   // Actions
+  Type const* on_id_type(Token);
   Expr* on_id(Token);
   Expr* on_bool(Token);
   Expr* on_int(Token);

@@ -35,7 +35,7 @@ operator<<(std::ostream& os, Type const& t)
 std::ostream&
 operator<<(std::ostream& os, Id_type const& t)
 {
-  return os << *t.symbol();
+  return os << "unresolved:" << *t.symbol();
 }
 
 
@@ -76,10 +76,11 @@ operator<<(std::ostream& os, Reference_type const& t)
 }
 
 
+// Just print the name of the type.
 std::ostream&
 operator<<(std::ostream& os, Record_type const& t)
 {
-  return os << *t.decl()->name();
+  return os << *t.declaration()->name();
 }
 
 
@@ -114,6 +115,7 @@ operator<<(std::ostream& os, Expr const& e)
     void operator()(Call_expr const* e) { os << *e; }
     void operator()(Value_conv const* e) { os << *e; }
     void operator()(Default_init const* e) { os << *e; }
+    void operator()(Copy_init const* e) { os << *e; }
   };
   apply(&e, Fn{os});
   return os;
@@ -265,5 +267,14 @@ operator<<(std::ostream& os, Value_conv const& e)
 std::ostream&
 operator<<(std::ostream& os, Default_init const& e)
 {
-  return os << "__default_init(" << *e.type() << ')';
+  // return os;
+  return os << "__default_init(" << *e.type() << ")";
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Copy_init const& e)
+{
+  return os << "__copy_init(" << *e.type() << ',' << *e.value() << ")";
+  // return os << *e.value();
 }

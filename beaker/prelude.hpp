@@ -38,6 +38,7 @@ struct Not_expr;
 struct Call_expr;
 struct Value_conv;
 struct Default_init;
+struct Copy_init;
 
 struct Type;
 struct Id_type;

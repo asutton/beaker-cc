@@ -51,7 +51,7 @@ inline bool
 is_less(Record_type const* a, Record_type const* b)
 {
   std::less<void const*> cmp;
-  return cmp(a->decl(), b->decl());
+  return cmp(a->declaration(), b->declaration());
 }
 
 
