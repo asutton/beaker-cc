@@ -23,6 +23,7 @@ operator<<(std::ostream& os, Type const& t)
     void operator()(Integer_type const* t) { os << *t; }
     void operator()(Function_type const* t) { os << *t; }
     void operator()(Reference_type const* t) { os << *t; }
+    void operator()(Struct_type const* t) { os << *t; }
   };
 
   apply(&t, Fn{os});
@@ -64,6 +65,13 @@ std::ostream&
 operator<<(std::ostream& os, Reference_type const& t)
 {
   return os << "ref " << *t.type();
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Struct_type const& t)
+{
+  return os << "struct " << t.decl()->name();
 }
 
 

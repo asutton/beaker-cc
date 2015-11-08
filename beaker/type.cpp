@@ -99,3 +99,12 @@ get_reference_type(Type const* t)
   auto ins = ts.emplace(t);
   return &*ins.first;
 }
+
+
+Type const*
+get_struct_type(Decl const* d)
+{
+  static Type_set<Struct_type> fn;
+  auto ins = fn.emplace(d);
+  return &*ins.first;  
+}

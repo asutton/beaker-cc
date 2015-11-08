@@ -28,6 +28,7 @@ add_library(beaker STATIC
   parser.cpp
   environment.cpp
   elaborator.cpp
+  overload.cpp
   evaluator.cpp
   generator.cpp
 )

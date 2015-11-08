@@ -33,6 +33,15 @@ is_equal(Reference_type const* a, Reference_type const* b)
 }
 
 
+// Two record types are the same if they point to the same
+// record declaration
+inline bool
+is_equal(Struct_type const* a, Struct_type const* b)
+{
+  return a->decl() == b->decl();
+}
+
+
 bool
 is_equal(Type const* a, Type const* b)
 {
@@ -58,6 +67,11 @@ is_equal(Type const* a, Type const* b)
     bool operator()(Reference_type const* a)
     {
       return is_equal(a, cast<Reference_type>(b));
+    }
+
+    bool operator()(Struct_type const* a)
+    {
+      return is_equal(a, cast<Struct_type>(b));
     }
   };
 

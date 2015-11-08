@@ -39,6 +39,13 @@ is_less(Reference_type const* a, Reference_type const* b)
 }
 
 
+inline bool
+is_equal(Struct_type const* a, Struct_type const* b)
+{
+  return a->decl() < b->decl();
+}
+
+
 bool
 is_less(Type const* a, Type const* b)
 {
@@ -57,6 +64,11 @@ is_less(Type const* a, Type const* b)
     bool operator()(Reference_type const* a)
     {
       return is_less(a, cast<Reference_type>(b));
+    }
+
+    bool operator()(Struct_type const* a)
+    {
+      return is_less(a, cast<Struct_type>(b));
     }
   };
 

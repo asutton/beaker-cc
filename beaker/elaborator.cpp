@@ -16,6 +16,15 @@
 // Lexical scoping
 
 
+Overload const& 
+Scope::bind(Symbol const* sym, Decl* d)
+{
+  Overload ovl { d };
+  Binding const& ins = Environment::bind(sym, ovl);
+  return ins.second;
+}
+
+
 // Create a declarative binding for d. This also checks
 // that the we are not redefining a symbol in the current 
 // scope.
@@ -24,14 +33,21 @@ Scope_stack::declare(Decl* d)
 {
   Scope& scope = current();
 
-  // TODO: If we allow overloading, then this is
-  // where we would handle that.
-  if (scope.lookup(d->name())) {
-    // TODO: Add a note that points to the previous
-    // definition.
+  if (auto binding = scope.lookup(d->name())) {
+    // check to see if overloading is possible
+    // the second member of the pair is an overload set
+    // if it is not possible this call will produce an error
+    if (overload_decl(&binding->second, d)) {
+      // set the declaration context
+      d->cxt_ = context();
+      return;
+    }
+
+    // TODO: Add a note that points to the previous definition
     std::stringstream ss;
     ss << "redefinition of '" << *d->name() << "'\n";
     throw Lookup_error({}, ss.str());
+    return;
   }
   
   // Create the binding.
@@ -160,7 +176,7 @@ Elaborator::elaborate(Id_expr* e)
   }
 
   // Annotate the expression with its declaration.
-  Decl* d = b->second;
+  Decl* d = b->second.front();
   e->declaration(d);
 
   // If the referenced declaration is a variable of
@@ -457,12 +473,85 @@ Elaborator::elaborate(Not_expr* e)
 
 // The target function operand is converted to
 // an rvalue and shall have funtion type.
+//
+// FIXME: refactor this, its long and ugly
 Expr*
 Elaborator::elaborate(Call_expr* e)
 {
   // Apply lvalue to rvalue conversion and ensure that
   // the target has function type.
   Expr* f = require_value(*this, e->first);
+
+  // If this is just a regular function call.
+  // Instead of simply looking for the type, we should do
+  // a lookup of the name and check if any functions in scope
+  // have that type
+  if (Id_expr* id = as<Id_expr>(f)) {
+    // maintain list of candidates
+    Decl_seq candidates;
+    Overload const& ovl = stack.lookup(id->symbol())->second;
+    for (auto decl : ovl) {
+      if (Function_type const* t = as<Function_type>(decl->type())) {
+        // push on as potential candidate
+        candidates.push_back(decl);
+
+        // Check for basic function arity.
+        Type_seq const& parms = t->parameter_types();
+        Expr_seq& args = e->arguments();
+        if (args.size() < parms.size())
+          continue;
+        if (parms.size() < args.size())
+          continue;
+
+        // Check that each argument conforms to the the
+        // parameter. 
+
+        // FIXME: this is ugly
+        bool parms_ok = true;
+        for (std::size_t i = 0; i < parms.size(); ++i) {
+          Type const* p = parms[i];
+          Expr* a = require_converted(*this, args[i], p);
+          if (!a)
+            parms_ok = false;       
+        }
+        // reset the loop
+        if (!parms_ok) 
+          continue;
+
+        // if we get here then this is the correct function
+        // The type of the expression is that of the
+        // function return type.
+        e->type(t->return_type());
+
+        return e;
+      }
+    }
+
+    // if we get here then no overload resolutions match
+    Expr_seq& args = e->arguments();
+    std::stringstream ss;
+    ss << "No matching function found for call to " << *id->symbol() << "(";
+    for (std::size_t i = 0; i < args.size(); ++i) {
+      Expr* ai = require_value(*this, args[i]);
+      Type const* p = ai->type();
+
+      if (p)
+        ss << *p;
+      if (i < args.size() - 1)
+        ss << ", ";
+    }
+    ss << ").\n";
+    
+    // print out all candidates
+    ss << "Candidates are: \n";
+    for (auto fn : candidates) {
+      ss << *fn->name() << *fn->type() << '\n';
+    } 
+    throw Type_error({}, ss.str());
+  }
+
+  // This could potentially be a call whose target is a
+  // function object
   Type const* t1 = f->type();
   if (!is<Function_type>(t1))
     throw Type_error({}, "cannot call to non-function");
@@ -492,7 +581,7 @@ Elaborator::elaborate(Call_expr* e)
   // function return type.
   e->type(t->return_type());
 
-  return e;
+  return e;  
 }
 
 
@@ -508,6 +597,8 @@ Elaborator::elaborate(Decl* d)
   {
     Elaborator& elab;
 
+    void operator()(Struct_decl* d) const { return elab.elaborate(d); }
+    void operator()(Member_decl* d) const { return elab.elaborate(d); }
     void operator()(Variable_decl* d) const { return elab.elaborate(d); }
     void operator()(Function_decl* d) const { return elab.elaborate(d); }
     void operator()(Parameter_decl* d) const { return elab.elaborate(d); }
@@ -571,6 +662,20 @@ void
 Elaborator::elaborate(Parameter_decl* d)
 {
   stack.declare(d);
+}
+
+
+void 
+Elaborator::elaborate(Struct_decl* d)
+{
+  // TODO: implement me
+}
+
+
+void 
+Elaborator::elaborate(Member_decl* d)
+{
+  // TODO: implement me
 }
 
 

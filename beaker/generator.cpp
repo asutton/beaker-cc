@@ -33,6 +33,7 @@ Generator::get_type(Type const* t)
     llvm::Type* operator()(Integer_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Function_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Reference_type const* t) const { return g.get_type(t); }
+    llvm::Type* operator()(Struct_type const* t) const { return g.get_type(t); }
   };
   return apply(t, Fn{*this});
 }
@@ -76,6 +77,15 @@ Generator::get_type(Reference_type const* t)
 {
   llvm::Type* t1 = get_type(t->type());
   return llvm::PointerType::getUnqual(t1);
+}
+
+
+// Generate a struct type
+llvm::Type*
+Generator::get_type(Struct_type const* t)
+{
+  // TODO: implement me
+  return nullptr;
 }
 
 
@@ -420,6 +430,8 @@ Generator::gen(Decl const* d)
     void operator()(Variable_decl const* d) { return g.gen(d); }
     void operator()(Function_decl const* d) { return g.gen(d); }
     void operator()(Parameter_decl const* d) { return g.gen(d); }
+    void operator()(Struct_decl const* d) { return g.gen(d); }
+    void operator()(Member_decl const* d) { return g.gen(d); }
     void operator()(Module_decl const* d) { return g.gen(d); }
   };
   return apply(d, Fn{*this});
@@ -537,6 +549,8 @@ Generator::gen(Function_decl const* d)
 }
 
 
+
+
 void
 Generator::gen(Parameter_decl const* d)
 {
@@ -545,6 +559,26 @@ Generator::gen(Parameter_decl const* d)
   llvm::Value* v = build.CreateAlloca(t);
   stack.top().rebind(d, v);
   build.CreateStore(a, v);
+}
+
+
+// Generate code for a record decl
+//
+// TODO: implement
+void
+Generator::gen(Struct_decl const* d)
+{
+  // TODO: implement me
+}
+
+
+// Generate code for a member decl
+//
+// TODO: implement
+void
+Generator::gen(Member_decl const* d)
+{
+  // TODO: implement me
 }
 
 

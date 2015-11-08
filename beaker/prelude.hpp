@@ -43,11 +43,14 @@ struct Boolean_type;
 struct Integer_type;
 struct Function_type;
 struct Reference_type;
+struct Struct_type;
 
 struct Decl;
 struct Variable_decl;
 struct Function_decl;
 struct Parameter_decl;
+struct Struct_decl;
+struct Member_decl;
 struct Module_decl;
 
 struct Stmt;

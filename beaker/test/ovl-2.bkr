@@ -1,0 +1,25 @@
+def foo(x : int, y : bool) -> int
+{
+	return 0;
+}
+
+// ok
+def foo(y : bool, x : int) -> int
+{
+	return 0;
+}
+
+
+// redefinition
+def foo(x : int, y : bool) -> int
+{
+	return 0;
+}
+
+
+// varying only in return type
+def foo(x : int, y : bool) -> bool
+{
+	return 0;
+}
+

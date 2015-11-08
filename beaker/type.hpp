@@ -5,6 +5,7 @@
 #define BEAKER_TYPE_HPP
 
 #include "prelude.hpp"
+#include "decl.hpp"
 
 
 // The Type class represents the set of all types in the
@@ -39,6 +40,7 @@ struct Type
 
 struct Type::Visitor
 {
+  virtual void visit(Struct_type const*) = 0;
   virtual void visit(Boolean_type const*) = 0;
   virtual void visit(Integer_type const*) = 0;
   virtual void visit(Function_type const*) = 0;
@@ -96,6 +98,36 @@ struct Reference_type : Type
 };
 
 
+// A helper class for defining user-defined types. A user-defined
+// type refers to a declaration.
+template<typename T>
+struct User_defined_type
+{
+  User_defined_type(Decl const* d)
+    : first(d)
+  {
+    assert(is<T>(d));
+  }
+
+  T const* decl() const { return cast<T>(first); }
+
+  Decl const* first;
+};
+
+
+// Record type represents the types of record members
+// Record type is a user defined type and thus it's 
+// type is defined by its declaration
+//
+// TODO: Support inheritance.
+struct Struct_type : Type, User_defined_type<Struct_decl>
+{
+  using User_defined_type<Struct_decl>::User_defined_type;
+
+  void accept(Visitor& v) const { v.visit(this); }
+};
+
+
 // -------------------------------------------------------------------------- //
 //                              Type accessors
 
@@ -105,7 +137,7 @@ Type const* get_integer_type();
 Type const* get_function_type(Type_seq const&, Type const*);
 Type const* get_function_type(Decl_seq const&, Type const*);
 Type const* get_reference_type(Type const*);
-
+Type const* get_struct_type(Decl const*);
 
 // -------------------------------------------------------------------------- //
 //                              Generic visitors
@@ -117,6 +149,7 @@ struct Generic_type_visitor : Type::Visitor, lingo::Generic_visitor<F, T>
     : lingo::Generic_visitor<F, T>(fn)
   { }
   
+  void visit(Struct_type const* t) { this->invoke(t); }
   void visit(Boolean_type const* t) { this->invoke(t); }
   void visit(Integer_type const* t) { this->invoke(t); }
   void visit(Function_type const* t) { this->invoke(t); }

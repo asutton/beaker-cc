@@ -68,6 +68,8 @@ public:
   void eval(Variable_decl const*);
   void eval(Function_decl const*);
   void eval(Parameter_decl const*);
+  void eval(Struct_decl const*);
+  void eval(Member_decl const*);
   void eval(Module_decl const*);
 
   Control eval(Stmt const*, Value&);

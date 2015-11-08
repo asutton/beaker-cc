@@ -1,0 +1,16 @@
+def foo(x : int, y : bool) -> int
+{
+	return 0;
+}
+
+// ok
+def foo(y : bool, x : int) -> int
+{
+	return 0;
+}
+
+def main() -> int
+{
+	foo(1, true, false); // error
+	foo(1, true); // ok
+}
