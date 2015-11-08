@@ -96,6 +96,7 @@ public:
   Expr* elaborate(Or_expr* e);
   Expr* elaborate(Not_expr* e);
   Expr* elaborate(Call_expr* e);
+  Expr* elaborate(Member_expr* e);
   Expr* elaborate(Value_conv* e);
   Expr* elaborate(Default_init* e);
   Expr* elaborate(Copy_init* e);

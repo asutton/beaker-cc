@@ -113,6 +113,7 @@ operator<<(std::ostream& os, Expr const& e)
     void operator()(Or_expr const* e) { os << *e; }
     void operator()(Not_expr const* e) { os << *e; }
     void operator()(Call_expr const* e) { os << *e; }
+    void operator()(Member_expr const* e) { os << *e; }
     void operator()(Value_conv const* e) { os << *e; }
     void operator()(Default_init const* e) { os << *e; }
     void operator()(Copy_init const* e) { os << *e; }
@@ -250,6 +251,13 @@ operator<<(std::ostream& os, Not_expr const&)
 
 std::ostream&
 operator<<(std::ostream& os, Call_expr const&)
+{
+  return os;
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Member_expr const&)
 {
   return os;
 }

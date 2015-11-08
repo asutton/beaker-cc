@@ -199,6 +199,7 @@ Elaborator::elaborate(Expr* e)
     Expr* operator()(Or_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Not_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Call_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Member_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Value_conv* e) const { return elab.elaborate(e); }
     Expr* operator()(Default_init* e) const { return elab.elaborate(e); }
     Expr* operator()(Copy_init* e) const { return elab.elaborate(e); }
@@ -537,7 +538,7 @@ Elaborator::elaborate(Not_expr* e)
 
 
 // The target function operand is converted to
-// an rvalue and shall have funtion type.
+// a value and shall have funtion type.
 Expr*
 Elaborator::elaborate(Call_expr* e)
 {
@@ -574,6 +575,13 @@ Elaborator::elaborate(Call_expr* e)
   e->type(t->return_type());
 
   return e;
+}
+
+
+Expr*
+Elaborator::elaborate(Member_expr* e)
+{
+  throw std::runtime_error("not implemented");
 }
 
 

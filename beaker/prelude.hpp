@@ -36,6 +36,7 @@ struct And_expr;
 struct Or_expr;
 struct Not_expr;
 struct Call_expr;
+struct Member_expr;
 struct Value_conv;
 struct Default_init;
 struct Copy_init;

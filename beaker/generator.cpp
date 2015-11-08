@@ -133,6 +133,7 @@ Generator::gen(Expr const* e)
     llvm::Value* operator()(Or_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Not_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Call_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Member_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Value_conv const* e) const { return g.gen(e); }
     llvm::Value* operator()(Default_init const* e) const { return g.gen(e); }
     llvm::Value* operator()(Copy_init const* e) const { return g.gen(e); }
@@ -286,6 +287,13 @@ Generator::gen(Not_expr const* e)
 
 llvm::Value*
 Generator::gen(Call_expr const* e)
+{
+  throw std::runtime_error("not implemented");
+}
+
+
+llvm::Value*
+Generator::gen(Member_expr const* e)
 {
   throw std::runtime_error("not implemented");
 }

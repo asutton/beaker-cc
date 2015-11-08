@@ -36,6 +36,7 @@ Evaluator::eval(Expr const* e)
     Value operator()(Or_expr const* e) { return ev.eval(e); }
     Value operator()(Not_expr const* e) { return ev.eval(e); }
     Value operator()(Call_expr const* e) { return ev.eval(e); }
+    Value operator()(Member_expr const* e) { return ev.eval(e); }
     Value operator()(Value_conv const* e) { return ev.eval(e); }
     Value operator()(Default_init const* e) { return ev.eval(e); }
     Value operator()(Copy_init const* e) { return ev.eval(e); }
@@ -288,6 +289,13 @@ Evaluator::eval(Call_expr const* e)
     throw std::runtime_error("function evaluation failed");
 
   return result;
+}
+
+
+Value
+Evaluator::eval(Member_expr const* e)
+{
+  throw std::runtime_error("not implemented");
 }
 
 

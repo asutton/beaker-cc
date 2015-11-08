@@ -62,6 +62,7 @@ public:
   Value eval(Or_expr const*);
   Value eval(Not_expr const*);
   Value eval(Call_expr const*);
+  Value eval(Member_expr const*);
   Value eval(Value_conv const*);
   Value eval(Default_init const*);
   Value eval(Copy_init const*);

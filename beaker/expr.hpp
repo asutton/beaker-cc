@@ -61,6 +61,7 @@ struct Expr::Visitor
   virtual void visit(Or_expr const*) = 0;
   virtual void visit(Not_expr const*) = 0;
   virtual void visit(Call_expr const*) = 0;
+  virtual void visit(Member_expr const*) = 0;
   virtual void visit(Value_conv const*) = 0;
   virtual void visit(Default_init const*) = 0;
   virtual void visit(Copy_init const*) = 0;
@@ -90,6 +91,7 @@ struct Expr::Mutator
   virtual void visit(Or_expr*) = 0;
   virtual void visit(Not_expr*) = 0;
   virtual void visit(Call_expr*) = 0;
+  virtual void visit(Member_expr*) = 0;
   virtual void visit(Value_conv*) = 0;
   virtual void visit(Default_init*) = 0;
   virtual void visit(Copy_init*) = 0;
@@ -330,7 +332,7 @@ struct Not_expr : Unary_expr
 };
 
 
-// The express e(e1, e2, ..., en)
+// The expression e(e1, e2, ..., en)
 struct Call_expr : Expr
 {
   Call_expr(Expr* f, Expr_seq const& a)
@@ -340,9 +342,7 @@ struct Call_expr : Expr
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
 
-  Expr const* target() const { return first; }
-  Expr*       target()       { return first; }
-
+  Expr*           target() const    { return first; }
   Expr_seq const& arguments() const { return second; }
   Expr_seq&       arguments()       { return second; }
 
@@ -350,6 +350,23 @@ struct Call_expr : Expr
   Expr_seq second;
 };
 
+
+// The expression e1.e2 where e1 has record type.
+struct Member_expr : Expr
+{
+  Member_expr(Expr* e1, Expr* e2)
+    : first(e1), second(e2)
+  { }
+
+  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Mutator& v)       { v.visit(this); }
+
+  Expr* scope() const  { return first; }
+  Expr* member() const { return first; }
+
+  Expr* first;
+  Expr* second;
+};
 
 // -------------------------------------------------------------------------- //
 // Conversions
@@ -464,6 +481,7 @@ struct Generic_expr_visitor : Expr::Visitor, lingo::Generic_visitor<F, T>
   void visit(Or_expr const* e) { this->invoke(e); }
   void visit(Not_expr const* e) { this->invoke(e); }
   void visit(Call_expr const* e) { this->invoke(e); }
+  void visit(Member_expr const* e) { this->invoke(e); }
   void visit(Value_conv const* e) { this->invoke(e); }
   void visit(Default_init const* e) { this->invoke(e); }
   void visit(Copy_init const* e) { this->invoke(e); }
@@ -509,6 +527,7 @@ struct Generic_expr_mutator : Expr::Mutator, lingo::Generic_mutator<F, T>
   void visit(Or_expr* e) { this->invoke(e); }
   void visit(Not_expr* e) { this->invoke(e); }
   void visit(Call_expr* e) { this->invoke(e); }
+  void visit(Member_expr* e) { this->invoke(e); }
   void visit(Value_conv* e) { this->invoke(e); }
   void visit(Default_init* e) { this->invoke(e); }
   void visit(Copy_init* e) { this->invoke(e); }
