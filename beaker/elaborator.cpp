@@ -111,10 +111,8 @@ Elaborator::elaborate(Expr* e)
     Expr* operator()(Or_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Not_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Call_expr* e) const { return elab.elaborate(e); }
-
-    // Conversions are created as needed and do not
-    // need to be elaborated.
-    Expr* operator()(Conversion* e) const { return e; }
+    Expr* operator()(Value_conv* e) const { return elab.elaborate(e); }
+    Expr* operator()(Default_init* e) const { return elab.elaborate(e); }
   };
 
   // If the expression has no type, then we need to
@@ -496,6 +494,24 @@ Elaborator::elaborate(Call_expr* e)
 }
 
 
+// Conversions are created after their source expressions
+// have been elaborated. No action is required. In fact,
+// we probably never actually call this function.
+Expr*
+Elaborator::elaborate(Value_conv* e)
+{
+  return e;
+}
+
+
+// TODO: I probably need to elaborate the type.
+Expr*
+Elaborator::elaborate(Default_init* e)
+{
+  return e;
+}
+
+
 // -------------------------------------------------------------------------- //
 // Elaboration of declarations
 
@@ -531,10 +547,18 @@ Elaborator::elaborate(Variable_decl* d)
   stack.declare(d);
 
   // Apply conversions to the initializer.
-  // FIXME: Consider renaming init_.
-  Expr* c = require_converted(*this, d->init_, d->type());
-  if (!c)
-    throw Type_error({}, "type mismatch in initializer");
+  Expr* c = require_converted(*this, d->init_, d->type_);
+  if (!c) {
+    std::stringstream ss;
+    ss << "type mismatch in initializer (expected "
+       << *d->type() << " but got " << *d->init()->type() << ')';
+    throw Type_error({}, ss.str());
+  }
+
+  // Annotate the initializer with the
+  // declared object.
+  if (Initializer* init = as<Initializer>(d->init_))
+    init->decl_ = d;
 }
 
 

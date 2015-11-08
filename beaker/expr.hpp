@@ -62,6 +62,7 @@ struct Expr::Visitor
   virtual void visit(Not_expr const*) = 0;
   virtual void visit(Call_expr const*) = 0;
   virtual void visit(Value_conv const*) = 0;
+  virtual void visit(Default_init const*) = 0;
 };
 
 
@@ -89,6 +90,7 @@ struct Expr::Mutator
   virtual void visit(Not_expr*) = 0;
   virtual void visit(Call_expr*) = 0;
   virtual void visit(Value_conv*) = 0;
+  virtual void visit(Default_init*) = 0;
 };
 
 
@@ -348,7 +350,7 @@ struct Call_expr : Expr
 
 
 // -------------------------------------------------------------------------- //
-//                              Conversions
+// Conversions
 
 // Represents the conversion of a source expression to
 // a target type.
@@ -369,6 +371,46 @@ struct Conversion : Expr
 struct Value_conv : Conversion
 {
   using Conversion::Conversion;
+
+  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Mutator& v)       { v.visit(this); }
+};
+
+
+// -------------------------------------------------------------------------- //
+// Initializers
+
+// An initializer is a kind of expression that performs
+// a particular form of initialization for a variable.
+//
+// Each initializer refers to the declaration that it
+// initializes. This is used during evaluation and
+// code generation to emplace values directly into the
+// allocated object. The declaration is set during
+// elaboration.
+//
+// FIXME: Should this be a declaraiton or an expression
+// that refers to the created object? Probably the
+// latter so that we can handle dynamic allocation in
+// a uniform way. Think about C++'s `new T() or
+// `new (p) T()`.
+struct Initializer : Expr
+{
+  Initializer(Type const* t)
+    : Expr(t)
+  { }
+
+  Decl const* declaration() const { return decl_; }
+
+  Decl const* decl_;
+};
+
+
+// Performs default initialization of an object
+// of the given type.
+struct Default_init : Initializer
+{
+  using Initializer::Initializer;
 
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
@@ -405,6 +447,7 @@ struct Generic_expr_visitor : Expr::Visitor, lingo::Generic_visitor<F, T>
   void visit(Not_expr const* e) { this->invoke(e); }
   void visit(Call_expr const* e) { this->invoke(e); }
   void visit(Value_conv const* e) { this->invoke(e); }
+  void visit(Default_init const* e) { this->invoke(e); }
 };
 
 
@@ -448,6 +491,7 @@ struct Generic_expr_mutator : Expr::Mutator, lingo::Generic_mutator<F, T>
   void visit(Not_expr* e) { this->invoke(e); }
   void visit(Call_expr* e) { this->invoke(e); }
   void visit(Value_conv* e) { this->invoke(e); }
+  void visit(Default_init* e) { this->invoke(e); }
 };
 
 

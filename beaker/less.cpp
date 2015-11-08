@@ -22,6 +22,14 @@ is_less(std::vector<T> const& a, std::vector<T> const& b)
 
 
 inline bool
+is_less(Id_type const* a, Id_type const* b)
+{
+  std::less<void const*> cmp;
+  return cmp(a->symbol(), b->symbol());
+}
+
+
+inline bool
 is_less(Function_type const* a, Function_type const* b)
 {
   if (is_less(a->parameter_types(), b->parameter_types()))
@@ -54,23 +62,12 @@ is_less(Type const* a, Type const* b)
   {
     Type const* b;
 
+    bool operator()(Id_type const* a) { return is_less(a, cast<Id_type>(b)); }
     bool operator()(Boolean_type const* a) { return false; }
     bool operator()(Integer_type const* a) { return false; }
-
-    bool operator()(Function_type const* a)
-    {
-      return is_less(a, cast<Function_type>(b));
-    }
-
-    bool operator()(Reference_type const* a)
-    {
-      return is_less(a, cast<Reference_type>(b));
-    }
-
-    bool operator()(Record_type const* a)
-    {
-      return is_less(a, cast<Record_type>(b));
-    }
+    bool operator()(Function_type const* a) { return is_less(a, cast<Function_type>(b)); }
+    bool operator()(Reference_type const* a) { return is_less(a, cast<Reference_type>(b)); }
+    bool operator()(Record_type const* a) { return is_less(a, cast<Record_type>(b)); }
   };
 
   std::type_index t1 = typeid(*a);

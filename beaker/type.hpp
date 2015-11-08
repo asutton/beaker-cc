@@ -39,11 +39,28 @@ struct Type
 
 struct Type::Visitor
 {
+  virtual void visit(Id_type const*) = 0;
   virtual void visit(Boolean_type const*) = 0;
   virtual void visit(Integer_type const*) = 0;
   virtual void visit(Function_type const*) = 0;
   virtual void visit(Reference_type const*) = 0;
   virtual void visit(Record_type const*) = 0;
+};
+
+
+// A type named by an identifier. These are Essentially
+// placeholders to be determined during initialization.
+struct Id_type : Type
+{
+  Id_type(Symbol const* s)
+    : sym_(s)
+  { }
+
+  void accept(Visitor& v) const { v.visit(this); };
+
+  Symbol const* symbol() const { return sym_; }
+
+  Symbol const* sym_;
 };
 
 
@@ -105,6 +122,8 @@ struct Record_type : Type
     : decl_(d)
   { }
 
+  void accept(Visitor& v) const { v.visit(this); };
+
   Record_decl const* decl() const;
 
   Decl const* decl_;
@@ -115,11 +134,13 @@ struct Record_type : Type
 //                              Type accessors
 
 Type const* get_type_kind();
+Type const* get_id_type(Symbol const*);
 Type const* get_boolean_type();
 Type const* get_integer_type();
 Type const* get_function_type(Type_seq const&, Type const*);
 Type const* get_function_type(Decl_seq const&, Type const*);
 Type const* get_reference_type(Type const*);
+Type const* get_record_type(Decl*);
 
 
 // -------------------------------------------------------------------------- //
@@ -132,6 +153,7 @@ struct Generic_type_visitor : Type::Visitor, lingo::Generic_visitor<F, T>
     : lingo::Generic_visitor<F, T>(fn)
   { }
 
+  void visit(Id_type const* t) { this->invoke(t); }
   void visit(Boolean_type const* t) { this->invoke(t); }
   void visit(Integer_type const* t) { this->invoke(t); }
   void visit(Function_type const* t) { this->invoke(t); }

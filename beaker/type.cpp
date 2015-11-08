@@ -63,6 +63,14 @@ using Type_set = std::set<T, Type_less<T>>;
 
 
 Type const*
+get_id_type(Symbol const* s)
+{
+  static Type_set<Id_type> fn;
+  auto ins = fn.emplace(s);
+  return &*ins.first;
+}
+
+Type const*
 get_boolean_type()
 {
   static Boolean_type t;
@@ -104,5 +112,14 @@ get_reference_type(Type const* t)
 {
   static Type_set<Reference_type> ts;
   auto ins = ts.emplace(t);
+  return &*ins.first;
+}
+
+
+Type const*
+get_record_type(Record_decl const* r)
+{
+  static Type_set<Record_type> ts;
+  auto ins = ts.emplace(r);
   return &*ins.first;
 }

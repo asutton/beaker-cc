@@ -255,7 +255,7 @@ Parser::expr()
 
 // Parse a type.
 //
-//    type -> 'bool' | 'int' | function-type
+//    type -> 'bool' | 'int' | function-type | id-type
 //
 //    function-type -> '(' type-list ')' '->' type
 //
@@ -263,6 +263,10 @@ Parser::expr()
 Type const*
 Parser::type()
 {
+  // id-type
+  if (Token tok = match_if(identifier_tok))
+    return get_id_type(tok.symbol());
+
   // bool
   if (match_if(bool_kw))
     return get_boolean_type();
@@ -301,9 +305,9 @@ Parser::type()
 
 // Parse a variable declaration.
 //
-//    variable-decl -> 'var' identifier object-type initializer-clause ';'
+//    variable-decl -> 'var' identifier object-type initializer-clause
 //
-//    initializer-clause -> '=' expr
+//    initializer-clause -> ';' | '=' expr ';'
 Decl*
 Parser::variable_decl()
 {
@@ -314,12 +318,15 @@ Parser::variable_decl()
   match(colon_tok);
   Type const* t = type();
 
-  // initializer-clause
+  // default initialization (var x : T;)
+  if (match_if(semicolon_tok))
+    return on_variable(n, t);
+
+  // value initialization (var x : T = e;)
   match(equal_tok);
   Expr* e = expr();
   match(semicolon_tok);
-
-  return on_variable_decl(n, t, e);
+  return on_variable(n, t, e);
 }
 
 
@@ -890,7 +897,14 @@ Parser::on_call(Expr* e, Expr_seq const& a)
 
 
 Decl*
-Parser::on_variable_decl(Token tok, Type const* t, Expr* e)
+Parser::on_variable(Token tok, Type const* t)
+{
+  return on_variable(tok, t, new Default_init(t));
+}
+
+
+Decl*
+Parser::on_variable(Token tok, Type const* t, Expr* e)
 {
   return new Variable_decl(tok.symbol(), t, e);
 }

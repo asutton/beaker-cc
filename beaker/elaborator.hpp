@@ -88,6 +88,8 @@ public:
   Expr* elaborate(Or_expr* e);
   Expr* elaborate(Not_expr* e);
   Expr* elaborate(Call_expr* e);
+  Expr* elaborate(Value_conv* e);
+  Expr* elaborate(Default_init* e);
 
   void elaborate(Decl*);
   void elaborate(Variable_decl*);

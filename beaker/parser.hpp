@@ -87,7 +87,8 @@ private:
   Expr* on_not(Expr*);
   Expr* on_call(Expr*, Expr_seq const&);
 
-  Decl* on_variable_decl(Token, Type const*, Expr*);
+  Decl* on_variable(Token, Type const*);
+  Decl* on_variable(Token, Type const*, Expr*);
   Decl* on_parameter_decl(Token, Type const*);
   Decl* on_function_decl(Token, Decl_seq const&, Type const*, Stmt*);
   Decl* on_record(Token, Decl_seq const&);

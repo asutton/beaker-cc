@@ -36,6 +36,7 @@ struct Generator
   llvm::Module* operator()(Decl const*);
 
   llvm::Type* get_type(Type const*);
+  llvm::Type* get_type(Id_type const*);
   llvm::Type* get_type(Boolean_type const*);
   llvm::Type* get_type(Integer_type const*);
   llvm::Type* get_type(Function_type const*);
@@ -63,6 +64,7 @@ struct Generator
   llvm::Value* gen(Not_expr const*);
   llvm::Value* gen(Call_expr const*);
   llvm::Value* gen(Value_conv const*);
+  llvm::Value* gen(Default_init const*);
 
   void gen(Stmt const*);
   void gen(Empty_stmt const*);

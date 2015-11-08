@@ -19,6 +19,7 @@ operator<<(std::ostream& os, Type const& t)
   {
     std::ostream& os;
 
+    void operator()(Id_type const* t) { os << *t; }
     void operator()(Boolean_type const* t) { os << *t; }
     void operator()(Integer_type const* t) { os << *t; }
     void operator()(Function_type const* t) { os << *t; }
@@ -28,6 +29,13 @@ operator<<(std::ostream& os, Type const& t)
 
   apply(&t, Fn{os});
   return os;
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Id_type const& t)
+{
+  return os << *t.symbol();
 }
 
 
@@ -105,6 +113,7 @@ operator<<(std::ostream& os, Expr const& e)
     void operator()(Not_expr const* e) { os << *e; }
     void operator()(Call_expr const* e) { os << *e; }
     void operator()(Value_conv const* e) { os << *e; }
+    void operator()(Default_init const* e) { os << *e; }
   };
   apply(&e, Fn{os});
   return os;
@@ -250,4 +259,11 @@ operator<<(std::ostream& os, Value_conv const& e)
   return os << "__to_value("
             << *e.source() << ','
             << *e.target() << ')';
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Default_init const& e)
+{
+  return os << "__default_init(" << *e.type() << ')';
 }

@@ -29,6 +29,7 @@ Generator::get_type(Type const* t)
   struct Fn
   {
     Generator& g;
+    llvm::Type* operator()(Id_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Boolean_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Integer_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Function_type const* t) const { return g.get_type(t); }
@@ -36,6 +37,16 @@ Generator::get_type(Type const* t)
     llvm::Type* operator()(Record_type const* t) const { return g.get_type(t); }
   };
   return apply(t, Fn{*this});
+}
+
+
+// The program is unsound if we ever reach this
+// function. Id-types are replaced with their
+// referenced declarations during elaboration.
+llvm::Type*
+Generator::get_type(Id_type const*)
+{
+  throw std::runtime_error("unresolved id-type");
 }
 
 
@@ -121,6 +132,7 @@ Generator::gen(Expr const* e)
     llvm::Value* operator()(Not_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Call_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Value_conv const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Default_init const* e) const { return g.gen(e); }
   };
 
   return apply(e, Fn{*this});
@@ -281,6 +293,17 @@ Generator::gen(Value_conv const* e)
 {
   llvm::Value* v = gen(e->source());
   return build.CreateLoad(v);
+}
+
+
+// Store the default value for T into a declared
+// object.
+llvm::Value*
+Generator::gen(Default_init const* e)
+{
+  // FIXME: Either generate a 0 or a zeroinitializer for
+  // the object.
+  throw std::runtime_error("not implemented");
 }
 
 

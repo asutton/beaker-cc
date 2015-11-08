@@ -9,6 +9,7 @@
 #include <iosfwd>
 
 std::ostream& operator<<(std::ostream&, Type const&);
+std::ostream& operator<<(std::ostream&, Id_type const&);
 std::ostream& operator<<(std::ostream&, Boolean_type const&);
 std::ostream& operator<<(std::ostream&, Integer_type const&);
 std::ostream& operator<<(std::ostream&, Function_type const&);
@@ -36,6 +37,7 @@ std::ostream& operator<<(std::ostream&, Or_expr const&);
 std::ostream& operator<<(std::ostream&, Not_expr const&);
 std::ostream& operator<<(std::ostream&, Call_expr const&);
 std::ostream& operator<<(std::ostream&, Value_conv const&);
+std::ostream& operator<<(std::ostream&, Default_init const&);
 
 
 #endif

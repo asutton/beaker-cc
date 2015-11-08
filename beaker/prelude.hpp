@@ -37,8 +37,10 @@ struct Or_expr;
 struct Not_expr;
 struct Call_expr;
 struct Value_conv;
+struct Default_init;
 
 struct Type;
+struct Id_type;
 struct Boolean_type;
 struct Integer_type;
 struct Function_type;
