@@ -3,6 +3,10 @@
 
 #include "token.hpp"
 
+
+// TODO: This could be unified with the token so
+// that I'd only ever have to write the spelling
+// once.
 char const*
 spelling(Token_kind k)
 {
@@ -11,6 +15,8 @@ spelling(Token_kind k)
     case rbrace_tok: return "}";
     case lparen_tok: return "(";
     case rparen_tok: return ")";
+    case lbrack_tok: return "[";
+    case rbrack_tok: return "]";
     case comma_tok: return ",";
     case colon_tok: return ":";
     case semicolon_tok: return ";";
@@ -58,6 +64,8 @@ init_symbols(Symbol_table& syms)
   syms.put<Symbol>("}", rbrace_tok);
   syms.put<Symbol>("(", lparen_tok);
   syms.put<Symbol>(")", rparen_tok);
+  syms.put<Symbol>("[", lbrack_tok);
+  syms.put<Symbol>("]", rbrack_tok);
   syms.put<Symbol>(",", comma_tok);
   syms.put<Symbol>(":", colon_tok);
   syms.put<Symbol>(";", semicolon_tok);

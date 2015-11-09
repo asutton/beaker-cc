@@ -63,6 +63,8 @@ Lexer::scan()
       case '}': return rbrace();
       case '(': return lparen();
       case ')': return rparen();
+      case '[': return lbrack();
+      case ']': return rbrack();
       case ',': return comma();
       case ':': return colon();
       case ';': return semicolon();

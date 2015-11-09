@@ -26,6 +26,8 @@ enum Token_kind
   rbrace_tok,
   lparen_tok,
   rparen_tok,
+  lbrack_tok,
+  rbrack_tok,
   comma_tok,
   colon_tok,
   semicolon_tok,

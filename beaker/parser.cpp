@@ -265,15 +265,18 @@ Parser::expr()
 // Type parsing
 
 
-// Parse a type.
+// Parse a primary type.
 //
-//    type -> 'bool' | 'int' | function-type | id-type
+//    primary-type -> 'bool'
+//                  | 'int'
+//                  | id-type
+//                  | function-type
 //
 //    function-type -> '(' type-list ')' '->' type
 //
 //    type-list -> type | type-list ',' type
 Type const*
-Parser::type()
+Parser::primary_type()
 {
   // id-type
   if (Token tok = match_if(identifier_tok))
@@ -300,7 +303,7 @@ Parser::type()
     match(rparen_tok);
     match(arrow_tok);
     Type const* t = type();
-    return get_function_type(ts, t);
+    return on_function_type(ts, t);
   }
 
   // error
@@ -309,6 +312,54 @@ Parser::type()
   else
     error("invalid type");
 }
+
+
+// Parse a postfix type.
+//
+//    postfix-type -> primary_type
+//                    postfix-type '[]'
+//                  | postfix-type '[' expr ']'
+//
+// TODO: Allow prefix type expressions. These should
+// bind more tightly than postfix type expressoins.
+//
+// TODO: Suffix notation will require parens for grouping.
+// For example, a reference to an array would be:
+//
+//    ref (T[N])
+//
+// We would need to handle function types carefully.
+Type const*
+Parser::postfix_type()
+{
+  Type const* t = primary_type();
+  while (true) {
+    // Match array types.
+    if (match_if(lbrack_tok)) {
+      if (match_if(rbrack_tok))
+        return on_block_type(t);
+      Expr* e = expr();
+      match(rbrack_tok);
+      t = on_array_type(t, e);
+    }
+
+    // No postfix operators
+    else
+      break;
+  }
+  return t;
+}
+
+
+// Parse a type.
+//
+//    type -> postfix-type
+Type const*
+Parser::type()
+{
+  return postfix_type();
+}
+
 
 
 // -------------------------------------------------------------------------- //
@@ -771,7 +822,7 @@ Parser::error(String const& msg)
 
 
 // Build a placeholder for a type name. Note that
-// we can map these into
+// we can map these to source code locations.
 Type const*
 Parser::on_id_type(Token tok)
 {
@@ -779,6 +830,28 @@ Parser::on_id_type(Token tok)
   locs_->emplace(t, tok.location());
   return t;
 }
+
+
+Type const*
+Parser::on_array_type(Type const* t , Expr* n)
+{
+  return get_array_type(t, n);
+}
+
+
+Type const*
+Parser::on_block_type(Type const* t)
+{
+  return get_block_type(t);
+}
+
+
+Type const*
+Parser::on_function_type(Type_seq const& ts, Type const* t)
+{
+  return get_function_type(ts, t);
+}
+
 
 Expr*
 Parser::on_id(Token tok)

@@ -157,6 +157,8 @@ public:
   Token rbrace();
   Token lparen();
   Token rparen();
+  Token lbrack();
+  Token rbrack();
   Token comma();
   Token colon();
   Token semicolon();
@@ -302,6 +304,20 @@ Lexer::lparen()
 
 inline Token
 Lexer::rparen()
+{
+  return symbol1();
+}
+
+
+inline Token
+Lexer::lbrack()
+{
+  return symbol1();
+}
+
+
+inline Token
+Lexer::rbrack()
 {
   return symbol1();
 }
