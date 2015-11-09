@@ -277,6 +277,7 @@ Parser::expr()
 //
 //    primary-type -> 'bool'
 //                  | 'int'
+//                  | 'char'
 //                  | id-type
 //                  | function-type
 //
@@ -293,6 +294,10 @@ Parser::primary_type()
   // bool
   if (match_if(bool_kw))
     return get_boolean_type();
+
+  // char
+  if (match_if(char_kw))
+    return get_character_type();
 
   // int
   else if (match_if(int_kw))

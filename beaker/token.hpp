@@ -52,6 +52,7 @@ enum Token_kind
   // Keywords
   bool_kw,
   break_kw,
+  char_kw,
   continue_kw,
   def_kw,
   else_kw,

@@ -201,6 +201,32 @@ Type const* get_record_type(Record_decl*);
 
 
 // -------------------------------------------------------------------------- //
+//                              Type queries
+
+// The scalar types are bool, char, and int.
+inline bool
+is_scalar_type(Type const* t)
+{
+  return is<Boolean_type>(t)
+      || is<Character_type>(t)
+      || is<Integer_type>(t);
+}
+
+
+// The aggregate types are record types and array
+// types.
+//
+// TODO: I don't believe that block types are aggregate.
+// I think they are scalar (pointers).
+inline bool
+is_aggregate_type(Type const* t)
+{
+  return is<Record_type>(t)
+      || is<Array_type>(t);
+}
+
+
+// -------------------------------------------------------------------------- //
 //                              Generic visitors
 
 template<typename F, typename T>

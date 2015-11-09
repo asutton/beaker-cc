@@ -40,6 +40,7 @@ spelling(Token_kind k)
 
     case bool_kw: return "bool";
     case break_kw: return "break";
+    case char_kw: return "char";
     case continue_kw: return "continue";
     case def_kw: return "def";
     case else_kw: return "else";
@@ -90,6 +91,7 @@ init_symbols(Symbol_table& syms)
   // Keywords
   syms.put<Symbol>("bool", bool_kw);
   syms.put<Symbol>("break", break_kw);
+  syms.put<Symbol>("char", char_kw);
   syms.put<Symbol>("continue", continue_kw);
   syms.put<Symbol>("def", def_kw);
   syms.put<Symbol>("else", else_kw);

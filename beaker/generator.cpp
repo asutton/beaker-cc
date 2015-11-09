@@ -378,14 +378,14 @@ Generator::gen(Default_init const* e)
 
   // Scalar types should get a 0 value in the
   // appropriate type.
-  if (is<Integer_type>(t) || is<Boolean_type>(t))
+  if (is_scalar_type(t))
     return llvm::ConstantInt::get(type, 0);
 
   // Aggregate types are zero initialized.
   //
   // NOTE: This isn't actually correct. Aggregate types
   // should be memberwise default initialized.
-  if (is<Record_type>(t) || is<Array_type>(t))
+  if (is_aggregate_type(t))
     return llvm::ConstantAggregateZero::get(type);
 
   throw std::runtime_error("unhahndled default initializer");
