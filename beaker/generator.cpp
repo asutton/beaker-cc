@@ -335,7 +335,13 @@ Generator::gen(Member_expr const* e)
 llvm::Value*
 Generator::gen(Index_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* arr = gen(e->array());
+  llvm::Value* ix = gen(e->index());
+  std::vector<llvm::Value*> args {
+    build.getInt32(0), // 0th element from base
+    ix                 // requested index
+  };
+  return build.CreateGEP(arr, args);
 }
 
 
@@ -361,14 +367,16 @@ Generator::gen(Default_init const* e)
   Type const* t = e->type();
   llvm::Type* type = get_type(t);
 
-  // TODO: Scalar types should get a 0 value in the
+  // Scalar types should get a 0 value in the
   // appropriate type.
+  if (is<Integer_type>(t) || is<Boolean_type>(t))
+    return llvm::ConstantInt::get(type, 0);
 
   // Aggregate types are zero initialized.
   //
   // NOTE: This isn't actually correct. Aggregate types
   // should be memberwise default initialized.
-  if (is<Record_type>(t))
+  if (is<Record_type>(t) || is<Array_type>(t))
     return llvm::ConstantAggregateZero::get(type);
 
   throw std::runtime_error("unhahndled default initializer");

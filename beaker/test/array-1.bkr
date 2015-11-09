@@ -1,5 +1,10 @@
 
-var x : int[10];
+var a : int[10];
 
-var z : int = x[0];
+var z : int;
 
+def f() -> int
+{
+  z = a[2];
+  return 0;
+}
