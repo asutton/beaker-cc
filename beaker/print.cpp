@@ -23,6 +23,8 @@ operator<<(std::ostream& os, Type const& t)
     void operator()(Boolean_type const* t) { os << *t; }
     void operator()(Integer_type const* t) { os << *t; }
     void operator()(Function_type const* t) { os << *t; }
+    void operator()(Block_type const* t) { os << *t; }
+    void operator()(Array_type const* t) { os << *t; }
     void operator()(Reference_type const* t) { os << *t; }
     void operator()(Record_type const* t) { os << *t; }
   };
@@ -66,6 +68,20 @@ operator<<(std::ostream& os, Function_type const& t)
   os << ')';
   os << " -> " << *t.return_type();
   return os;
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Array_type const& t)
+{
+  return os << *t.type() << '[' << *t.extent() << ']';
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Block_type const& t)
+{
+  return os << *t.type() << "[]";
 }
 
 
@@ -126,7 +142,7 @@ operator<<(std::ostream& os, Expr const& e)
 std::ostream&
 operator<<(std::ostream& os, Literal_expr const& e)
 {
-  return os << e.spelling();
+  return os << e.value();
 }
 
 

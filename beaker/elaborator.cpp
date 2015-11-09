@@ -7,6 +7,7 @@
 #include "decl.hpp"
 #include "stmt.hpp"
 #include "convert.hpp"
+#include "evaluator.hpp"
 #include "error.hpp"
 
 #include <iostream>
@@ -94,6 +95,8 @@ Elaborator::elaborate(Type const* t)
     Type const* operator()(Boolean_type const* t) { return elab.elaborate(t); }
     Type const* operator()(Integer_type const* t) { return elab.elaborate(t); }
     Type const* operator()(Function_type const* t) { return elab.elaborate(t); }
+    Type const* operator()(Block_type const* t) { return elab.elaborate(t); }
+    Type const* operator()(Array_type const* t) { return elab.elaborate(t); }
     Type const* operator()(Reference_type const* t) { return elab.elaborate(t); }
     Type const* operator()(Record_type const* t) { return elab.elaborate(t); }
   };
@@ -148,6 +151,25 @@ Elaborator::elaborate(Function_type const* t)
     ts.push_back(elaborate(t1));
   Type const* r = elaborate(t->return_type());
   return get_function_type(ts, r);
+}
+
+
+Type const*
+Elaborator::elaborate(Array_type const* t)
+{
+  Type const* t1 = elaborate(t->type());
+  Expr* e = elaborate(t->extent());
+  Expr* n = reduce(e);
+  if (!n)
+    throw Type_error({}, "non-constant array extent");
+  return get_array_type(t1, n);
+}
+
+Type const*
+Elaborator::elaborate(Block_type const* t)
+{
+  Type const* t1 = elaborate(t->type());
+  return get_reference_type(t1);
 }
 
 
@@ -209,15 +231,11 @@ Elaborator::elaborate(Expr* e)
 }
 
 
+// Literal expressions are fully elaborated at the point
+// of construction.
 Expr*
 Elaborator::elaborate(Literal_expr* e)
 {
-  if (is<Boolean_sym>(e->symbol()))
-    e->type(get_boolean_type());
-  else if (is<Integer_sym>(e->symbol()))
-    e->type(get_integer_type());
-  else
-    throw std::runtime_error("untyped literal");
   return e;
 }
 

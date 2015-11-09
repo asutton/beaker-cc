@@ -107,6 +107,24 @@ get_function_type(Decl_seq const& d, Type const* r)
 }
 
 
+Type const*
+get_array_type(Type const* t, Expr* n)
+{
+  static Type_set<Array_type> ts;
+  auto ins = ts.emplace(t, n);
+  return &*ins.first;
+}
+
+
+Type const*
+get_block_type(Type const* t)
+{
+  static Type_set<Block_type> ts;
+  auto ins = ts.emplace(t);
+  return &*ins.first;
+}
+
+
 // FIXME: Don't allow references to non-object types.
 Type const*
 get_reference_type(Type const* t)

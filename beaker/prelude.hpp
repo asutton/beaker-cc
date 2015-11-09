@@ -4,9 +4,7 @@
 #ifndef BEAKER_PRELUDE_HPP
 #define BEAKER_PRELUDE_HPP
 
-#include "cast.hpp"
-#include "symbol.hpp"
-
+#include "lingo/error.hpp"
 #include "lingo/node.hpp"
 #include "lingo/print.hpp"
 
@@ -14,6 +12,19 @@
 #include <vector>
 #include <stdexcept>
 #include <type_traits>
+
+
+// Lingo casting
+using lingo::is;
+using lingo::as;
+using lingo::cast;
+
+
+// Lingo node concepts
+using lingo::is_nullary_node;
+using lingo::is_unary_node;
+using lingo::is_binary_node;
+using lingo::is_ternary_node;
 
 
 struct Expr;
@@ -46,6 +57,8 @@ struct Id_type;
 struct Boolean_type;
 struct Integer_type;
 struct Function_type;
+struct Array_type;
+struct Block_type;
 struct Reference_type;
 struct Record_type;
 
@@ -77,6 +90,7 @@ using Decl_seq = std::vector<Decl*>;
 using Stmt_seq = std::vector<Stmt*>;
 
 
+#include "symbol.hpp" // TODO: Do I need this?
 #include "print.hpp"
 
 #endif

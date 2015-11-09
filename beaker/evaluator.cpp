@@ -49,12 +49,7 @@ Evaluator::eval(Expr const* e)
 Value
 Evaluator::eval(Literal_expr const* e)
 {
-  Symbol const* s = e->symbol();
-  if (Boolean_sym const* b = as<Boolean_sym>(s))
-    return b->value();
-  if (Integer_sym const* z = as<Integer_sym>(s))
-    return z->value();
-  throw std::runtime_error("ill-formed literal");
+  return e->value();
 }
 
 
@@ -552,6 +547,30 @@ Evaluator::eval(Declaration_stmt const* s, Value& r)
 {
   eval(s->declaration());
   return next_ctl;
+}
+
+
+// -------------------------------------------------------------------------- //
+// Expression reduction
+
+// Return a literal corresponding to the evaluation
+// of e. If e invokes undefined behavior or is not
+// otherwise a constant expression, this returns nullptr.
+Expr*
+reduce(Expr const* e)
+{
+  // If the expression is already a literal, then just
+  // return it.
+  if (is<Literal_expr>(e))
+    return const_cast<Expr*>(e);
+
+  // Otherwise, try evaluating.
+  try {
+    Value v = evaluate(e);
+    return new Literal_expr(e->type(), v);
+  } catch (...) {
+    return nullptr;
+  }
 }
 
 

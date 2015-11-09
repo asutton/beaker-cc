@@ -5,7 +5,8 @@
 #define BEAKER_SYMBOL_HPP
 
 #include "string.hpp"
-#include "cast.hpp"
+
+#include "lingo/node.hpp"
 
 #include <unordered_map>
 #include <typeinfo>

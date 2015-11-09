@@ -4,6 +4,7 @@
 #ifndef BEAKER_TOKEN_HPP
 #define BEAKER_TOKEN_HPP
 
+#include "prelude.hpp"
 #include "symbol.hpp"
 #include "location.hpp"
 
@@ -90,9 +91,12 @@ public:
   explicit operator bool() const;
 
   int           kind() const;
-  Symbol const* symbol() const;
   String const& spelling() const;
   Location      location() const;
+
+  Symbol const*        symbol() const;
+  Boolean_sym const*   boolean_symbol() const;
+  Integer_sym const*   integer_symbol() const;
 
 private:
   Location      loc_;
@@ -140,14 +144,6 @@ Token::kind() const
 }
 
 
-// Returns the token's symbol and attributes.
-inline Symbol const*
-Token::symbol() const
-{
-  return sym_;
-}
-
-
 // Returns the spelling of the token.
 inline String const&
 Token::spelling() const
@@ -161,6 +157,30 @@ inline Location
 Token::location() const
 {
   return loc_;
+}
+
+
+// Returns the token's symbol and attributes.
+inline Symbol const*
+Token::symbol() const
+{
+  return sym_;
+}
+
+
+// Return the boolean symbol for the token.
+inline Boolean_sym const*
+Token::boolean_symbol() const
+{
+  return cast<Boolean_sym>(sym_);
+}
+
+
+// Returns the integer symbol for the token.
+inline Integer_sym const*
+Token::integer_symbol() const
+{
+  return cast<Integer_sym>(sym_);
 }
 
 

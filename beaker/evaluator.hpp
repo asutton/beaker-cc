@@ -113,6 +113,9 @@ struct Evaluator::Store_sentinel
 };
 
 
+// -------------------------------------------------------------------------- //
+// Expression evaluation
+
 // Evaluate the given expression.
 inline Value
 evaluate(Expr const* e)
@@ -120,6 +123,8 @@ evaluate(Expr const* e)
   Evaluator ev;
   return ev.eval(e);
 }
+
+Expr* reduce(Expr const* e);
 
 
 #endif

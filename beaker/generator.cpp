@@ -33,6 +33,8 @@ Generator::get_type(Type const* t)
     llvm::Type* operator()(Boolean_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Integer_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Function_type const* t) const { return g.get_type(t); }
+    llvm::Type* operator()(Array_type const* t) const { return g.get_type(t); }
+    llvm::Type* operator()(Block_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Reference_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Record_type const* t) const { return g.get_type(t); }
   };
@@ -78,6 +80,26 @@ Generator::get_type(Function_type const* t)
     ts.push_back(get_type(t1));
   llvm::Type* r = get_type(t->return_type());
   return llvm::FunctionType::get(r, ts, false);
+}
+
+
+// Return an array type.
+llvm::Type*
+Generator::get_type(Array_type const* t)
+{
+  llvm::Type* t1 = get_type(t->type());
+  Value v = evaluate(t->extent());
+  return llvm::ArrayType::get(t1, v.get_integer());
+}
+
+
+// A chunk is just a pointer to an object
+// of the underlying type.
+llvm::Type*
+Generator::get_type(Block_type const* t)
+{
+  llvm::Type* t1 = get_type(t->type());
+  return llvm::PointerType::getUnqual(t1);
 }
 
 

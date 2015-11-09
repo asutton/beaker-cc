@@ -43,6 +43,8 @@ struct Generator
   llvm::Type* get_type(Boolean_type const*);
   llvm::Type* get_type(Integer_type const*);
   llvm::Type* get_type(Function_type const*);
+  llvm::Type* get_type(Array_type const*);
+  llvm::Type* get_type(Block_type const*);
   llvm::Type* get_type(Reference_type const*);
   llvm::Type* get_type(Record_type const*);
 

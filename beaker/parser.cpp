@@ -790,14 +790,18 @@ Parser::on_id(Token tok)
 Expr*
 Parser::on_bool(Token tok)
 {
-  return init<Literal_expr>(tok.location(), tok.symbol());
+  Type const* t = get_boolean_type();
+  int v = tok.boolean_symbol()->value();
+  return init<Literal_expr>(tok.location(), t, v);
 }
 
 
 Expr*
 Parser::on_int(Token tok)
 {
-  return new Literal_expr(tok.symbol());
+  Type const* t = get_integer_type();
+  int v = tok.integer_symbol()->value();
+  return init<Literal_expr>(tok.location(), t, v);
 }
 
 

@@ -6,6 +6,7 @@
 
 #include "prelude.hpp"
 #include "symbol.hpp"
+#include "value.hpp"
 
 
 // The Expr class represents the set of all expressions
@@ -106,17 +107,16 @@ struct Expr::Mutator
 // since functions can only ever be named.
 struct Literal_expr : Expr
 {
-  Literal_expr(Symbol const* s)
-    : sym(s)
+  Literal_expr(Type const* t, Value const& v)
+    : Expr(t), val(v)
   { }
 
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
 
-  Symbol const* symbol() const   { return sym; }
-  String const& spelling() const { return sym->spelling(); }
+  Value const& value() const   { return val; }
 
-  Symbol const* sym;
+  Value val;
 };
 
 

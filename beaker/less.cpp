@@ -3,12 +3,15 @@
 
 #include "less.hpp"
 #include "type.hpp"
+#include "expr.hpp"
+#include "value.hpp"
 
 #include <algorithm>
 #include <typeindex>
 
 
-// TODO: Rewrite using lingo node concepts.
+// -------------------------------------------------------------------------- //
+// Generic comparisons
 
 
 template<typename T>
@@ -21,29 +24,59 @@ is_less(std::vector<T> const& a, std::vector<T> const& b)
 }
 
 
+template<typename T>
+typename std::enable_if<is_nullary_node<T>(), bool>::type
+is_less(T const* a, T const* b)
+{
+  return false;
+}
+
+
+template<typename T>
+typename std::enable_if<is_unary_node<T>(), bool>::type
+is_less(T const* a, T const* b)
+{
+  return is_less(a->first, b->first);
+}
+
+
+template<typename T>
+typename std::enable_if<is_binary_node<T>(), bool>::type
+is_less(T const* a, T const* b)
+{
+  if (is_less(a->first, b->first))
+    return true;
+  if (is_less(b->first, a->first))
+    return false;
+  return is_less(a->second, b->second);
+}
+
+
+template<typename T>
+typename std::enable_if<is_ternary_node<T>(), bool>::type
+is_less(T const* a, T const* b)
+{
+  if (is_less(a->first, b->first))
+    return true;
+  if (is_less(b->first, a->first))
+    return false;
+  if (is_less(a->second, b->second))
+    return true;
+  if (is_less(b->second, a->second))
+    return false;
+  return is_less(a->second, b->second);
+}
+
+
+// -------------------------------------------------------------------------- //
+// Comparison of types
+
+
 inline bool
 is_less(Id_type const* a, Id_type const* b)
 {
   std::less<void const*> cmp;
   return cmp(a->symbol(), b->symbol());
-}
-
-
-inline bool
-is_less(Function_type const* a, Function_type const* b)
-{
-  if (is_less(a->parameter_types(), b->parameter_types()))
-    return true;
-  if (is_less(b->parameter_types(), a->parameter_types()))
-    return false;
-  return is_less(a->return_type(), b->return_type());
-}
-
-
-inline bool
-is_less(Reference_type const* a, Reference_type const* b)
-{
-  return is_less(a->first, b->first);
 }
 
 
@@ -66,8 +99,96 @@ is_less(Type const* a, Type const* b)
     bool operator()(Boolean_type const* a) { return false; }
     bool operator()(Integer_type const* a) { return false; }
     bool operator()(Function_type const* a) { return is_less(a, cast<Function_type>(b)); }
+    bool operator()(Array_type const* a) { return is_less(a, cast<Array_type>(b)); }
+    bool operator()(Block_type const* a) {return is_less(a, cast<Block_type>(b)); }
     bool operator()(Reference_type const* a) { return is_less(a, cast<Reference_type>(b)); }
     bool operator()(Record_type const* a) { return is_less(a, cast<Record_type>(b)); }
+  };
+
+  std::type_index t1 = typeid(*a);
+  std::type_index t2 = typeid(*b);
+  if (t1 < t2)
+    return true;
+  if (t2 < t1)
+    return true;
+  return apply(a, Fn{b});
+}
+
+
+// -------------------------------------------------------------------------- //
+// Comparison of values
+
+
+// FIXME: Use a visitor for values. Also, push this into
+// a header file somewhere.
+bool
+is_less(Value const& a, Value const& b)
+{
+  if (a.kind() < b.kind())
+    return true;
+  if (b.kind() < a.kind())
+    return false;
+  switch (a.kind()) {
+    case error_value:
+      return false;
+
+    case integer_value:
+      return a.get_integer() < b.get_integer();
+
+    case function_value: {
+      std::less<void const*> cmp;
+      return cmp(a.get_function(), b.get_function());
+    }
+
+    case reference_value:
+      return is_less(*a.get_reference(), *b.get_reference());
+  }
+  throw std::runtime_error("unhandled value");
+}
+
+
+// -------------------------------------------------------------------------- //
+// Comparison of expressions
+
+
+inline bool
+is_less(Literal_expr const* a, Literal_expr const* b)
+{
+  return is_less(a->value(), b->value());
+}
+
+
+// FIXME: Actually implement this!
+bool
+is_less(Expr const* a, Expr const* b)
+{
+  struct Fn
+  {
+    Expr const* b;
+
+    bool operator()(Literal_expr const* a) { return is_less(a, cast<Literal_expr>(b)); }
+    bool operator()(Id_expr const* a) { return false; }
+    bool operator()(Add_expr const* a) { return false; }
+    bool operator()(Sub_expr const* a) { return false; }
+    bool operator()(Mul_expr const* a) { return false; }
+    bool operator()(Div_expr const* a) { return false; }
+    bool operator()(Rem_expr const* a) { return false; }
+    bool operator()(Neg_expr const* a) { return false; }
+    bool operator()(Pos_expr const* a) { return false; }
+    bool operator()(Eq_expr const* a) { return false; }
+    bool operator()(Ne_expr const* a) { return false; }
+    bool operator()(Lt_expr const* a) { return false; }
+    bool operator()(Gt_expr const* a) { return false; }
+    bool operator()(Le_expr const* a) { return false; }
+    bool operator()(Ge_expr const* a) { return false; }
+    bool operator()(And_expr const* a) { return false; }
+    bool operator()(Or_expr const* a) { return false; }
+    bool operator()(Not_expr const* a) { return false; }
+    bool operator()(Call_expr const* a) { return false; }
+    bool operator()(Member_expr const* a) { return false; }
+    bool operator()(Value_conv const* a) { return false; }
+    bool operator()(Default_init const* a) { return false; }
+    bool operator()(Copy_init const* a) { return false; }
   };
 
   std::type_index t1 = typeid(*a);
