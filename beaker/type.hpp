@@ -118,15 +118,15 @@ struct Reference_type : Type
 // record declaration.
 struct Record_type : Type
 {
-  Record_type(Decl const* d)
+  Record_type(Decl* d)
     : decl_(d)
   { }
 
   void accept(Visitor& v) const { v.visit(this); };
 
-  Record_decl const* declaration() const;
+  Record_decl* declaration() const;
 
-  Decl const* decl_;
+  Decl* decl_;
 };
 
 
@@ -140,7 +140,7 @@ Type const* get_integer_type();
 Type const* get_function_type(Type_seq const&, Type const*);
 Type const* get_function_type(Decl_seq const&, Type const*);
 Type const* get_reference_type(Type const*);
-Type const* get_record_type(Record_decl const*);
+Type const* get_record_type(Record_decl*);
 
 
 // -------------------------------------------------------------------------- //

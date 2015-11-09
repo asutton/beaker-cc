@@ -292,10 +292,24 @@ Generator::gen(Call_expr const* e)
 }
 
 
+// TODO: We can compress a sequence of member expressions
+// into a single GEP instruction. We just need to compute
+// the base object and then queue the sequence of offsets.
+//
+// Note that array subsrcipt expressions can also participate
+// in this formulation.
 llvm::Value*
 Generator::gen(Member_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* obj = gen(e->scope());
+
+  std::vector<llvm::Value*> args {
+    build.getInt32(0),
+    build.getInt32(e->position())
+  };
+
+  // Create the access instruction.
+  return build.CreateGEP(obj, args);
 }
 
 

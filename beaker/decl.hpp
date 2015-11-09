@@ -178,11 +178,13 @@ is_local_variable(Variable_decl const* v)
 
 
 // Returns true if the declaration defines an object.
-// Only variables and parameters define objects.
+// Only variables, parameters, and fields define objects.
 inline bool
 defines_object(Decl const* d)
 {
-  return is<Variable_decl>(d) || is<Parameter_decl>(d);
+  return is<Variable_decl>(d)
+      || is<Parameter_decl>(d)
+      || is<Field_decl>(d);
 }
 
 

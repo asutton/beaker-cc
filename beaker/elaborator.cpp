@@ -581,7 +581,45 @@ Elaborator::elaborate(Call_expr* e)
 Expr*
 Elaborator::elaborate(Member_expr* e)
 {
-  throw std::runtime_error("not implemented");
+  Expr* e1 = elaborate(e->scope());
+
+  // Get the non-reference type of the outer
+  // object so we can perform lookups.
+  Record_type const* t = as<Record_type>(e1->type()->nonref());
+  if (!t) {
+    std::stringstream ss;
+    ss << "object does not have record type";
+    throw Type_error({}, ss.str());
+  }
+
+  // Re-open the class scope so we can perform lookups
+  // in the usual way.
+  Record_decl* d = t->declaration();
+  Scope_sentinel scope(*this, d);
+  for (Decl* d1 : d->fields())
+    stack.top().bind(d1->name(), d1);
+
+  // Elaborate the member expression.
+  Id_expr* e2 = as<Id_expr>(elaborate(e->member()));
+  if (!e2) {
+    std::stringstream ss;
+    ss << "invalid member reference";
+    throw Type_error({}, ss.str());
+  }
+
+  // Find the offset in the class of the member.
+  // And stash it in the member expression.
+  for (int i = 0; i < d->fields().size(); ++i) {
+    if (e2->declaration() == d->fields()[i]) {
+      e->pos_ = i;
+      break;
+    }
+  }
+  assert(e->pos_ != -1);
+
+  // Finally set the type of the expression.
+  e->type_ = e2->type();
+  return e;
 }
 
 

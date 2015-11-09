@@ -38,7 +38,7 @@ Reference_type::nonref() const
 }
 
 
-Record_decl const*
+Record_decl*
 Record_type::declaration() const
 {
   return cast<Record_decl>(decl_);
@@ -118,7 +118,7 @@ get_reference_type(Type const* t)
 
 
 Type const*
-get_record_type(Record_decl const* r)
+get_record_type(Record_decl* r)
 {
   static Type_set<Record_type> ts;
   auto ins = ts.emplace(r);

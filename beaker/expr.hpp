@@ -352,18 +352,25 @@ struct Call_expr : Expr
 
 
 // The expression e1.e2 where e1 has record type.
+//
+// We cache the position of the resolved member
+// within its enclosing scope. This means we don't
+// have to re-compute it during evaluation or
+// codegen later on.
 struct Member_expr : Expr
 {
   Member_expr(Expr* e1, Expr* e2)
-    : first(e1), second(e2)
+    : pos_(-1), first(e1), second(e2)
   { }
 
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
 
-  Expr* scope() const  { return first; }
-  Expr* member() const { return first; }
+  int   position() const { return pos_; }
+  Expr* scope() const    { return first; }
+  Expr* member() const   { return second; }
 
+  int   pos_;
   Expr* first;
   Expr* second;
 };
