@@ -627,7 +627,7 @@ Elaborator::elaborate(Member_expr* e)
 
   // Find the offset in the class of the member.
   // And stash it in the member expression.
-  for (int i = 0; i < d->fields().size(); ++i) {
+  for (std::size_t i = 0; i < d->fields().size(); ++i) {
     if (e2->declaration() == d->fields()[i]) {
       e->pos_ = i;
       break;
