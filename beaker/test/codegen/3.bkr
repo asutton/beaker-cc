@@ -1,6 +1,6 @@
 def main() -> int
 {
-	var x : int = 0;
+	var x : int = 1;
 	var y : int = 1;
 	var z : bool = true;
 

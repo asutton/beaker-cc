@@ -2,9 +2,7 @@ def main() -> int
 {
 	var x : int = 0;
 	while (x < 5) {
-		var z : int = 0;
 		x = x + 1;
-		z = 1;
 	}
-	return 0;
+	return x;
 }

@@ -9,5 +9,5 @@ def main() -> int
 		z = z + x;
 	}
 
-	return 0;
+	return z;
 }

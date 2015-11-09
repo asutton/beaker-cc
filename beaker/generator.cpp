@@ -714,15 +714,16 @@ Generator::gen_local(Variable_decl const* d)
   llvm::Type* t = get_type(d->type());
   String const& name = d->name()->spelling();
   llvm::Value* local = build.CreateAlloca(t, nullptr, name);
+
+  // reset the insert point
+  build.SetInsertPoint(prev);
+
   // generate the initializer first
   llvm::Value* init = gen(d->init());
   // generate the store
   build.CreateStore(init, local);
 
   stack.top().bind(d, local);
-
-  // reset the insert point
-  build.SetInsertPoint(prev);
 }
 
 
