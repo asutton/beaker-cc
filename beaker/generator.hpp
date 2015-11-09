@@ -69,7 +69,9 @@ struct Generator
   llvm::Value* gen(Not_expr const*);
   llvm::Value* gen(Call_expr const*);
   llvm::Value* gen(Member_expr const*);
+  llvm::Value* gen(Index_expr const*);
   llvm::Value* gen(Value_conv const*);
+  llvm::Value* gen(Block_conv const*);
   llvm::Value* gen(Default_init const*);
   llvm::Value* gen(Copy_init const*);
 

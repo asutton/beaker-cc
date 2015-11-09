@@ -37,7 +37,9 @@ Evaluator::eval(Expr const* e)
     Value operator()(Not_expr const* e) { return ev.eval(e); }
     Value operator()(Call_expr const* e) { return ev.eval(e); }
     Value operator()(Member_expr const* e) { return ev.eval(e); }
+    Value operator()(Index_expr const* e) { return ev.eval(e); }
     Value operator()(Value_conv const* e) { return ev.eval(e); }
+    Value operator()(Block_conv const* e) { return ev.eval(e); }
     Value operator()(Default_init const* e) { return ev.eval(e); }
     Value operator()(Copy_init const* e) { return ev.eval(e); }
   };
@@ -294,7 +296,14 @@ Evaluator::eval(Member_expr const* e)
 }
 
 
-// Apply an lvalue-to-rvalue conversion by dereferencing
+Value
+Evaluator::eval(Index_expr const* e)
+{
+  throw std::runtime_error("not implemnted");
+}
+
+
+// Apply an object-to-value conversion by dereferencing
 // the reference value. Note that the source must evaluate
 // to a reference.
 Value
@@ -302,6 +311,16 @@ Evaluator::eval(Value_conv const* e)
 {
   Value v = eval(e->source());
   return *v.get_reference();
+}
+
+
+// Apply an array-to-block conversion by dereferencing
+// the reference value. Note that the source must evaluate
+// to a reference.
+Value
+Evaluator::eval(Block_conv const* e)
+{
+  throw std::runtime_error("not implemented");
 }
 
 

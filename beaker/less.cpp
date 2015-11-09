@@ -186,7 +186,9 @@ is_less(Expr const* a, Expr const* b)
     bool operator()(Not_expr const* a) { return false; }
     bool operator()(Call_expr const* a) { return false; }
     bool operator()(Member_expr const* a) { return false; }
+    bool operator()(Index_expr const* a) { return false; }
     bool operator()(Value_conv const* a) { return false; }
+    bool operator()(Block_conv const* a) { return false; }
     bool operator()(Default_init const* a) { return false; }
     bool operator()(Copy_init const* a) { return false; }
   };

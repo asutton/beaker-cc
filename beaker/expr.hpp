@@ -63,7 +63,9 @@ struct Expr::Visitor
   virtual void visit(Not_expr const*) = 0;
   virtual void visit(Call_expr const*) = 0;
   virtual void visit(Member_expr const*) = 0;
+  virtual void visit(Index_expr const*) = 0;
   virtual void visit(Value_conv const*) = 0;
+  virtual void visit(Block_conv const*) = 0;
   virtual void visit(Default_init const*) = 0;
   virtual void visit(Copy_init const*) = 0;
 };
@@ -93,7 +95,9 @@ struct Expr::Mutator
   virtual void visit(Not_expr*) = 0;
   virtual void visit(Call_expr*) = 0;
   virtual void visit(Member_expr*) = 0;
+  virtual void visit(Index_expr*) = 0;
   virtual void visit(Value_conv*) = 0;
+  virtual void visit(Block_conv*) = 0;
   virtual void visit(Default_init*) = 0;
   virtual void visit(Copy_init*) = 0;
 };
@@ -375,6 +379,26 @@ struct Member_expr : Expr
   Expr* second;
 };
 
+
+// Represents the expression e1[e2] where e1
+// has array type.
+struct Index_expr : Expr
+{
+  Index_expr(Expr* e1, Expr* e2)
+    : first(e1), second(e2)
+  { }
+
+  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Mutator& v)       { v.visit(this); }
+
+  Expr* array() const   { return first; }
+  Expr* index() const   { return second; }
+
+  Expr* first;
+  Expr* second;
+};
+
+
 // -------------------------------------------------------------------------- //
 // Conversions
 
@@ -395,6 +419,16 @@ struct Conversion : Expr
 
 // Represents the conversion of a reference to a value.
 struct Value_conv : Conversion
+{
+  using Conversion::Conversion;
+
+  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Mutator& v)       { v.visit(this); }
+};
+
+
+// Represents the conversion of an array to a block.
+struct Block_conv : Conversion
 {
   using Conversion::Conversion;
 
@@ -489,7 +523,9 @@ struct Generic_expr_visitor : Expr::Visitor, lingo::Generic_visitor<F, T>
   void visit(Not_expr const* e) { this->invoke(e); }
   void visit(Call_expr const* e) { this->invoke(e); }
   void visit(Member_expr const* e) { this->invoke(e); }
+  void visit(Index_expr const* e) { this->invoke(e); }
   void visit(Value_conv const* e) { this->invoke(e); }
+  void visit(Block_conv const* e) { this->invoke(e); }
   void visit(Default_init const* e) { this->invoke(e); }
   void visit(Copy_init const* e) { this->invoke(e); }
 };
@@ -535,7 +571,9 @@ struct Generic_expr_mutator : Expr::Mutator, lingo::Generic_mutator<F, T>
   void visit(Not_expr* e) { this->invoke(e); }
   void visit(Call_expr* e) { this->invoke(e); }
   void visit(Member_expr* e) { this->invoke(e); }
+  void visit(Index_expr* e) { this->invoke(e); }
   void visit(Value_conv* e) { this->invoke(e); }
+  void visit(Block_conv* e) { this->invoke(e); }
   void visit(Default_init* e) { this->invoke(e); }
   void visit(Copy_init* e) { this->invoke(e); }
 };

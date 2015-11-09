@@ -222,7 +222,9 @@ Elaborator::elaborate(Expr* e)
     Expr* operator()(Not_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Call_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Member_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Index_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Value_conv* e) const { return elab.elaborate(e); }
+    Expr* operator()(Block_conv* e) const { return elab.elaborate(e); }
     Expr* operator()(Default_init* e) const { return elab.elaborate(e); }
     Expr* operator()(Copy_init* e) const { return elab.elaborate(e); }
   };
@@ -596,6 +598,7 @@ Elaborator::elaborate(Call_expr* e)
 }
 
 
+// TODO: Document the semantics of member access.
 Expr*
 Elaborator::elaborate(Member_expr* e)
 {
@@ -641,11 +644,52 @@ Elaborator::elaborate(Member_expr* e)
 }
 
 
-// Conversions are created after their source expressions
-// have been elaborated. No action is required. In fact,
-// we probably never actually call this function.
+// TODO: Finalize the semantics of array access.
+//
+// In the expression e1[e2], e1 shall have array
+// type T[N] (for some N) or block type T[]. The
+// expression e2 shall be an integer value. The result
+// type of the expressions is ref T.
+Expr*
+Elaborator::elaborate(Index_expr* e)
+{
+  Expr* e1 = elaborate(e->array());
+
+  // Get the non-reference type of the array.
+  //
+  // FIXME: Does this require a value transformation?
+  // We don't (yet?) have array literals, so I generally
+  // expect that this *must* be a reference to an array.
+  Array_type const* t = as<Array_type>(e1->type()->nonref());
+  if (!t) {
+    std::stringstream ss;
+    ss << "object does not have array type";
+    throw Type_error({}, ss.str());
+  }
+
+  // The index shall be an integer value.
+  require_converted(*this, e->second, get_integer_type());
+
+  // The result type shall be ref T.
+  e->type_ = get_reference_type(t);
+  
+  return e;
+}
+
+
+// NOTE: Conversions are created after their source 
+// expressions  have been elaborated. No action is 
+//required.
+
 Expr*
 Elaborator::elaborate(Value_conv* e)
+{
+  return e;
+}
+
+
+Expr*
+Elaborator::elaborate(Block_conv* e)
 {
   return e;
 }

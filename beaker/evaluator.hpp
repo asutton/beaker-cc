@@ -63,7 +63,9 @@ public:
   Value eval(Not_expr const*);
   Value eval(Call_expr const*);
   Value eval(Member_expr const*);
+  Value eval(Index_expr const*);
   Value eval(Value_conv const*);
+  Value eval(Block_conv const*);
   Value eval(Default_init const*);
   Value eval(Copy_init const*);
 

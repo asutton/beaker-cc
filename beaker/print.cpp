@@ -130,7 +130,9 @@ operator<<(std::ostream& os, Expr const& e)
     void operator()(Not_expr const* e) { os << *e; }
     void operator()(Call_expr const* e) { os << *e; }
     void operator()(Member_expr const* e) { os << *e; }
+    void operator()(Index_expr const* e) { os << *e; }
     void operator()(Value_conv const* e) { os << *e; }
+    void operator()(Block_conv const* e) { os << *e; }
     void operator()(Default_init const* e) { os << *e; }
     void operator()(Copy_init const* e) { os << *e; }
   };
@@ -273,9 +275,16 @@ operator<<(std::ostream& os, Call_expr const&)
 
 
 std::ostream&
-operator<<(std::ostream& os, Member_expr const&)
+operator<<(std::ostream& os, Member_expr const& e)
 {
-  return os;
+  return os << *e.scope() << '.' << *e.member();
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Index_expr const& e)
+{
+  return os << *e.array() << '[' << *e.index() << ']';
 }
 
 
@@ -283,6 +292,15 @@ std::ostream&
 operator<<(std::ostream& os, Value_conv const& e)
 {
   return os << "__to_value("
+            << *e.source() << ','
+            << *e.target() << ')';
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Block_conv const& e)
+{
+  return os << "__to_block("
             << *e.source() << ','
             << *e.target() << ')';
 }
