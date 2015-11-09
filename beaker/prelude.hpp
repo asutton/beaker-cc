@@ -57,6 +57,7 @@ struct Copy_init;
 struct Type;
 struct Id_type;
 struct Boolean_type;
+struct Character_type;
 struct Integer_type;
 struct Function_type;
 struct Array_type;

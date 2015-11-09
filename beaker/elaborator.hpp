@@ -71,6 +71,7 @@ public:
   Type const* elaborate(Type const*);
   Type const* elaborate(Id_type const*);
   Type const* elaborate(Boolean_type const*);
+  Type const* elaborate(Character_type const*);
   Type const* elaborate(Integer_type const*);
   Type const* elaborate(Function_type const*);
   Type const* elaborate(Array_type const*);

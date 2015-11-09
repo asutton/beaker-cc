@@ -21,6 +21,7 @@ operator<<(std::ostream& os, Type const& t)
 
     void operator()(Id_type const* t) { os << *t; }
     void operator()(Boolean_type const* t) { os << *t; }
+    void operator()(Character_type const* t) { os << *t; }
     void operator()(Integer_type const* t) { os << *t; }
     void operator()(Function_type const* t) { os << *t; }
     void operator()(Block_type const* t) { os << *t; }
@@ -45,6 +46,13 @@ std::ostream&
 operator<<(std::ostream& os, Boolean_type const&)
 {
   return os << "bool";
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Character_type const&)
+{
+  return os << "char";
 }
 
 

@@ -93,6 +93,7 @@ Elaborator::elaborate(Type const* t)
 
     Type const* operator()(Id_type const* t) { return elab.elaborate(t); }
     Type const* operator()(Boolean_type const* t) { return elab.elaborate(t); }
+    Type const* operator()(Character_type const* t) { return elab.elaborate(t); }
     Type const* operator()(Integer_type const* t) { return elab.elaborate(t); }
     Type const* operator()(Function_type const* t) { return elab.elaborate(t); }
     Type const* operator()(Block_type const* t) { return elab.elaborate(t); }
@@ -129,6 +130,13 @@ Elaborator::elaborate(Id_type const* t)
 
 Type const*
 Elaborator::elaborate(Boolean_type const* t)
+{
+  return t;
+}
+
+
+Type const*
+Elaborator::elaborate(Character_type const* t)
 {
   return t;
 }
@@ -672,7 +680,7 @@ Elaborator::elaborate(Index_expr* e)
 
   // The result type shall be ref T.
   e->type_ = get_reference_type(t->type());
-  
+
   return e;
 }
 

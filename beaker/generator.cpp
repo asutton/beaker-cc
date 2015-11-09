@@ -31,6 +31,7 @@ Generator::get_type(Type const* t)
     Generator& g;
     llvm::Type* operator()(Id_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Boolean_type const* t) const { return g.get_type(t); }
+    llvm::Type* operator()(Character_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Integer_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Function_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Array_type const* t) const { return g.get_type(t); }
@@ -59,6 +60,14 @@ llvm::Type*
 Generator::get_type(Boolean_type const*)
 {
   return build.getInt1Ty();
+}
+
+
+// Return the 8 bit integer type.
+llvm::Type*
+Generator::get_type(Character_type const*)
+{
+  return build.getInt8Ty();
 }
 
 

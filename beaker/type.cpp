@@ -71,10 +71,19 @@ get_id_type(Symbol const* s)
   return new Id_type(s);
 }
 
+
 Type const*
 get_boolean_type()
 {
   static Boolean_type t;
+  return &t;
+}
+
+
+Type const*
+get_character_type()
+{
+  static Character_type t;
   return &t;
 }
 
