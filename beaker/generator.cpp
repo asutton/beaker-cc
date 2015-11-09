@@ -177,7 +177,7 @@ Generator::gen(Div_expr const* e)
 {
   llvm::Value* left = gen(e->left());
   llvm::Value* right = gen(e->right());
-  return build.CreateUDiv(left,right);
+  return build.CreateSDiv(left,right);
 }
 
 
@@ -186,7 +186,7 @@ Generator::gen(Rem_expr const* e)
 {
   llvm::Value* left = gen(e->left());
   llvm::Value* right = gen(e->right());
-  return build.CreateURem(left,right);
+  return build.CreateSRem(left,right);
 }
 
 
@@ -232,7 +232,7 @@ Generator::gen(Lt_expr const* e)
 { 
   llvm::Value* left = gen(e->left());
   llvm::Value* right = gen(e->right());
-  return build.CreateICmpULT(left,right);
+  return build.CreateICmpSLT(left,right);
 }
 
 
@@ -241,7 +241,7 @@ Generator::gen(Gt_expr const* e)
 {
   llvm::Value* left = gen(e->left());
   llvm::Value* right = gen(e->right());
-  return build.CreateICmpUGT(left,right);
+  return build.CreateICmpSGT(left,right);
 }
 
 
@@ -250,7 +250,7 @@ Generator::gen(Le_expr const* e)
 {
   llvm::Value* left = gen(e->left());
   llvm::Value* right = gen(e->right());
-  return build.CreateICmpULE(left,right);
+  return build.CreateICmpSLE(left,right);
 }
 
 
@@ -259,7 +259,7 @@ Generator::gen(Ge_expr const* e)
 {
   llvm::Value* left = gen(e->left());
   llvm::Value* right = gen(e->right());
-  return build.CreateICmpUGE(left,right);
+  return build.CreateICmpSGE(left,right);
 }
 
 
@@ -284,7 +284,8 @@ Generator::gen(Or_expr const* e)
 llvm::Value*
 Generator::gen(Not_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* op = gen(e->operand());
+  return build.CreateNot(op);
 }
 
 
@@ -344,7 +345,7 @@ Generator::gen(Stmt const* s)
 void
 Generator::gen(Empty_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  throw std::runtime_error("empty: not implemented");
 }
 
 
@@ -387,35 +388,58 @@ Generator::gen(Return_stmt const* s)
 void
 Generator::gen(If_then_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* cond = gen(s->condition());
+  if(!cond) {
+    throw std::runtime_error("err:cond");
+  }
+  
+  llvm::Function* theFunc = build.GetInsertBlock()->getParent();
+  llvm::BasicBlock* thenBB = 
+    llvm::BasicBlock::Create(cxt, "then", theFunc);
+  llvm::BasicBlock* mergeBB =
+    llvm::BasicBlock::Create(cxt, "ifcont");
+
+  build.CreateCondBr(cond, thenBB, mergeBB);
+
+  build.SetInsertPoint(thenBB);
+
+  gen(s->body());
+
+  build.CreateBr(mergeBB);
+  thenBB = build.GetInsertBlock();
+
+  theFunc->getBasicBlockList().push_back(mergeBB);
+  build.SetInsertPoint(mergeBB);
+
+  //throw std::runtime_error("if_then: not implemented");
 }
 
 
 void
 Generator::gen(If_else_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  throw std::runtime_error("if_else: not implemented");
 }
 
 
 void
 Generator::gen(While_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  throw std::runtime_error("while: not implemented");
 }
 
 
 void
 Generator::gen(Break_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  throw std::runtime_error("break: not implemented");
 }
 
 
 void
 Generator::gen(Continue_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  throw std::runtime_error("continue: not implemented");
 }
 
 
@@ -468,7 +492,7 @@ Generator::gen(Decl const* d)
 void
 Generator::gen_local(Variable_decl const* d)
 {
-  throw std::runtime_error("not implemented");
+  throw std::runtime_error("gen_local: not implemented");
 }
 
 
