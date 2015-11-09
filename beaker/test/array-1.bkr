@@ -1,2 +1,5 @@
 
 var x : int[10];
+
+var z : int = x[0];
+

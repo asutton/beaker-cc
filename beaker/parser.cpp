@@ -43,8 +43,9 @@ Parser::primary_expr()
 // Parse a postfix expression.
 //
 //    postfix-expression -> postfix-expression '(' argument-list ')'
-//                       | postfix-expression . identifier
-//                       -> primary-expression
+//                        | postfix-expression '[' expression ']'
+//                        | postfix-expression . identifier
+//                        | primary-expression
 Expr*
 Parser::postfix_expr()
 {
@@ -69,6 +70,13 @@ Parser::postfix_expr()
       }
       match(rparen_tok);
       e1 = on_call(e1, args);
+    }
+
+    // index-expr
+    else if (match_if(lbrack_tok)) {
+      Expr* e2 = expr();
+      match(rbrack_tok);
+      e1 = on_index(e1, e2);
     }
 
     // anything else
@@ -993,6 +1001,13 @@ Expr*
 Parser::on_call(Expr* e, Expr_seq const& a)
 {
   return new Call_expr(e, a);
+}
+
+
+Expr*
+Parser::on_index(Expr* e1, Expr* e2)
+{
+  return new Index_expr(e1, e2);
 }
 
 

@@ -671,7 +671,7 @@ Elaborator::elaborate(Index_expr* e)
   require_converted(*this, e->second, get_integer_type());
 
   // The result type shall be ref T.
-  e->type_ = get_reference_type(t);
+  e->type_ = get_reference_type(t->type());
   
   return e;
 }
@@ -715,7 +715,7 @@ Elaborator::elaborate(Copy_init* e)
   if (!c) {
     std::stringstream ss;
     ss << "type mismatch in copy initializer (expected "
-       << e->value() << " but got " << e->value()->type() << ')';
+       << *e->type() << " but got " << *e->value()->type() << ')';
     throw Type_error({}, ss.str());
   }
 
