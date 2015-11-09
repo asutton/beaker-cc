@@ -368,19 +368,15 @@ Generator::gen(Not_expr const* e)
 llvm::Value*
 Generator::gen(Call_expr const* e)
 {
-  if (Id_expr const* id = as<Id_expr>(e->target())) {
-    llvm::Value* fn = stack.lookup(id->declaration())->second;
+  llvm::Value* fn = gen(e->target());
 
-    std::vector<llvm::Value*> argsV;
-    for (auto arg : e->arguments()) {
-      llvm::Value* argi = gen(arg);
-      argsV.push_back(argi);
-    }
+  std::vector<llvm::Value*> argsV;
+  for (auto arg : e->arguments()) {
+    llvm::Value* argi = gen(arg);
+    argsV.push_back(argi);
+  }
 
-    return build.CreateCall(fn, argsV, "calltmp");
-  } 
-  
-  throw std::runtime_error("unqualified id in call expr");
+  return build.CreateCall(fn, argsV, "calltmp");
 }
 
 
