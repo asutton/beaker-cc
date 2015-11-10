@@ -76,6 +76,8 @@ private:
   Expr* on_id(Token);
   Expr* on_bool(Token);
   Expr* on_int(Token);
+  Expr* on_char(Token);
+  Expr* on_str(Token);
   Expr* on_add(Expr*, Expr*);
   Expr* on_sub(Expr*, Expr*);
   Expr* on_mul(Expr*, Expr*);

@@ -17,17 +17,34 @@
 //
 //    primary-expr -> literal | identifier | '(' expr ')'
 //
-//    literal -> integer-literal | boolean-literal
+//    literal -> integer-literal
+//             | boolean-literal
+//             | character-literal
+//             | string-literal
 Expr*
 Parser::primary_expr()
 {
-  // FIXME: switch on the token kind.
+  // identifier
   if (Token tok = match_if(identifier_tok))
     return on_id(tok);
+
+  // boolean-literal
   if (Token tok = match_if(boolean_tok))
     return on_bool(tok);
+
+  // integer-literal
   if (Token tok = match_if(integer_tok))
     return on_int(tok);
+
+  // character-literal
+  if (Token tok = match_if(character_tok))
+    return on_char(tok);
+
+  // string-literal
+  if (Token tok = match_if(string_tok))
+    return on_str(tok);
+
+  // paren-expr
   if (match_if(lparen_tok)) {
     Expr* e = expr();
     match(rparen_tok);
@@ -888,6 +905,44 @@ Parser::on_int(Token tok)
   Type const* t = get_integer_type();
   int v = tok.integer_symbol()->value();
   return init<Literal_expr>(tok.location(), t, v);
+}
+
+
+Expr*
+Parser::on_char(Token tok)
+{
+  Type const* t = get_character_type();
+  int v = tok.character_symbol()->value();
+  return init<Literal_expr>(tok.location(), t, v);
+}
+
+
+// Build a new string literal. String literals
+// are arrays of characters.
+Expr*
+Parser::on_str(Token tok)
+{
+  /*
+  // Build the string value.
+  String_sym const* s = tok.string_symbol();
+  String_value v {
+     s->value().c_str(),
+     s->value().size()
+  };
+
+  // Create the extent of the literal array. This is
+  // explicitly more than the length of the string,
+  // and includes the null character.
+  Type const* z = get_integer_type();
+  Expr* n = new Literal_expr(z, v.len + 1);
+
+  // Create the array type.
+  Type const* c = get_character_type();
+  Type const* t = get_array_type(c, n);
+
+  return init<Literal_expr>(tok.location(), t, v);
+  */
+  throw std::runtime_error("not implemented");
 }
 
 
