@@ -5,6 +5,19 @@
 #include "decl.hpp"
 
 
+// Return a string value for the arary.
+std::string
+Array_value::to_string() const
+{
+  std::string str(len, '\0');
+  std::transform(data, data + len, str.begin(), [](Value const& v) -> char {
+    return v.get_integer();
+  });
+  return str;
+}
+
+
+
 std::ostream&
 operator<<(std::ostream& os, Value const& v)
 {

@@ -226,6 +226,18 @@ is_aggregate_type(Type const* t)
 }
 
 
+// Returns true if this is the type of a string
+// literal: char[N].
+inline bool
+is_string_type(Type const* t)
+{
+  if (Array_type const* a = as<Array_type>(t))
+    return a->type() == get_character_type();
+  else
+    return false;
+}
+
+
 // -------------------------------------------------------------------------- //
 //                              Generic visitors
 

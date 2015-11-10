@@ -184,10 +184,39 @@ Generator::gen(Literal_expr const* e)
   //
   // TODO: Write a better interface for values.
   Value v = evaluate(e);
-  if (e->type() == get_boolean_type())
+  Type const* t = e->type();
+  if (t == get_boolean_type())
     return build.getInt1(v.get_integer());
-  if (e->type() == get_integer_type())
+  if (t == get_character_type())
+    return build.getInt8(v.get_integer());
+  if (t == get_integer_type())
     return build.getInt32(v.get_integer());
+
+  // FIXME: How should we generate array literals? Are
+  // these global constants or are they local alloca
+  // objects. Does it depend on context?
+
+  // A string literal produces a new global string constant.
+  // and returns a pointer to an array of N characters.
+  if (is_string_type(t)) {
+    Array_value a = v.get_array();
+    String s = a.to_string();
+    llvm::Constant* c = llvm::ConstantDataArray::getString(cxt, s);
+
+    llvm::GlobalVariable* v = new llvm::GlobalVariable(
+      *mod,                              // owning module
+      c->getType(),                      // type
+      true,                              // constant
+      llvm::GlobalValue::PrivateLinkage, // private
+      c                                  // initializer
+    );
+
+    // Allow globals with the same value to
+    // be unified into the same object.
+    v->setUnnamedAddr(true);
+    return v;
+  }
+
   else
     throw std::runtime_error("cannot generate function literal");
 }
@@ -365,7 +394,16 @@ Generator::gen(Value_conv const* e)
 llvm::Value*
 Generator::gen(Block_conv const* e)
 {
-  return gen(e->source());
+  // Generate the array value.
+  llvm::Value* a = gen(e->source());
+
+  // Decay the array pointer to an array into
+  // a pointer to the first object. This effectively
+  // returns a pointer to the first object in the
+  // array.
+  llvm::Value *zero = build.getInt32(0);
+  llvm::Value *args[] = { zero, zero };
+  return build.CreateInBoundsGEP(a, args);
 }
 
 

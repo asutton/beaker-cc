@@ -39,6 +39,8 @@ struct Array_value
   Array_value(std::size_t n);
   Array_value(char const*, std::size_t n);
 
+  std::string to_string() const;
+
   int    len;
   Value* data;
 };

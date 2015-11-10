@@ -177,7 +177,7 @@ Type const*
 Elaborator::elaborate(Block_type const* t)
 {
   Type const* t1 = elaborate(t->type());
-  return get_reference_type(t1);
+  return get_block_type(t1);
 }
 
 
@@ -685,8 +685,8 @@ Elaborator::elaborate(Index_expr* e)
 }
 
 
-// NOTE: Conversions are created after their source 
-// expressions  have been elaborated. No action is 
+// NOTE: Conversions are created after their source
+// expressions  have been elaborated. No action is
 //required.
 
 Expr*
