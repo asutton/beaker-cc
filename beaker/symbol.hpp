@@ -25,12 +25,14 @@ class Symbol
   friend struct Symbol_table;
 
 public:
-  Symbol(int);
+  Symbol(int k)
+    : str_(nullptr), tok_(k)
+  { }
 
   virtual ~Symbol() { }
 
-  String const& spelling() const;
-  int           token() const;
+  String const& spelling() const { return *str_; }
+  int           token() const    { return tok_; }
 
 private:
   String const* str_; // The textual representation
@@ -38,27 +40,15 @@ private:
 };
 
 
-inline
-Symbol::Symbol(int k)
-  : str_(nullptr), tok_(k)
-{ }
-
-
-// Returns the spelling of the symbol.
-inline String const&
-Symbol::spelling() const
+// Represents all identifiers.
+//
+// TODO: Track the innermost binding of the identifier?
+struct Identifier_sym : Symbol
 {
-  return *str_;
-}
-
-
-// Returns the kind of token classfication of
-// the symbol.
-inline int
-Symbol::token() const
-{
-  return tok_;
-}
+  Identifier_sym(int k)
+    : Symbol(k)
+  { }
+};
 
 
 // Represents the integer symbols true and false.
@@ -94,14 +84,43 @@ struct Integer_sym : Symbol
 };
 
 
-// Represents all identifiers.
+// Character symbols are represented by their integer
+// encoding in the execution character set. That
+// defaults to extended ASCII. Note that this internall
+// represnted as a system integer for simplicity.
 //
-// TODO: Track the innermost binding of the identifier?
-struct Identifier_sym : Symbol
+// TODO: Support wide character encoding in ISO 10646
+// (Unicode).
+//
+// TODO: Support configuration of the execution character
+// set.
+struct Character_sym : Symbol
 {
-  Identifier_sym(int k)
-    : Symbol(k)
+  Character_sym(int k, int n)
+    : Symbol(k), value_(n)
   { }
+
+  int value() const { return value_; }
+
+  int value_;
+};
+
+
+// A string symbol contains the representation of the
+// string literal in the execution character set.
+//
+// TODO: Supporting wide string literals would effectively
+// require this to be a union of narrow and wide string
+// representations.
+struct String_sym : Symbol
+{
+  String_sym(int k, String const& s)
+    : Symbol(k), value_(s)
+  { }
+
+  String const& value() const { return value_; }
+
+  String value_;
 };
 
 

@@ -177,6 +177,8 @@ public:
 
   Token integer();
   Token word();
+  Token character();
+  Token string();
 
   Token eof();
   Token error();
@@ -186,6 +188,8 @@ private:
   Token on_token();
   Token on_word();
   Token on_integer();
+  Token on_character();
+  Token on_string();
 
   // Lexing support
   char peek() const;

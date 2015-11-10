@@ -28,6 +28,8 @@ enum Token_kind
   rparen_tok,
   lbrack_tok,
   rbrack_tok,
+  squote_tok,
+  dquote_tok,
   comma_tok,
   colon_tok,
   semicolon_tok,
@@ -66,6 +68,8 @@ enum Token_kind
   // Multi-valued tokens
   boolean_tok,      // true | false
   integer_tok,      // digit+
+  character_tok,    // narrow characters
+  string_tok,       // narrow string literals
   identifier_tok,   // letter (letter | digit)*
 };
 
@@ -97,9 +101,12 @@ public:
   String const& spelling() const;
   Location      location() const;
 
-  Symbol const*        symbol() const;
-  Boolean_sym const*   boolean_symbol() const;
-  Integer_sym const*   integer_symbol() const;
+  Symbol const*         symbol() const;
+  Identifier_sym const* identifier_symbol() const;
+  Boolean_sym const*    boolean_symbol() const;
+  Integer_sym const*    integer_symbol() const;
+  Character_sym const*  character_symbol() const;
+  String_sym const*     string_symbol() const;
 
 private:
   Location      loc_;
@@ -171,6 +178,14 @@ Token::symbol() const
 }
 
 
+// Return the identifier symbol for the token.
+inline Identifier_sym const*
+Token::identifier_symbol() const
+{
+  return cast<Identifier_sym>(sym_);
+}
+
+
 // Return the boolean symbol for the token.
 inline Boolean_sym const*
 Token::boolean_symbol() const
@@ -184,6 +199,22 @@ inline Integer_sym const*
 Token::integer_symbol() const
 {
   return cast<Integer_sym>(sym_);
+}
+
+
+// Return the character symbol for the token.
+inline Character_sym const*
+Token::character_symbol() const
+{
+  return cast<Character_sym>(sym_);
+}
+
+
+// Return the string symbol for the token.
+inline String_sym const*
+Token::string_symbol() const
+{
+  return cast<String_sym>(sym_);
 }
 
 

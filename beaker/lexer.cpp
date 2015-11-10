@@ -108,10 +108,51 @@ Lexer::scan()
       case 'Z':
         return word();
 
+      case '\'': return character();
+      case '"': return string();
+
       default:
         return error();
     }
   }
+}
+
+
+// character ::= ' c '
+//
+// TODO: Allow for unicode characters? Imrove error
+// handling.
+//
+// FIXME: Move the diagnostics into the semantic
+// action for character tokens. We might actually
+// want to support multicharacter literals.
+Token
+Lexer::character()
+{
+  assert(peek() == '\'');
+  get(); // '
+  if (peek() == '\\') // consume an escape.
+    get();
+  get(); // c
+  if (peek() != '\'')
+    throw std::runtime_error("invalid character literal");
+  get(); // '
+  return on_character();
+}
+
+
+Token
+Lexer::string()
+{
+  assert(peek() == '"');
+  get();
+  while (peek() != '"') {
+    if (peek() == '\\')
+      get();
+    get();
+  }
+  get();
+  return on_string();
 }
 
 
@@ -150,6 +191,79 @@ Lexer::on_integer()
   int n = string_to_int<int>(str, 10);
   Symbol* sym = syms_.put<Integer_sym>(str, integer_tok, n);
   return Token(loc_, integer_tok, sym);
+}
+
+
+namespace
+{
+
+// Translate a character from the basic character
+// set into the execution character set.
+inline char
+translate_escape(char c)
+{
+  switch (c) {
+    case '\'': return '\'';
+    case '\"': return '\"';
+    case '\\': return '\\';
+    case 'a': return '\a';
+    case 'b': return '\b';
+    case 'f': return '\f';
+    case 'n': return '\n';
+    case 't': return '\t';
+    case 'r': return '\r';
+    case 'v': return '\v';
+  }
+  throw std::runtime_error("invalid escape sequence");
+}
+
+} // namespace
+
+
+Token
+Lexer::on_character()
+{
+  String str = build_.take();
+
+  // Translate the spelling of the lexeme in the
+  // basic character set into the execution character
+  // set.
+  //
+  // TODO: This belongs is a separate facility
+  // in order to better enable translation between
+  // the basic and execution character sets.
+  int rep;
+  char const* p = str.c_str();
+  if (*++p == '\\')
+    rep = *p;
+  else
+    rep = translate_escape(*++p);
+  Symbol* sym = syms_.put<Character_sym>(str, character_tok, rep);
+
+  return Token(loc_, character_tok, sym);
+}
+
+
+Token
+Lexer::on_string()
+{
+  String str = build_.take();
+
+  // Translate the spelling of the lexeme ion the basic
+  // character set into the execution character set.
+  String rep;
+  rep.reserve(str.size());
+  char const* p = str.c_str() + 1;
+  while (*p != '\"') {
+    if (*p != '\\')
+      rep.push_back(*p);
+    else
+      rep.push_back(translate_escape(*++p));
+    ++p;
+  }
+  Symbol* sym = syms_.put<String_sym>(str, string_tok, rep);
+
+  return Token(loc_, string_tok, sym);
 }
 
 

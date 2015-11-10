@@ -17,6 +17,8 @@ spelling(Token_kind k)
     case rparen_tok: return ")";
     case lbrack_tok: return "[";
     case rbrack_tok: return "]";
+    case squote_tok: return "''";
+    case dquote_tok: return "\"";
     case comma_tok: return ",";
     case colon_tok: return ":";
     case semicolon_tok: return ";";
@@ -67,6 +69,8 @@ init_symbols(Symbol_table& syms)
   syms.put<Symbol>(")", rparen_tok);
   syms.put<Symbol>("[", lbrack_tok);
   syms.put<Symbol>("]", rbrack_tok);
+  syms.put<Symbol>("'", squote_tok);
+  syms.put<Symbol>("\"", dquote_tok);
   syms.put<Symbol>(",", comma_tok);
   syms.put<Symbol>(":", colon_tok);
   syms.put<Symbol>(";", semicolon_tok);
