@@ -922,10 +922,9 @@ Parser::on_char(Token tok)
 Expr*
 Parser::on_str(Token tok)
 {
-  /*
   // Build the string value.
   String_sym const* s = tok.string_symbol();
-  String_value v {
+  Array_value v {
      s->value().c_str(),
      s->value().size()
   };
@@ -941,8 +940,6 @@ Parser::on_str(Token tok)
   Type const* t = get_array_type(c, n);
 
   return init<Literal_expr>(tok.location(), t, v);
-  */
-  throw std::runtime_error("not implemented");
 }
 
 

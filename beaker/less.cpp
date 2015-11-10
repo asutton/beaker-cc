@@ -143,6 +143,10 @@ is_less(Value const& a, Value const& b)
 
     case reference_value:
       return is_less(*a.get_reference(), *b.get_reference());
+
+    case array_value:
+      // FIXME: Implement me!
+      return false;
   }
   throw std::runtime_error("unhandled value");
 }
