@@ -381,7 +381,8 @@ void
 Generator::gen(Return_stmt const* s)
 {
   llvm::Value* v = gen(s->value());
-  build.CreateRet(v);
+  
+  build.CreateStore(v, ret);
 }
 
 
@@ -397,17 +398,16 @@ Generator::gen(If_then_stmt const* s)
   llvm::BasicBlock* thenBB = 
     llvm::BasicBlock::Create(cxt, "then", theFunc);
   llvm::BasicBlock* mergeBB =
-    llvm::BasicBlock::Create(cxt, "ifcont");
+    llvm::BasicBlock::Create(cxt, "merge");
 
   build.CreateCondBr(cond, thenBB, mergeBB);
 
+  //if true
   build.SetInsertPoint(thenBB);
-
   gen(s->body());
-
   build.CreateBr(mergeBB);
-  thenBB = build.GetInsertBlock();
 
+  //merge
   theFunc->getBasicBlockList().push_back(mergeBB);
   build.SetInsertPoint(mergeBB);
 
@@ -418,7 +418,36 @@ Generator::gen(If_then_stmt const* s)
 void
 Generator::gen(If_else_stmt const* s)
 {
-  throw std::runtime_error("if_else: not implemented");
+  llvm::Value* cond = gen(s->condition());
+  if(!cond) {
+    throw std::runtime_error("err:cond");
+  }
+  
+  llvm::Function* theFunc = build.GetInsertBlock()->getParent();
+  llvm::BasicBlock* thenBB = 
+    llvm::BasicBlock::Create(cxt, "then", theFunc);
+  llvm::BasicBlock* elseBB =
+    llvm::BasicBlock::Create(cxt, "else");
+  llvm::BasicBlock* mergeBB =
+    llvm::BasicBlock::Create(cxt, "merge");
+
+  build.CreateCondBr(cond, thenBB, elseBB);
+
+  //if true
+  build.SetInsertPoint(thenBB);
+  gen(s->true_branch());
+  build.CreateBr(mergeBB);
+
+  //else false
+  theFunc->getBasicBlockList().push_back(elseBB);
+  build.SetInsertPoint(elseBB);
+  gen(s->false_branch());
+  build.CreateBr(mergeBB);
+
+  //merge
+  theFunc->getBasicBlockList().push_back(mergeBB);
+  build.SetInsertPoint(mergeBB);
+  //throw std::runtime_error("if_else: not implemented");
 }
 
 
@@ -596,10 +625,15 @@ Generator::gen(Function_decl const* d)
   for (Decl const* p : d->parameters())
     gen(p);
 
-  
+  llvm::Type* t = get_type(d->return_type());
+  ret = build.CreateAlloca(t);
+
+
   // Generate the body of the function.
   gen(d->body());
 
+  llvm::Value* loadret = build.CreateLoad(ret);
+  build.CreateRet(loadret);
 }
 
 
