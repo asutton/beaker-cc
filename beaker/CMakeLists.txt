@@ -16,6 +16,7 @@ add_library(beaker STATIC
   expr.cpp
   type.cpp
   decl.cpp
+  specifier.cpp
   value.cpp
   print.cpp
   less.cpp

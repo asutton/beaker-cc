@@ -5,6 +5,7 @@
 #define BEAKER_DECL_HPP
 
 #include "prelude.hpp"
+#include "specifier.hpp"
 
 
 // Represents the declaration of a named entity.
@@ -18,7 +19,11 @@ struct Decl
   struct Mutator;
 
   Decl(Symbol const* s, Type const* t)
-    : name_(s), type_(t)
+    : spec_(no_spec), name_(s), type_(t), cxt_(nullptr)
+  { }
+
+  Decl(Specifier spec, Symbol const* s, Type const* t)
+    : spec_(spec), name_(s), type_(t), cxt_(nullptr)
   { }
 
   virtual ~Decl() { }
@@ -26,13 +31,19 @@ struct Decl
   virtual void accept(Visitor&) const = 0;
   virtual void accept(Mutator&) = 0;
 
-  Decl const*   context() const { return cxt_; }
+  // Declaration specifiers
+  Specifier specifiers() const { return spec_; }
+  bool      is_foreign() const { return spec_ & foreign_spec; }
+
   Symbol const* name() const { return name_; }
   Type const*   type() const { return type_; }
 
-  Decl const*   cxt_;
+  Decl const*   context() const { return cxt_; }
+
+  Specifier     spec_;
   Symbol const* name_;
   Type const*   type_;
+  Decl const*   cxt_;
 };
 
 
@@ -67,6 +78,10 @@ struct Variable_decl : Decl
     : Decl(n, t), init_(e)
   { }
 
+  Variable_decl(Specifier spec, Symbol const* n, Type const* t, Expr* e)
+    : Decl(spec, n, t), init_(e)
+  { }
+
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
 
@@ -82,6 +97,10 @@ struct Function_decl : Decl
 {
   Function_decl(Symbol const* n, Type const* t, Decl_seq const& p, Stmt* b)
     : Decl(n, t), parms_(p), body_(b)
+  { }
+
+  Function_decl(Specifier spec, Symbol const* n, Type const* t, Decl_seq const& p, Stmt* b)
+    : Decl(spec, n, t), parms_(p), body_(b)
   { }
 
   void accept(Visitor& v) const { v.visit(this); }

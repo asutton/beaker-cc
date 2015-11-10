@@ -805,8 +805,9 @@ Elaborator::elaborate(Function_decl* d)
   for (Decl* p : d->parameters())
     elaborate(p);
 
-  // Check the body of the function.
-  elaborate(d->body());
+  // Check the body of the function, if present.
+  if (d->body())
+    elaborate(d->body());
 
   // TODO: Build a control flow graph and ensure that
   // every branch returns a value.

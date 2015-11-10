@@ -58,6 +58,7 @@ enum Token_kind
   continue_kw,
   def_kw,
   else_kw,
+  foreign_kw,
   if_kw,
   int_kw,
   return_kw,
@@ -255,6 +256,7 @@ public:
   bool eof() const;
 
   Token peek() const;
+  Token peek(int) const;
   Token get();
   void put(Token);
 
@@ -291,6 +293,25 @@ Token_stream::peek() const
     return Token();
   else
     return *pos_;
+}
+
+
+// Returns the nth token past the current position.
+inline Token
+Token_stream::peek(int n) const
+{
+  // Get the nth token, but restore the stream position
+  // afterwards. Note that this will gracefully handle
+  // an eof during lookahead.
+  Position i = pos_;
+  while (i != buf_.end() && n) {
+    ++i;
+    --n;
+  }
+  if (i == buf_.end())
+    return Token();
+  else
+    return *i;
 }
 
 

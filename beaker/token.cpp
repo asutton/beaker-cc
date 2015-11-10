@@ -5,8 +5,7 @@
 
 
 // TODO: This could be unified with the token so
-// that I'd only ever have to write the spelling
-// once.
+// that I'd only have to write the spelling once.
 char const*
 spelling(Token_kind k)
 {
@@ -46,6 +45,7 @@ spelling(Token_kind k)
     case continue_kw: return "continue";
     case def_kw: return "def";
     case else_kw: return "else";
+    case foreign_kw: return "else";
     case if_kw: return "if";
     case int_kw: return "int";
     case return_kw: return "return";
@@ -99,6 +99,7 @@ init_symbols(Symbol_table& syms)
   syms.put<Symbol>("continue", continue_kw);
   syms.put<Symbol>("def", def_kw);
   syms.put<Symbol>("else", else_kw);
+  syms.put<Symbol>("foreign", foreign_kw);
   syms.put<Symbol>("if", if_kw);
   syms.put<Symbol>("int", int_kw);
   syms.put<Symbol>("while", while_kw);

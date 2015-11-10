@@ -38,6 +38,8 @@ struct Generator
 
   llvm::Module* operator()(Decl const*);
 
+  String get_name(Decl const*);
+
   llvm::Type* get_type(Type const*);
   llvm::Type* get_type(Id_type const*);
   llvm::Type* get_type(Boolean_type const*);

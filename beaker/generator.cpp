@@ -17,6 +17,28 @@
 
 
 // -------------------------------------------------------------------------- //
+// Mapping of names
+
+// Synthesize a name using the linkage model for
+// the declaration's language. Currently, there
+// are two linkage models:
+//
+//    - C
+//    - Beaker
+//
+// NOTE: Currently, these are the same. However, these
+// differ be as Beaker evolves.
+String
+Generator::get_name(Decl const* d)
+{
+  if (d->is_foreign())
+    return d->name()->spelling();
+  else
+    return d->name()->spelling();
+}
+
+
+// -------------------------------------------------------------------------- //
 // Mapping of types
 //
 // The type generator transforms a beaker type into
@@ -602,22 +624,28 @@ Generator::gen_local(Variable_decl const* d)
 void
 Generator::gen_global(Variable_decl const* d)
 {
-  String const&   name = d->name()->spelling();
-  llvm::Type*     type = get_type(d->type());
+  String      name = get_name(d);
+  llvm::Type* type = get_type(d->type());
 
-  // FIXME: Handle initialization correctly. If the
-  // initializer is a literal (or a constant expression),
-  // then we should evaluate that and assign it here.
-  llvm::Value* val = gen(d->init());
-  llvm::Constant* init;
-  if (llvm::Constant* c = llvm::dyn_cast<llvm::Constant>(val))
-    init = c;
-  else
-    init = llvm::ConstantInt::get(type, 0);
+  // Try to generate a constant initializer.
+  llvm::Constant* init = nullptr;
+  if (!d->is_foreign()) {
+
+    // FIXME: If the initializer can be reduced to a value,
+    // then generate that constant. If not, we need dynamic
+    // initialization of global variables.
+
+    init = llvm::Constant::getNullValue(type);
+
+    // llvm::Value* val = gen(d->init());
+    // if (llvm::Constant* c = llvm::dyn_cast<llvm::Constant>(val)) {
+    //   init = c;
+    // } 
+  }
+
 
   // Note that the aggregate 0 only applies to aggregate
   // types. We can't apply it to initializers for scalars.
-  // llvm::Constant* init = llvm::ConstantAggregateZero::get(type);
 
   // Build the global variable, automatically adding
   // it to the module.
@@ -654,7 +682,7 @@ Generator::gen(Variable_decl const* d)
 void
 Generator::gen(Function_decl const* d)
 {
-  String const& name = d->name()->spelling();
+  String name = get_name(d);
   llvm::Type*   type = get_type(d->type());
 
   // Build the function.
@@ -667,6 +695,11 @@ Generator::gen(Function_decl const* d)
 
   // Create a new binding for the variable.
   stack.top().bind(d, fn);
+
+  // If the declaration is not defined, then don't
+  // do any of this stuff...
+  if (!d->body())
+    return;
 
   // Establish a new binding environment for declarations
   // related to this function.
