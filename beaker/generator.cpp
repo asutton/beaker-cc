@@ -372,7 +372,11 @@ Generator::gen(Not_expr const* e)
 llvm::Value*
 Generator::gen(Call_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* fn = gen(e->target());
+  std::vector<llvm::Value*> args;
+  for (Expr const* a : e->arguments())
+    args.push_back(gen(a));
+  return build.CreateCall(fn, args);
 }
 
 
@@ -617,7 +621,18 @@ Generator::gen(Decl const* d)
 void
 Generator::gen_local(Variable_decl const* d)
 {
-  throw std::runtime_error("not implemented");
+  // Create the alloca instruction at the beginning of
+  // the function. Not at the point where we get it.
+  llvm::BasicBlock& b = fn->getEntryBlock();
+  llvm::IRBuilder<> tmp(&b, b.begin());
+  llvm::Value* ptr = tmp.CreateAlloca(get_type(d->type()));
+
+  // Save the decl binding.
+  stack.top().bind(d, ptr);
+
+  // Initialize the object.
+  llvm::Value* init = gen(d->init());
+  build.CreateStore(init, ptr);
 }
 
 
@@ -683,11 +698,11 @@ void
 Generator::gen(Function_decl const* d)
 {
   String name = get_name(d);
-  llvm::Type*   type = get_type(d->type());
+  llvm::Type* type = get_type(d->type());
 
   // Build the function.
   llvm::FunctionType* ftype = llvm::cast<llvm::FunctionType>(type);
-  llvm::Function* fn = llvm::Function::Create(
+  fn = llvm::Function::Create(
     ftype,                           // function type
     llvm::Function::ExternalLinkage, // linkage
     name,                            // name
@@ -726,11 +741,12 @@ Generator::gen(Function_decl const* d)
 
   // Build the entry point for the function
   // and make that the insertion point.
-  //
-  // TODO: We probably need a stack of blocks
-  // so that we know where we are.
-  llvm::BasicBlock* b = llvm::BasicBlock::Create(cxt, "b", fn);
+  llvm::BasicBlock* b = llvm::BasicBlock::Create(cxt, "entry", fn);
   build.SetInsertPoint(b);
+
+  // TODO: Create a local variable for the return value.
+  // Return statements will write here.
+  ret = build.CreateAlloca(fn->getReturnType());
 
   // Generate a local variable for each of the variables.
   for (Decl const* p : d->parameters())
@@ -738,6 +754,14 @@ Generator::gen(Function_decl const* d)
 
   // Generate the body of the function.
   gen(d->body());
+
+  // TODO: Create an exit block and allow code to
+  // jump directly to that block after storing
+  // the return value.
+
+  // Reset stateful info.
+  ret = nullptr;
+  fn = nullptr;
 }
 
 

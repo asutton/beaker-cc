@@ -662,10 +662,11 @@ Elaborator::elaborate(Member_expr* e)
 // expression e2 shall be an integer value. The result
 // type of the expressions is ref T.
 //
-// Note that e1 shall not be a value.
-//
-// FIXME: Should we first convert to a value? This has
-// an impact on code generation.
+// Note that e1 is not converted to a value, and in fact
+// *must* be a reference to an object. Converting to a
+// value will prevent me from creating element pointers
+// in code gen, because we need the base pointer from
+// which to compute offsets.
 Expr*
 Elaborator::elaborate(Index_expr* e)
 {

@@ -105,6 +105,8 @@ struct Generator
   llvm::LLVMContext cxt;
   llvm::IRBuilder<> build;
   llvm::Module*     mod;
+  llvm::Function*   fn;
+  llvm::Value*      ret;
 
   Symbol_stack      stack;
   Type_env          types;
