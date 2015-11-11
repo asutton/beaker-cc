@@ -290,10 +290,14 @@ Evaluator::eval(Call_expr const* e)
 }
 
 
+// Return a reference to the object at the
+// requested field.
 Value
 Evaluator::eval(Member_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+  Value obj = eval(e->scope());
+  Value* ref = obj.get_reference();
+  return &ref->get_tuple().data[e->position()];
 }
 
 
@@ -302,8 +306,9 @@ Value
 Evaluator::eval(Index_expr const* e)
 {
   Value arr = eval(e->array());
+  Value* ref = arr.get_reference();
   Value ix = eval(e->index());
-  return &arr.get_array().data[ix.get_integer()];
+  return &ref->get_array().data[ix.get_integer()];
 }
 
 

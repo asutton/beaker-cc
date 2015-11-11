@@ -611,6 +611,11 @@ Expr*
 Elaborator::elaborate(Member_expr* e)
 {
   Expr* e1 = elaborate(e->scope());
+  if (!is<Reference_type>(e1->type())) {
+    std::stringstream ss;
+    ss << "cannot access a member of a non-object";
+    throw Type_error({}, ss.str());
+  }
 
   // Get the non-reference type of the outer
   // object so we can perform lookups.
@@ -652,16 +657,24 @@ Elaborator::elaborate(Member_expr* e)
 }
 
 
-// In the expression e1[e2], e1 shall be a value of 
+// In the expression e1[e2], e1 shall be an object of 
 // array type T[N] (for some N) or block type T[]. The
 // expression e2 shall be an integer value. The result
 // type of the expressions is ref T.
 //
-// Note that e1 is converted to a value.
+// Note that e1 shall not be a value.
+//
+// FIXME: Should we first convert to a value? This has
+// an impact on code generation.
 Expr*
 Elaborator::elaborate(Index_expr* e)
 {
-  Expr* e1 = require_value(*this, e->first);
+  Expr* e1 = elaborate(e->first);
+  if (!is<Reference_type>(e1->type())) {
+    std::stringstream ss;
+    ss << "cannot index into a value";
+    throw Type_error({}, ss.str());
+  }
 
   // Get the non-reference type of the array.
   //
