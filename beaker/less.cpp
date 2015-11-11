@@ -145,6 +145,7 @@ is_less(Value const& a, Value const& b)
       return is_less(*a.get_reference(), *b.get_reference());
 
     case array_value:
+    case tuple_value:
       // FIXME: Implement me!
       return false;
   }
