@@ -49,8 +49,10 @@ struct Not_expr;
 struct Call_expr;
 struct Member_expr;
 struct Index_expr;
+struct Conv;
 struct Value_conv;
 struct Block_conv;
+struct Init;
 struct Default_init;
 struct Copy_init;
 

@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "evaluator.hpp"
+#include "type.hpp"
 #include "expr.hpp"
 #include "decl.hpp"
 #include "stmt.hpp"
@@ -40,8 +41,7 @@ Evaluator::eval(Expr const* e)
     Value operator()(Index_expr const* e) { return ev.eval(e); }
     Value operator()(Value_conv const* e) { return ev.eval(e); }
     Value operator()(Block_conv const* e) { return ev.eval(e); }
-    Value operator()(Default_init const* e) { return ev.eval(e); }
-    Value operator()(Copy_init const* e) { return ev.eval(e); }
+    Value operator()(Init const* e) { return ev.eval(e); }
   };
 
   return apply(e, Fn {*this});
@@ -324,17 +324,16 @@ Evaluator::eval(Block_conv const* e)
 }
 
 
+// Initializers are not handled in the usual
+// evaluator rules for expressions.
+//
+// TODO: Should initializers be pulled out of
+// the expression hierarchy? They only apply
+// in  a very limited set of cases.
 Value
-Evaluator::eval(Default_init const* e)
+Evaluator::eval(Init const*)
 {
-  throw std::runtime_error("not implemented");
-}
-
-
-Value
-Evaluator::eval(Copy_init const* e)
-{
-  throw std::runtime_error("not implemented");
+  throw std::runtime_error("unreachable");
 }
 
 
@@ -360,11 +359,46 @@ Evaluator::eval(Decl const* d)
 }
 
 
+namespace
+{
+
+// TODO: Handle default iniitalization for aggregate
+// types. That's probably going to be zero initialization
+// for everything.
+void
+init(Evaluator&, Value& v, Default_init const* e)
+{
+  if (is_scalar(e->type()))
+    v = Value(0);
+  else
+    throw std::runtime_error("unhandled default initializer");
+}
+
+
+// Evaluate the initializer and set th value.
+void
+init(Evaluator& ev, Value& v, Copy_init const* e)
+{
+  v = ev.eval(e->value());
+}
+
+
+} // namespace
+
+
 void
 Evaluator::eval(Variable_decl const* d)
 {
-  Value v = eval(d->init());
-  stack.top().bind(d->name(), v);
+  // Create and bind the value. Get a reference
+  // the bound value so we can initialize it.
+  Value& v = stack.top().bind(d->name(), Value()).second;
+
+  // TODO: Use a visitor.
+  Expr* e = d->init();
+  if (Default_init const* i = as<Default_init>(e))
+    init(*this, v, i);
+  else if (Copy_init const* i = as<Copy_init>(e))
+    init(*this, v, i);
 }
 
 

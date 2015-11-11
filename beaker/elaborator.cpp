@@ -777,7 +777,7 @@ Elaborator::elaborate(Variable_decl* d)
   //
   // TODO: This will probably be an expression in
   // the future.
-  cast<Initializer>(d->init())->decl_ = d;
+  cast<Init>(d->init())->decl_ = d;
 }
 
 
