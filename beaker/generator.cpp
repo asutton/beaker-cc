@@ -220,7 +220,7 @@ Generator::gen(Literal_expr const* e)
 
   // A string literal produces a new global string constant.
   // and returns a pointer to an array of N characters.
-  if (is_string_type(t)) {
+  if (is_string(t)) {
     Array_value a = v.get_array();
     String s = a.to_string();
     llvm::Constant* c = llvm::ConstantDataArray::getString(cxt, s);
@@ -438,14 +438,14 @@ Generator::gen(Default_init const* e)
 
   // Scalar types should get a 0 value in the
   // appropriate type.
-  if (is_scalar_type(t))
+  if (is_scalar(t))
     return llvm::ConstantInt::get(type, 0);
 
   // Aggregate types are zero initialized.
   //
   // NOTE: This isn't actually correct. Aggregate types
   // should be memberwise default initialized.
-  if (is_aggregate_type(t))
+  if (is_aggregate(t))
     return llvm::ConstantAggregateZero::get(type);
 
   throw std::runtime_error("unhahndled default initializer");

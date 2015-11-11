@@ -449,11 +449,16 @@ struct Block_conv : Conv
 // allocated object. The declaration is set during
 // elaboration.
 //
-// FIXME: Should this be a declaraiton or an expression
-// that refers to the created object? Probably the
-// latter so that we can handle dynamic allocation in
-// a uniform way. Think about C++'s `new T() or
-// `new (p) T()`.
+// FIXME: An initializer is a syntactic placeholder for
+// a constructor that is evaluated on uninitialized memory. 
+// This means that during elaboration. For example,
+// default initalization for an POD aggregate should
+// select a memset intrinsic. 
+//
+// TODO: Initializers should probably be bound to
+// a reference to the object created, not the
+// declaration. Otherwise, we can't do new very
+// well.
 struct Init : Expr
 {
   Init(Type const* t)
@@ -468,6 +473,13 @@ struct Init : Expr
 
 // Performs default initialization of an object
 // of the given type.
+//
+// FIXME: Find a constructor of the type:
+//
+//    (ref T) -> void
+//
+// Note that we should also explicitly represent
+// trivial default constructors.
 struct Default_init : Init
 {
   using Init::Init;
@@ -479,6 +491,10 @@ struct Default_init : Init
 
 // Performs copy initialization of an object
 // of the given type.
+//
+// FIXME: Find a constructor of the type:
+//
+//    (ref const T) -> void
 struct Copy_init : Init
 {
   Copy_init(Type const* t, Expr* e)
