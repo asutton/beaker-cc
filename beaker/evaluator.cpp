@@ -297,10 +297,13 @@ Evaluator::eval(Member_expr const* e)
 }
 
 
+// Return a reference to nth element of an array.
 Value
 Evaluator::eval(Index_expr const* e)
 {
-  throw std::runtime_error("not implemnted");
+  Value arr = eval(e->array());
+  Value ix = eval(e->index());
+  return &arr.get_array().data[ix.get_integer()];
 }
 
 
@@ -330,10 +333,7 @@ Evaluator::eval(Block_conv const* e)
 Value
 Evaluator::eval(Default_init const* e)
 {
-  if (is_scalar(e->type()))
-    return Value(0);
-  else
-    throw std::runtime_error("unhandled default initializer");
+  throw std::runtime_error("not reachable");
 }
 
 
@@ -342,7 +342,7 @@ Evaluator::eval(Default_init const* e)
 Value
 Evaluator::eval(Copy_init const* e)
 {
-  return eval(e->value());
+  lingo_unreachable();
 }
 
 
@@ -368,16 +368,97 @@ Evaluator::eval(Decl const* d)
 }
 
 
+namespace
+{
+
+// Allocate a value whose shape is determined
+// by the type. No guarantees are made about the
+// contents of the resulting value.
+Value
+get_value(Type const* t)
+{
+  struct Fn
+  {
+    Value operator()(Id_type const*) { lingo_unreachable(); }
+    
+    // Produce an integer value.
+    Value operator()(Boolean_type const*) { return 0; }
+    Value operator()(Character_type const*) { return 0; }
+    Value operator()(Integer_type const*) { return 0; }
+    
+    // Produce a function value.
+    Value operator()(Function_type const*) 
+    { 
+      return Function_value(nullptr);
+    }
+    
+    // Recursively construct an array whose values are
+    // shaped by the element type.
+    Value operator()(Array_type const* t) 
+    {
+      Array_value v(t->size());
+      for (std::size_t i = 0; i < v.len; ++i)
+        v.data[i] = get_value(t->type());
+      return v;
+    }
+    
+
+    // FIXME: What kind of value is this?
+    Value operator()(Block_type const*)
+    {
+      throw std::runtime_error("not implemented");
+    }
+    
+
+    Value operator()(Reference_type const*) 
+    {
+      return Reference_value(nullptr);
+    }
+    
+
+    Value operator()(Record_type const* t) 
+    { 
+      Record_decl const* d = t->declaration();
+      Decl_seq const& f = d->fields();
+      Tuple_value v(f.size());
+      for (std::size_t i = 0; i < v.len; ++i)
+        v.data[i] = get_value(f[i]->type());
+      return v;
+    }
+  };
+  return apply(t, Fn{});
+}
+
+} // namespace
+
+
 void
 Evaluator::eval(Variable_decl const* d)
 {
-  // FIXME: This is wrong. We should create and bind the
-  // value first. Then, we should call a constructor
-  // passing a reference to the uninitialized object.
-  Value v = eval(d->init());
+  // Create an uninitialized object and bind it
+  // to the symbol. Keep a reference so we can
+  // initialize it directly.
+  Value v0 = get_value(d->type());
+  Value& v1 = stack.top().bind(d->name(), v0).second;
 
-  // Create and bind the value.
-  stack.top().bind(d->name(), v).second;
+  // Handle initialization.
+  //
+  // FIXME: The initializer should hold a function
+  // that can be evalated to perform the initialization
+  // procedure. We shouldn't be doing this explicitly.
+  Expr const* e = d->init();
+  
+  // Perform default initialization.
+  if (is<Default_init>(e))
+    zero_init(v1);
+  
+  // Perfor copy initialization. We should guarantee
+  // that v1 and the evaluation of i produce values
+  // of the same shape.
+  else if (Copy_init const* i = as<Copy_init>(e))
+    v1 = eval(i->value());
+  else
+    throw std::runtime_error("unhandled initializer");
 }
 
 

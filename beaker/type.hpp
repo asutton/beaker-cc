@@ -123,6 +123,7 @@ struct Array_type : Type
 
   Type const* type() const   { return first; }
   Expr*       extent() const { return second; }
+  int         size() const;
 
   Type const* first;
   Expr*       second;

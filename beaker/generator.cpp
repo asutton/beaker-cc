@@ -222,7 +222,7 @@ Generator::gen(Literal_expr const* e)
   // and returns a pointer to an array of N characters.
   if (is_string(t)) {
     Array_value a = v.get_array();
-    String s = a.to_string();
+    String s = a.get_string();
     llvm::Constant* c = llvm::ConstantDataArray::getString(cxt, s);
 
     llvm::GlobalVariable* v = new llvm::GlobalVariable(

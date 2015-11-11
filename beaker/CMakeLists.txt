@@ -40,8 +40,8 @@ set(libs
   ${Boost_SYSTEM_LIBRARIES}
   ${Boost_FILESYSTEM_LIBRARIES}
   ${LLVM_LIBRARIES}
-  lingo
-  beaker)
+  beaker
+  lingo)
 
 
 # Create the beaker compiler.

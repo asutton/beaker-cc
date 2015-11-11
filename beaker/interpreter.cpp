@@ -64,7 +64,7 @@ main(int argc, char* argv[])
     if (elab.main) {
       Evaluator ev;
       Value v = ev.exec(elab.main);
-      std::cout << v << '\n';
+      std::cout << "result: " << v << '\n';
     } else {
       std::cout << "no main\n";
     }

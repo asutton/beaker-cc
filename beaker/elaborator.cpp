@@ -652,22 +652,24 @@ Elaborator::elaborate(Member_expr* e)
 }
 
 
-// TODO: Finalize the semantics of array access.
-//
-// In the expression e1[e2], e1 shall have array
-// type T[N] (for some N) or block type T[]. The
+// In the expression e1[e2], e1 shall be a value of 
+// array type T[N] (for some N) or block type T[]. The
 // expression e2 shall be an integer value. The result
 // type of the expressions is ref T.
+//
+// Note that e1 is converted to a value.
 Expr*
 Elaborator::elaborate(Index_expr* e)
 {
-  Expr* e1 = elaborate(e->array());
+  Expr* e1 = require_value(*this, e->first);
 
   // Get the non-reference type of the array.
   //
   // FIXME: Does this require a value transformation?
   // We don't (yet?) have array literals, so I generally
   // expect that this *must* be a reference to an array.
+  //
+  // TODO: Allow block type.
   Array_type const* t = as<Array_type>(e1->type()->nonref());
   if (!t) {
     std::stringstream ss;
