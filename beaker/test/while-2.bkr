@@ -1,0 +1,10 @@
+def whl(x: int)->int {
+	while(x<20) {
+		x = x + 1;
+	}
+	return x;
+}
+
+def main()->int {
+	return whl(0);
+}

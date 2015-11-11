@@ -447,14 +447,41 @@ Generator::gen(If_else_stmt const* s)
   //merge
   theFunc->getBasicBlockList().push_back(mergeBB);
   build.SetInsertPoint(mergeBB);
-  //throw std::runtime_error("if_else: not implemented");
 }
 
 
 void
 Generator::gen(While_stmt const* s)
 {
-  throw std::runtime_error("while: not implemented");
+
+  llvm::Function* theFunc = build.GetInsertBlock()->getParent();
+  llvm::BasicBlock* condBB =
+    llvm::BasicBlock::Create(cxt, "cond", theFunc);
+  llvm::BasicBlock* loopBB =
+    llvm::BasicBlock::Create(cxt, "loop");
+  llvm::BasicBlock* endBB =
+    llvm::BasicBlock::Create(cxt, "endloop");
+
+
+  build.CreateBr(condBB);
+  build.SetInsertPoint(condBB);
+
+  llvm::Value* cond = gen(s->condition());
+  if(!cond) {
+    throw std::runtime_error("while: condition errror");
+  }
+  build.CreateCondBr(cond, loopBB, endBB);
+
+  theFunc->getBasicBlockList().push_back(loopBB);  
+  build.SetInsertPoint(loopBB);
+  gen(s->body());
+  build.CreateBr(condBB);
+
+
+  //after exit loop
+  theFunc->getBasicBlockList().push_back(endBB);
+  build.SetInsertPoint(endBB);
+  //throw std::runtime_error("while: not implemented");
 }
 
 
@@ -625,6 +652,8 @@ Generator::gen(Function_decl const* d)
   for (Decl const* p : d->parameters())
     gen(p);
 
+
+  //generate return var
   llvm::Type* t = get_type(d->return_type());
   ret = build.CreateAlloca(t);
 
@@ -632,6 +661,8 @@ Generator::gen(Function_decl const* d)
   // Generate the body of the function.
   gen(d->body());
 
+
+  //load return at end of function
   llvm::Value* loadret = build.CreateLoad(ret);
   build.CreateRet(loadret);
 }
