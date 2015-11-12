@@ -882,11 +882,12 @@ Generator::gen(Function_decl const* d)
   for (Decl const* p : d->parameters())
     gen(p);
 
-  retBB = llvm::BasicBlock::Create(cxt, "ret", fn);
+  retBB = llvm::BasicBlock::Create(cxt, "ret");
 
   // Generate the body of the function.
   gen(d->body());
 
+  fn->getBasicBlockList().push_back(retBB);  
   build.SetInsertPoint(retBB);
 
   //load return at end of function
