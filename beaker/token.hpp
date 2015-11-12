@@ -49,6 +49,7 @@ enum Token_kind
   and_tok,
   or_tok,
   not_tok,
+  amp_tok,
   arrow_tok,
 
   // Keywords

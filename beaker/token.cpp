@@ -37,6 +37,7 @@ spelling(Token_kind k)
     case and_tok: return "&&";
     case or_tok: return "||";
     case not_tok: return "!";
+    case amp_tok: return "&";
     case arrow_tok: return "->";
 
     case bool_kw: return "bool";
@@ -90,6 +91,7 @@ init_symbols(Symbol_table& syms)
   syms.put<Symbol>("&&", and_tok);
   syms.put<Symbol>("||", or_tok);
   syms.put<Symbol>("!", not_tok);
+  syms.put<Symbol>("&", amp_tok);
   syms.put<Symbol>("->", arrow_tok);
 
   // Keywords

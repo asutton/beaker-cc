@@ -347,6 +347,7 @@ Parser::primary_type()
 // Parse a postfix type.
 //
 //    postfix-type -> primary_type
+//                    postfix-type '&'
 //                    postfix-type '[]'
 //                  | postfix-type '[' expr ']'
 //
@@ -364,8 +365,12 @@ Parser::postfix_type()
 {
   Type const* t = primary_type();
   while (true) {
-    // Match array types.
-    if (match_if(lbrack_tok)) {
+    // reference-type
+    if (match_if(amp_tok))
+      t = on_reference_type(t);
+    
+    // array-types
+    else if (match_if(lbrack_tok)) {
       if (match_if(rbrack_tok))
         return on_block_type(t);
       Expr* e = expr();
@@ -909,6 +914,19 @@ Parser::on_id_type(Token tok)
 }
 
 
+// TODO: Ensure that we can actually construt
+// a reference-to-T.
+Type const*
+Parser::on_reference_type(Type const* t)
+{
+  auto* p = get_reference_type(t);
+  std::cout << *p << '\n';
+  return p;
+}
+
+
+// TODO: Ensure that we can actually construt
+// a array-of-T.
 Type const*
 Parser::on_array_type(Type const* t , Expr* n)
 {
@@ -916,6 +934,8 @@ Parser::on_array_type(Type const* t , Expr* n)
 }
 
 
+// TODO: Ensure that we can actually construt
+// a array-of-T.
 Type const*
 Parser::on_block_type(Type const* t)
 {

@@ -455,7 +455,7 @@ Lexer::ampersand()
   if (peek() == '&')
     return symbol1();
   else
-    return error();
+    return symbol0();
 }
 
 

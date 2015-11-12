@@ -71,6 +71,7 @@ public:
 private:
   // Actions
   Type const* on_id_type(Token);
+  Type const* on_reference_type(Type const*);
   Type const* on_array_type(Type const*, Expr*);
   Type const* on_block_type(Type const*);
   Type const* on_function_type(Type_seq const&, Type const*);
