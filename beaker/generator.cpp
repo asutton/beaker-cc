@@ -223,20 +223,16 @@ Generator::gen(Literal_expr const* e)
   if (is_string(t)) {
     Array_value a = v.get_array();
     String s = a.get_string();
-    llvm::Constant* c = llvm::ConstantDataArray::getString(cxt, s);
 
-    llvm::GlobalVariable* v = new llvm::GlobalVariable(
-      *mod,                              // owning module
-      c->getType(),                      // type
-      true,                              // constant
-      llvm::GlobalValue::PrivateLinkage, // private
-      c                                  // initializer
-    );
-
-    // Allow globals with the same value to
-    // be unified into the same object.
-    v->setUnnamedAddr(true);
-    return v;
+    // FIXME: This does not unify equivalent strings.
+    // Maybe we needt maintain a mapping in order to
+    // avoid redunancies.
+    auto iter = strings.find(s);
+    if (iter == strings.end()) {
+      llvm::Value* v = build.CreateGlobalString(s);
+      iter = strings.emplace(s, v).first;
+    }
+    return iter->second;
   }
 
   else
