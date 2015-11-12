@@ -494,6 +494,9 @@ Generator::gen(Copy_init const* e)
 }
 
 
+
+
+
 // -------------------------------------------------------------------------- //
 // Code generation for statements
 //
@@ -563,6 +566,9 @@ Generator::gen(Return_stmt const* s)
   llvm::Value* v = gen(s->value());
   
   build.CreateStore(v, ret);
+
+  build.CreateBr(retBB);
+  // makeBranch(retBB, build.GetInsertBlock());
 }
 
 
@@ -585,7 +591,8 @@ Generator::gen(If_then_stmt const* s)
   //if true
   build.SetInsertPoint(thenBB);
   gen(s->body());
-  build.CreateBr(mergeBB);
+  //build.CreateBr(mergeBB);
+  makeBranch(mergeBB, build.GetInsertBlock());
 
   //merge
   theFunc->getBasicBlockList().push_back(mergeBB);
@@ -616,13 +623,15 @@ Generator::gen(If_else_stmt const* s)
   //if true
   build.SetInsertPoint(thenBB);
   gen(s->true_branch());
-  build.CreateBr(mergeBB);
+  //build.CreateBr(mergeBB);
+  makeBranch(mergeBB, build.GetInsertBlock());
 
   //else false
   theFunc->getBasicBlockList().push_back(elseBB);
   build.SetInsertPoint(elseBB);
   gen(s->false_branch());
-  build.CreateBr(mergeBB);
+  // build.CreateBr(mergeBB);
+  makeBranch(mergeBB, build.GetInsertBlock());
 
   //merge
   theFunc->getBasicBlockList().push_back(mergeBB);
@@ -642,8 +651,12 @@ Generator::gen(While_stmt const* s)
   llvm::BasicBlock* endBB =
     llvm::BasicBlock::Create(cxt, "endloop");
 
+  loop_entry.push(condBB);
+  loop_exit.push(endBB);
 
-  build.CreateBr(condBB);
+
+  // build.CreateBr(condBB);
+  makeBranch(condBB, build.GetInsertBlock());
   build.SetInsertPoint(condBB);
 
   llvm::Value* cond = gen(s->condition());
@@ -655,7 +668,8 @@ Generator::gen(While_stmt const* s)
   theFunc->getBasicBlockList().push_back(loopBB);  
   build.SetInsertPoint(loopBB);
   gen(s->body());
-  build.CreateBr(condBB);
+  // build.CreateBr(condBB);
+  makeBranch(condBB, build.GetInsertBlock());
 
 
   //after exit loop
@@ -668,14 +682,20 @@ Generator::gen(While_stmt const* s)
 void
 Generator::gen(Break_stmt const* s)
 {
-  throw std::runtime_error("break: not implemented");
+  // build.CreateBr(loop_exit.top());
+  makeBranch(loop_exit.top(), build.GetInsertBlock());
+  loop_exit.pop();
+  //throw std::runtime_error("break: not implemented");
 }
 
 
 void
 Generator::gen(Continue_stmt const* s)
 {
-  throw std::runtime_error("continue: not implemented");
+  // build.CreateBr(loop_entry.top());
+  makeBranch(loop_entry.top(), build.GetInsertBlock());
+  loop_entry.pop();
+  //throw std::runtime_error("continue: not implemented");
 }
 
 
@@ -862,19 +882,17 @@ Generator::gen(Function_decl const* d)
   for (Decl const* p : d->parameters())
     gen(p);
 
-
-  //generate return var
-  llvm::Type* t = get_type(d->return_type());
-  ret = build.CreateAlloca(t);
-
+  retBB = llvm::BasicBlock::Create(cxt, "ret", fn);
 
   // Generate the body of the function.
   gen(d->body());
 
+  build.SetInsertPoint(retBB);
 
   //load return at end of function
   llvm::Value* loadret = build.CreateLoad(ret);
   build.CreateRet(loadret);
+
   // TODO: Create an exit block and allow code to
   // jump directly to that block after storing
   // the return value.

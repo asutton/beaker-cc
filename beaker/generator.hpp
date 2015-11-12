@@ -8,6 +8,8 @@
 
 #include "prelude.hpp"
 #include "environment.hpp"
+#include <stack>
+#include <iostream>
 
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/IRBuilder.h>
@@ -107,11 +109,26 @@ struct Generator
   llvm::Module*     mod;
   llvm::Function*   fn;
   llvm::Value*      ret;
+  llvm::BasicBlock* retBB;
+
+  std::stack<llvm::BasicBlock*> loop_entry;
+  std::stack<llvm::BasicBlock*> loop_exit;
 
   Symbol_stack      stack;
   Type_env          types;
 
   struct Symbol_sentinel;
+
+  //Helper function for statements
+  void makeBranch(llvm::BasicBlock* dest, llvm::BasicBlock* src) {
+    // llvm::BasicBlock* src = build.GetInsertBlock();
+    if(!src->getTerminator()) {
+      std::cout<< "test\n";
+      build.CreateBr(dest);
+      std::cout<< "test2\n";
+
+    }
+  }
 };
 
 
@@ -138,6 +155,7 @@ struct Generator::Symbol_sentinel
 
   Generator& gen;
 };
+
 
 
 #endif
