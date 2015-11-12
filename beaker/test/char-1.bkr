@@ -1,0 +1,4 @@
+
+var a : char;
+
+var b : char[10];

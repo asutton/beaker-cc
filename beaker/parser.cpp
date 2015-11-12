@@ -17,17 +17,34 @@
 //
 //    primary-expr -> literal | identifier | '(' expr ')'
 //
-//    literal -> integer-literal | boolean-literal
+//    literal -> integer-literal
+//             | boolean-literal
+//             | character-literal
+//             | string-literal
 Expr*
 Parser::primary_expr()
 {
-  // FIXME: switch on the token kind.
+  // identifier
   if (Token tok = match_if(identifier_tok))
     return on_id(tok);
+
+  // boolean-literal
   if (Token tok = match_if(boolean_tok))
     return on_bool(tok);
+
+  // integer-literal
   if (Token tok = match_if(integer_tok))
     return on_int(tok);
+
+  // character-literal
+  if (Token tok = match_if(character_tok))
+    return on_char(tok);
+
+  // string-literal
+  if (Token tok = match_if(string_tok))
+    return on_str(tok);
+
+  // paren-expr
   if (match_if(lparen_tok)) {
     Expr* e = expr();
     match(rparen_tok);
@@ -43,13 +60,23 @@ Parser::primary_expr()
 // Parse a postfix expression.
 //
 //    postfix-expression -> postfix-expression '(' argument-list ')'
-//                       -> primary-expression
+//                        | postfix-expression '[' expression ']'
+//                        | postfix-expression . identifier
+//                        | primary-expression
 Expr*
 Parser::postfix_expr()
 {
   Expr* e1 = primary_expr();
   while (true) {
-    if (match_if(lparen_tok)) {
+    // dot-expr
+    if (match_if(dot_tok)) {
+      Token tok = match(identifier_tok);
+      Expr* e2 = on_id(tok);
+      e1 = on_dot(e1, e2);
+    }
+
+    // call-expr
+    else if (match_if(lparen_tok)) {
       Expr_seq args;
       while (lookahead() != rparen_tok) {
         args.push_back(expr());
@@ -60,7 +87,17 @@ Parser::postfix_expr()
       }
       match(rparen_tok);
       e1 = on_call(e1, args);
-    } else {
+    }
+
+    // index-expr
+    else if (match_if(lbrack_tok)) {
+      Expr* e2 = expr();
+      match(rbrack_tok);
+      e1 = on_index(e1, e2);
+    }
+
+    // anything else
+    else {
       break;
     }
   }
@@ -253,19 +290,31 @@ Parser::expr()
 // Type parsing
 
 
-// Parse a type.
+// Parse a primary type.
 //
-//    type -> 'bool' | 'int' | function-type
+//    primary-type -> 'bool'
+//                  | 'int'
+//                  | 'char'
+//                  | id-type
+//                  | function-type
 //
 //    function-type -> '(' type-list ')' '->' type
 //
 //    type-list -> type | type-list ',' type
 Type const*
-Parser::type()
+Parser::primary_type()
 {
+  // id-type
+  if (Token tok = match_if(identifier_tok))
+    return on_id_type(tok);
+
   // bool
   if (match_if(bool_kw))
     return get_boolean_type();
+
+  // char
+  if (match_if(char_kw))
+    return get_character_type();
 
   // int
   else if (match_if(int_kw))
@@ -284,8 +333,8 @@ Parser::type()
     match(rparen_tok);
     match(arrow_tok);
     Type const* t = type();
-    return get_function_type(ts, t);
-  } 
+    return on_function_type(ts, t);
+  }
 
   // error
   //
@@ -295,38 +344,89 @@ Parser::type()
 }
 
 
+// Parse a postfix type.
+//
+//    postfix-type -> primary_type
+//                    postfix-type '[]'
+//                  | postfix-type '[' expr ']'
+//
+// TODO: Allow prefix type expressions. These should
+// bind more tightly than postfix type expressoins.
+//
+// TODO: Suffix notation will require parens for grouping.
+// For example, a reference to an array would be:
+//
+//    ref (T[N])
+//
+// We would need to handle function types carefully.
+Type const*
+Parser::postfix_type()
+{
+  Type const* t = primary_type();
+  while (true) {
+    // Match array types.
+    if (match_if(lbrack_tok)) {
+      if (match_if(rbrack_tok))
+        return on_block_type(t);
+      Expr* e = expr();
+      match(rbrack_tok);
+      t = on_array_type(t, e);
+    }
+
+    // No postfix operators
+    else
+      break;
+  }
+  return t;
+}
+
+
+// Parse a type.
+//
+//    type -> postfix-type
+Type const*
+Parser::type()
+{
+  return postfix_type();
+}
+
+
+
 // -------------------------------------------------------------------------- //
 // Declaration parsing
 
 
 // Parse a variable declaration.
 //
-//    variable-decl -> 'var' identifier object-type initializer-clause ';'
+//    variable-decl -> 'var' identifier object-type initializer-clause
 //
-//    initializer-clause -> '=' expr
+//    initializer-clause -> ';' | '=' expr ';'
 Decl*
-Parser::variable_decl()
+Parser::variable_decl(Specifier spec)
 {
   require(var_kw);
   Token n = match(identifier_tok);
-  
+
   // object-type
   match(colon_tok);
   Type const* t = type();
 
-  // initializer-clause
+  // default initialization (var x : T;)
+  if (match_if(semicolon_tok))
+    return on_variable(spec, n, t);
+
+  // value initialization (var x : T = e;)
   match(equal_tok);
   Expr* e = expr();
   match(semicolon_tok);
-
-  return on_variable_decl(n, t, e);
+  return on_variable(spec, n, t, e);
 }
 
 
 // Parse a function declaration.
 //
-//    function-decl -> 'def' identifier parameter-clause return-type function-definition
-//
+//    function-decl -> 'def' identifier parameter-clause return-type ';'
+//                   | 'def' identifier parameter-clause return-type function-definition
 //    parameter-clause -> '(' [parameter-list] ')'
 //
 //    parameter-list -> parameter-decl | parameter-decl ',' parameter-list
@@ -334,8 +434,10 @@ Parser::variable_decl()
 //    return-type -> '->' type
 //
 //    function-definition -> block-stmt
+//
+// A function declaration may not have a definition.
 Decl*
-Parser::function_decl()
+Parser::function_decl(Specifier spec)
 {
   require(def_kw);
   Token n = match(identifier_tok);
@@ -358,41 +460,124 @@ Parser::function_decl()
   match(arrow_tok);
   Type const* t = type();
 
+  // function declaration
+  if (match_if(semicolon_tok))
+    return on_function(spec, n, parms, t);
+
   // function-definition.
   Stmt* s = block_stmt();
 
-  return on_function_decl(n, parms, t, s);
+  return on_function(spec, n, parms, t, s);
 }
 
 
 // Parse a parameter declaration.
 //
-//    parameter-decl ::= identifier object-type
+//    parameter-decl ::= identifier ':' type
+//                     | type
 Decl*
 Parser::parameter_decl()
 {
+  // specifier-seq
+  Specifier spec = specifier_seq();
+
+  // If we have <token> :, then interpret
+  // this as a named parameter.
+  if (lookahead(1) == colon_tok) {
+    Token n = match(identifier_tok);
+    match(colon_tok);
+    Type const* t = type();
+    return on_parameter(spec, n, t);
+  }
+
+  // Otherwise, we probably just have a type.
+  else {
+    Type const* t = type();
+    return on_parameter(spec, t);
+  }
+}
+
+
+// Parse a record declaration.
+//
+//    record-decl -> 'struct' identifier record-body
+//
+//    record-body -> '{' field-seq '}'
+//
+//    field-seq -> field-seq | field-seq field-seq
+Decl*
+Parser::record_decl(Specifier spec)
+{
+  require(struct_kw);
   Token n = match(identifier_tok);
 
-  // object-type
+  // record-body and field-seq
+  require(lbrace_tok);
+  Decl_seq fs;
+  while (lookahead() != rbrace_tok) {
+    Decl* f = field_decl();
+    fs.push_back(f);
+  }
+  match(rbrace_tok);
+  return on_record(spec, n, fs);
+}
+
+
+// Parse a field declaration.
+//
+//    field-decl -> [specifier-seq] identifier object-type
+Decl*
+Parser::field_decl()
+{
+  // specifier-seq
+  Specifier spec = specifier_seq();
+
+  // actual declaration
+  Token n = match(identifier_tok);
   match(colon_tok);
   Type const* t = type();
+  match(semicolon_tok);
+  return on_field(spec, n, t);
+}
 
-  return on_parameter_decl(n, t);
+
+// Parse a sequence of declaration specifiers.
+//
+//    specifier-seq -> specifier | specifier-seq specifier
+Specifier
+Parser::specifier_seq()
+{
+  Specifier spec = no_spec;
+  while (true) {
+    if (match_if(foreign_kw))
+      spec |= foreign_spec;
+    else
+      break;
+  }
+  return spec;
 }
 
 
 // Parse a declaration.
 //
-//    decl -> variable-decl
-//          | function-decl
+//    decl -> [specifier-seq] entity-decl
+//
+//    entity-decl -> variable-decl
+//                 | function-decl
 Decl*
 Parser::decl()
 {
+  // optional specifier-seq
+  Specifier spec = specifier_seq();
+
+  // entity-decl
   switch (lookahead()) {
     case var_kw:
-      return variable_decl();
+      return variable_decl(spec);
     case def_kw:
-      return function_decl();
+      return function_decl(spec);
+    case struct_kw:
+      return record_decl(spec);
     default:
       // TODO: Is this a recoverable error?
       error("invalid declaration");
@@ -423,7 +608,7 @@ Parser::empty_stmt()
 Stmt*
 Parser::block_stmt()
 {
-  std::vector<Stmt*> stmts;
+  Stmt_seq stmts;
   require(lbrace_tok);
   while (lookahead() != rbrace_tok) {
     try {
@@ -583,10 +768,11 @@ Parser::stmt()
     case continue_kw:
       return continue_stmt();
 
-    case var_kw: 
+    case var_kw:
     case def_kw:
+    case foreign_kw:
       return declaration_stmt();
-    
+
     default:
       return expression_stmt();
   }
@@ -617,7 +803,7 @@ Parser::module()
       consume_thru(term_);
     }
   }
-  return on_module_decl(decls);
+  return on_module(decls);
 }
 
 
@@ -629,9 +815,9 @@ Parser::match(Token_kind k)
 {
   if (lookahead() == k)
     return ts_.get();
-  
+
   std::stringstream ss;
-  ss << "expected '" << spelling(k) 
+  ss << "expected '" << spelling(k)
      << "' but got '" <<  ts_.peek().spelling() << "'";
   error(ss.str());
 }
@@ -711,6 +897,39 @@ Parser::error(String const& msg)
 // -------------------------------------------------------------------------- //
 // Semantic actions
 
+
+// Build a placeholder for a type name. Note that
+// we can map these to source code locations.
+Type const*
+Parser::on_id_type(Token tok)
+{
+  Type const* t = get_id_type(tok.symbol());
+  locs_->emplace(t, tok.location());
+  return t;
+}
+
+
+Type const*
+Parser::on_array_type(Type const* t , Expr* n)
+{
+  return get_array_type(t, n);
+}
+
+
+Type const*
+Parser::on_block_type(Type const* t)
+{
+  return get_block_type(t);
+}
+
+
+Type const*
+Parser::on_function_type(Type_seq const& ts, Type const* t)
+{
+  return get_function_type(ts, t);
+}
+
+
 Expr*
 Parser::on_id(Token tok)
 {
@@ -721,14 +940,53 @@ Parser::on_id(Token tok)
 Expr*
 Parser::on_bool(Token tok)
 {
-  return init<Literal_expr>(tok.location(), tok.symbol());
+  Type const* t = get_boolean_type();
+  int v = tok.boolean_symbol()->value();
+  return init<Literal_expr>(tok.location(), t, v);
 }
 
 
 Expr*
 Parser::on_int(Token tok)
 {
-  return new Literal_expr(tok.symbol());
+  Type const* t = get_integer_type();
+  int v = tok.integer_symbol()->value();
+  return init<Literal_expr>(tok.location(), t, v);
+}
+
+
+Expr*
+Parser::on_char(Token tok)
+{
+  Type const* t = get_character_type();
+  int v = tok.character_symbol()->value();
+  return init<Literal_expr>(tok.location(), t, v);
+}
+
+
+// Build a new string literal. String literals
+// are arrays of characters.
+Expr*
+Parser::on_str(Token tok)
+{
+  // Build the string value.
+  String_sym const* s = tok.string_symbol();
+  Array_value v {
+     s->value().c_str(),
+     s->value().size()
+  };
+
+  // Create the extent of the literal array. This is
+  // explicitly more than the length of the string,
+  // and includes the null character.
+  Type const* z = get_integer_type();
+  Expr* n = new Literal_expr(z, v.len + 1);
+
+  // Create the array type.
+  Type const* c = get_character_type();
+  Type const* t = get_array_type(c, n);
+
+  return init<Literal_expr>(tok.location(), t, v);
 }
 
 
@@ -850,32 +1108,94 @@ Parser::on_call(Expr* e, Expr_seq const& a)
 }
 
 
-Decl* 
-Parser::on_variable_decl(Token tok, Type const* t, Expr* e)
+Expr*
+Parser::on_index(Expr* e1, Expr* e2)
 {
-  return new Variable_decl(tok.symbol(), t, e);
+  return new Index_expr(e1, e2);
 }
 
 
-Decl* 
-Parser::on_parameter_decl(Token tok, Type const* t)
+Expr*
+Parser::on_dot(Expr* e1, Expr* e2)
+{
+  return new Member_expr(e1, e2);
+}
+
+
+// TODO: Check declaration specifiers. Not every specifier
+// makes sense in every combination or for every declaration.
+// A foreign parameter is not particularly useful.
+
+
+Decl*
+Parser::on_variable(Specifier spec, Token tok, Type const* t)
+{
+  Expr* init = new Default_init(t);
+  return new Variable_decl(spec, tok.symbol(), t, init);
+}
+
+
+Decl*
+Parser::on_variable(Specifier spec, Token tok, Type const* t, Expr* e)
+{
+  Expr* init = new Copy_init(t, e);
+  return new Variable_decl(spec, tok.symbol(), t, init);
+}
+
+
+// Create an unnamed parameter.
+Decl*
+Parser::on_parameter(Specifier spec, Type const* t)
+{
+  // Create (or get) an empty identifier.
+  Symbol const* s = syms_.put<Identifier_sym>("", identifier_tok);
+  return new Parameter_decl(spec, s, t);
+}
+
+
+Decl*
+Parser::on_parameter(Specifier spec, Token tok, Type const* t)
 {
   return new Parameter_decl(tok.symbol(), t);
 }
 
 
-Decl* 
-Parser::on_function_decl(Token tok, Decl_seq const& p, Type const* t, Stmt* b)
+// Create a function with no body. This is a declaration
+// but not a definition.
+Decl*
+Parser::on_function(Specifier spec, Token tok, Decl_seq const& p, Type const* t)
+{
+  Type const* f = get_function_type(p, t);
+  return new Function_decl(tok.symbol(), f, p, nullptr);
+}
+
+
+Decl*
+Parser::on_function(Specifier spec, Token tok, Decl_seq const& p, Type const* t, Stmt* b)
 {
   Type const* f = get_function_type(p, t);
   return new Function_decl(tok.symbol(), f, p, b);
 }
 
 
+Decl*
+Parser::on_record(Specifier spec, Token n, Decl_seq const& fs)
+{
+  return new Record_decl(n.symbol(), fs);
+}
+
+
+Decl*
+Parser::on_field(Specifier spec, Token n, Type const* t)
+{
+  return new Field_decl(n.symbol(), t);
+}
+
+
 // FIXME: The name of the module should be the name of the
 // file, or maybe even the absolute path of the file.
-Decl* 
-Parser::on_module_decl(Decl_seq const& d)
+Decl*
+Parser::on_module(Decl_seq const& d)
 {
   Symbol const* sym = syms_.get("<input>");
   return new Module_decl(sym, d);
@@ -889,7 +1209,7 @@ Parser::on_empty()
 }
 
 
-Stmt* 
+Stmt*
 Parser::on_block(std::vector<Stmt*> const& s)
 {
   return new Block_stmt(s);
@@ -945,17 +1265,15 @@ Parser::on_continue()
 }
 
 
-Stmt* 
+Stmt*
 Parser::on_expression(Expr* e)
 {
   return new Expression_stmt(e);
 }
 
 
-Stmt* 
+Stmt*
 Parser::on_declaration(Decl* d)
 {
   return new Declaration_stmt(d);
 }
-
-

@@ -1,0 +1,21 @@
+
+struct S1 {
+  a : int;
+}
+
+struct S2 {
+  b : bool;
+  s : S1;
+}
+
+struct S3 {
+  z : int;
+  s : S2;
+}
+
+var x : S3;
+
+def f() -> int
+{
+  return x.s.s.a;
+}

@@ -8,6 +8,7 @@
 
 
 bool is_less(Type const*, Type const*);
+bool is_less(Expr const*, Expr const*);
 
 
 // A function object that invokes the is_less function.

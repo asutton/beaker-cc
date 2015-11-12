@@ -1,0 +1,12 @@
+
+struct S {
+  s : bool;
+  z : int;
+}
+
+var s : S;
+
+def f() -> int
+{
+  return s.z;
+}

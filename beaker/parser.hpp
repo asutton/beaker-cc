@@ -7,6 +7,7 @@
 #include "prelude.hpp"
 #include "string.hpp"
 #include "token.hpp"
+#include "specifier.hpp"
 
 
 class Input_buffer;
@@ -34,13 +35,18 @@ public:
   Expr* expr();
 
   // Type parsers
+  Type const* primary_type();
+  Type const* postfix_type();
   Type const* type();
 
   // Declaration parsers
   Decl* decl();
-  Decl* variable_decl();
+  Decl* variable_decl(Specifier);
+  Decl* function_decl(Specifier);
   Decl* parameter_decl();
-  Decl* function_decl();
+  Decl* record_decl(Specifier);
+  Decl* field_decl();
+  Specifier specifier_seq();
 
   // Statement parsers
   Stmt* stmt();
@@ -64,9 +70,16 @@ public:
 
 private:
   // Actions
+  Type const* on_id_type(Token);
+  Type const* on_array_type(Type const*, Expr*);
+  Type const* on_block_type(Type const*);
+  Type const* on_function_type(Type_seq const&, Type const*);
+
   Expr* on_id(Token);
   Expr* on_bool(Token);
   Expr* on_int(Token);
+  Expr* on_char(Token);
+  Expr* on_str(Token);
   Expr* on_add(Expr*, Expr*);
   Expr* on_sub(Expr*, Expr*);
   Expr* on_mul(Expr*, Expr*);
@@ -84,11 +97,18 @@ private:
   Expr* on_or(Expr*, Expr*);
   Expr* on_not(Expr*);
   Expr* on_call(Expr*, Expr_seq const&);
+  Expr* on_index(Expr*, Expr*);
+  Expr* on_dot(Expr*, Expr*);
 
-  Decl* on_variable_decl(Token, Type const*, Expr*);
-  Decl* on_parameter_decl(Token, Type const*);
-  Decl* on_function_decl(Token, Decl_seq const&, Type const*, Stmt*);
-  Decl* on_module_decl(Decl_seq const&);
+  Decl* on_variable(Specifier, Token, Type const*);
+  Decl* on_variable(Specifier, Token, Type const*, Expr*);
+  Decl* on_parameter(Specifier, Type const*);
+  Decl* on_parameter(Specifier, Token, Type const*);
+  Decl* on_function(Specifier, Token, Decl_seq const&, Type const*);
+  Decl* on_function(Specifier, Token, Decl_seq const&, Type const*, Stmt*);
+  Decl* on_record(Specifier, Token, Decl_seq const&);
+  Decl* on_field(Specifier, Token, Type const*);
+  Decl* on_module(Decl_seq const&);
 
   // FIXME: Remove _stmt from handlers.
   Stmt* on_empty();
@@ -105,6 +125,7 @@ private:
 
   // Parsing support
   Token_kind lookahead() const;
+  Token_kind lookahead(int) const;
   Token      match(Token_kind);
   Token      match_if(Token_kind);
   Token      require(Token_kind);
@@ -124,6 +145,8 @@ private:
   Symbol_table& syms_;
   Token_stream& ts_;
   Location_map* locs_;
+
+  Specifier spec_;  // Current specifeirs
 
   int errs_;        // Error count
 
@@ -152,12 +175,20 @@ Parser::lookahead() const
 }
 
 
+// Returns the nth token of lookahead.
+inline Token_kind
+Parser::lookahead(int n) const
+{
+  return Token_kind(ts_.peek(n).kind());
+}
+
+
 // A helper function to create nodes and record their
 // source location.
 //
 // TODO: Put this in the .cpp file? It is private.
 template<typename T, typename... Args>
-inline T* 
+inline T*
 Parser::init(Location loc, Args&&... args)
 {
   T* t = new T(std::forward<Args>(args)...);

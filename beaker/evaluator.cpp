@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "evaluator.hpp"
+#include "type.hpp"
 #include "expr.hpp"
 #include "decl.hpp"
 #include "stmt.hpp"
@@ -36,22 +37,22 @@ Evaluator::eval(Expr const* e)
     Value operator()(Or_expr const* e) { return ev.eval(e); }
     Value operator()(Not_expr const* e) { return ev.eval(e); }
     Value operator()(Call_expr const* e) { return ev.eval(e); }
+    Value operator()(Member_expr const* e) { return ev.eval(e); }
+    Value operator()(Index_expr const* e) { return ev.eval(e); }
     Value operator()(Value_conv const* e) { return ev.eval(e); }
+    Value operator()(Block_conv const* e) { return ev.eval(e); }
+    Value operator()(Default_init const* e) { return ev.eval(e); }
+    Value operator()(Copy_init const* e) { return ev.eval(e); }
   };
 
   return apply(e, Fn {*this});
 }
 
 
-Value 
+Value
 Evaluator::eval(Literal_expr const* e)
 {
-  Symbol const* s = e->symbol();
-  if (Boolean_sym const* b = as<Boolean_sym>(s))
-    return b->value();
-  if (Integer_sym const* z = as<Integer_sym>(s))
-    return z->value();
-  throw std::runtime_error("ill-formed literal");
+  return e->value();
 }
 
 
@@ -131,13 +132,13 @@ Evaluator::eval(Pos_expr const* e)
 
 // Compare two integer or function values.
 template<typename F>
-bool 
+bool
 compare_equal(Value const& v1, Value const& v2, F fn)
 {
   // See through references.
   Value const& a = v1.is_reference() ? *v1.get_reference() : v1;
   Value const& b = v2.is_reference() ? *v2.get_reference() : v2;
-  
+
   // Perform comparison.
   if (a.kind() == b.kind()) {
     if (a.is_integer())
@@ -170,7 +171,7 @@ Evaluator::eval(Ne_expr const* e)
 
 // Compare two integer or function values.
 template<typename F>
-bool 
+bool
 compare_less(Value const& v1, Value const& v2, F fn)
 {
   Value const& a = v1.is_reference() ? *v1.get_reference() : v1;
@@ -289,7 +290,29 @@ Evaluator::eval(Call_expr const* e)
 }
 
 
-// Apply an lvalue-to-rvalue conversion by dereferencing
+// Return a reference to the object at the
+// requested field.
+Value
+Evaluator::eval(Member_expr const* e)
+{
+  Value obj = eval(e->scope());
+  Value* ref = obj.get_reference();
+  return &ref->get_tuple().data[e->position()];
+}
+
+
+// Return a reference to nth element of an array.
+Value
+Evaluator::eval(Index_expr const* e)
+{
+  Value arr = eval(e->array());
+  Value* ref = arr.get_reference();
+  Value ix = eval(e->index());
+  return &ref->get_array().data[ix.get_integer()];
+}
+
+
+// Apply an object-to-value conversion by dereferencing
 // the reference value. Note that the source must evaluate
 // to a reference.
 Value
@@ -297,6 +320,34 @@ Evaluator::eval(Value_conv const* e)
 {
   Value v = eval(e->source());
   return *v.get_reference();
+}
+
+
+// Apply an array-to-block conversion by dereferencing
+// the reference value. Note that the source must evaluate
+// to a reference.
+Value
+Evaluator::eval(Block_conv const* e)
+{
+  throw std::runtime_error("not implemented");
+}
+
+
+// FIXME: This is wrong. We should be calling a function
+// that default initializes the created object.
+Value
+Evaluator::eval(Default_init const* e)
+{
+  throw std::runtime_error("not reachable");
+}
+
+
+// FIXME: This should be calling a function that
+// default iniitializes the created object.
+Value
+Evaluator::eval(Copy_init const* e)
+{
+  lingo_unreachable();
 }
 
 
@@ -313,6 +364,8 @@ Evaluator::eval(Decl const* d)
     void operator()(Variable_decl const* d) { ev.eval(d); }
     void operator()(Function_decl const* d) { ev.eval(d); }
     void operator()(Parameter_decl const* d) { ev.eval(d); }
+    void operator()(Record_decl const* d) { ev.eval(d); }
+    void operator()(Field_decl const* d) { ev.eval(d); }
     void operator()(Module_decl const* d) { ev.eval(d); }
   };
 
@@ -320,11 +373,97 @@ Evaluator::eval(Decl const* d)
 }
 
 
+namespace
+{
+
+// Allocate a value whose shape is determined
+// by the type. No guarantees are made about the
+// contents of the resulting value.
+Value
+get_value(Type const* t)
+{
+  struct Fn
+  {
+    Value operator()(Id_type const*) { lingo_unreachable(); }
+    
+    // Produce an integer value.
+    Value operator()(Boolean_type const*) { return 0; }
+    Value operator()(Character_type const*) { return 0; }
+    Value operator()(Integer_type const*) { return 0; }
+    
+    // Produce a function value.
+    Value operator()(Function_type const*) 
+    { 
+      return Function_value(nullptr);
+    }
+    
+    // Recursively construct an array whose values are
+    // shaped by the element type.
+    Value operator()(Array_type const* t) 
+    {
+      Array_value v(t->size());
+      for (std::size_t i = 0; i < v.len; ++i)
+        v.data[i] = get_value(t->type());
+      return v;
+    }
+    
+
+    // FIXME: What kind of value is this?
+    Value operator()(Block_type const*)
+    {
+      throw std::runtime_error("not implemented");
+    }
+    
+
+    Value operator()(Reference_type const*) 
+    {
+      return Reference_value(nullptr);
+    }
+    
+
+    Value operator()(Record_type const* t) 
+    { 
+      Record_decl const* d = t->declaration();
+      Decl_seq const& f = d->fields();
+      Tuple_value v(f.size());
+      for (std::size_t i = 0; i < v.len; ++i)
+        v.data[i] = get_value(f[i]->type());
+      return v;
+    }
+  };
+  return apply(t, Fn{});
+}
+
+} // namespace
+
+
 void
 Evaluator::eval(Variable_decl const* d)
 {
-  Value v = eval(d->init());
-  stack.top().bind(d->name(), v);
+  // Create an uninitialized object and bind it
+  // to the symbol. Keep a reference so we can
+  // initialize it directly.
+  Value v0 = get_value(d->type());
+  Value& v1 = stack.top().bind(d->name(), v0).second;
+
+  // Handle initialization.
+  //
+  // FIXME: The initializer should hold a function
+  // that can be evalated to perform the initialization
+  // procedure. We shouldn't be doing this explicitly.
+  Expr const* e = d->init();
+  
+  // Perform default initialization.
+  if (is<Default_init>(e))
+    zero_init(v1);
+  
+  // Perfor copy initialization. We should guarantee
+  // that v1 and the evaluation of i produce values
+  // of the same shape.
+  else if (Copy_init const* i = as<Copy_init>(e))
+    v1 = eval(i->value());
+  else
+    throw std::runtime_error("unhandled initializer");
 }
 
 
@@ -343,6 +482,24 @@ Evaluator::eval(Parameter_decl const*)
   return;
 }
 
+
+// There is no evaluation for a record.
+void
+Evaluator::eval(Record_decl const*)
+{
+  return;
+}
+
+
+// There is no evaluation for a field.
+void
+Evaluator::eval(Field_decl const*)
+{
+  return;
+}
+
+
+// Evaluate the declarations in the module.
 void
 Evaluator::eval(Module_decl const* d)
 {
@@ -397,7 +554,7 @@ Evaluator::eval(Block_stmt const* s, Value& r)
   Store_sentinel store(*this);
   for(Stmt const* s1 : s->statements()) {
 
-    // Evaluate each statement in turn. If the 
+    // Evaluate each statement in turn. If the
     Control ctl = eval(s1, r);
     switch (ctl) {
       case return_ctl:
@@ -444,8 +601,8 @@ Evaluator::eval(If_then_stmt const* s, Value& r)
 
 // If the condition evaluates to true, the true branch
 // is evaluated. Otherwise the false branch is evaluated.
-// Note that control stops if either branch returns, 
-// breaks, or continues. In all other cases, control 
+// Note that control stops if either branch returns,
+// breaks, or continues. In all other cases, control
 // flows to the next statement.
 Control
 Evaluator::eval(If_else_stmt const* s, Value& r)
@@ -467,10 +624,10 @@ Evaluator::eval(While_stmt const* s, Value& r)
     Value c = eval(s->condition());
     if (!c.get_integer())
       break;
-    
-    // Evaluate the body. Stop iterating if we got 
-    // a break, or return if we got a return. 
-    // Otherwise, continue to the next iteration. 
+
+    // Evaluate the body. Stop iterating if we got
+    // a break, or return if we got a return.
+    // Otherwise, continue to the next iteration.
     Control ctl = eval(s->body(), r);
     if (ctl == break_ctl)
       break;
@@ -512,6 +669,30 @@ Evaluator::eval(Declaration_stmt const* s, Value& r)
 
 
 // -------------------------------------------------------------------------- //
+// Expression reduction
+
+// Return a literal corresponding to the evaluation
+// of e. If e invokes undefined behavior or is not
+// otherwise a constant expression, this returns nullptr.
+Expr*
+reduce(Expr const* e)
+{
+  // If the expression is already a literal, then just
+  // return it.
+  if (is<Literal_expr>(e))
+    return const_cast<Expr*>(e);
+
+  // Otherwise, try evaluating.
+  try {
+    Value v = evaluate(e);
+    return new Literal_expr(e->type(), v);
+  } catch (...) {
+    return nullptr;
+  }
+}
+
+
+// -------------------------------------------------------------------------- //
 // Program execution
 
 // Execute the given function.
@@ -535,4 +716,3 @@ Evaluator::exec(Function_decl const* fn)
 
   return result;
 }
-

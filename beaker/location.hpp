@@ -22,7 +22,7 @@ public:
   Location()
     : file_(nullptr), line_(0), col_(0)
   { }
-  
+
   Location(File const* f, int l, int o)
     : file_(f), line_(l), col_(o)
   { }
@@ -40,20 +40,20 @@ public:
 // The location map associates terms of the
 // language with their location in source code.
 // Note that types do not have a source code
-// location since they are uniqued. 
+// location since they are uniqued.
 //
 // TODO: Use this to also determine the
 // end of a term.
-struct Location_map : std::unordered_map<void*, Location>
+struct Location_map : std::unordered_map<void const*, Location>
 {
-  using std::unordered_map<void*, Location>::unordered_map;
+  using std::unordered_map<void const*, Location>::unordered_map;
 
-  Location get(void*) const;
+  Location get(void const*) const;
 };
 
 
-inline Location 
-Location_map::get(void* p) const
+inline Location
+Location_map::get(void const* p) const
 {
   auto iter = find(p);
   if (iter != end())
