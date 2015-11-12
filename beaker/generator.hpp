@@ -105,10 +105,7 @@ struct Generator
   llvm::LLVMContext cxt;
   llvm::IRBuilder<> build;
   llvm::Module*     mod;
-<<<<<<< HEAD
-=======
   llvm::Function*   fn;
->>>>>>> upstream/master
   llvm::Value*      ret;
 
   Symbol_stack      stack;

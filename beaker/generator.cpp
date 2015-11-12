@@ -402,19 +402,6 @@ Generator::gen(Not_expr const* e)
 llvm::Value*
 Generator::gen(Call_expr const* e)
 {
-<<<<<<< HEAD
-  llvm::Value* callee = gen(e->target());
-  if(!callee) throw std::runtime_error("!callee");
-
-
-  std::vector<llvm::Value*> args;
-  for(auto a : e->arguments()) {
-    args.push_back(gen(a));
-  }
-
-
-  return build.CreateCall(callee, args);
-=======
   llvm::Value* fn = gen(e->target());
   std::vector<llvm::Value*> args;
   for (Expr const* a : e->arguments())
@@ -449,7 +436,6 @@ Generator::gen(Index_expr const* e)
     ix                 // requested index
   };
   return build.CreateGEP(arr, args);
->>>>>>> upstream/master
 }
 
 
@@ -744,9 +730,6 @@ Generator::gen(Decl const* d)
 void
 Generator::gen_local(Variable_decl const* d)
 {
-<<<<<<< HEAD
-  throw std::runtime_error("gen_local: not implemented");
-=======
   // Create the alloca instruction at the beginning of
   // the function. Not at the point where we get it.
   llvm::BasicBlock& b = fn->getEntryBlock();
@@ -759,7 +742,6 @@ Generator::gen_local(Variable_decl const* d)
   // Initialize the object.
   llvm::Value* init = gen(d->init());
   build.CreateStore(init, ptr);
->>>>>>> upstream/master
 }
 
 
@@ -889,12 +871,10 @@ Generator::gen(Function_decl const* d)
   // Generate the body of the function.
   gen(d->body());
 
-<<<<<<< HEAD
 
   //load return at end of function
   llvm::Value* loadret = build.CreateLoad(ret);
   build.CreateRet(loadret);
-=======
   // TODO: Create an exit block and allow code to
   // jump directly to that block after storing
   // the return value.
@@ -902,7 +882,6 @@ Generator::gen(Function_decl const* d)
   // Reset stateful info.
   ret = nullptr;
   fn = nullptr;
->>>>>>> upstream/master
 }
 
 
