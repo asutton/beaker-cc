@@ -1010,9 +1010,14 @@ Elaborator::elaborate(Return_stmt* s)
   Type const* t = fn->return_type();
 
   // Check that the return type matches the returned value.
-  Expr* c = require_converted(*this, s->first, t);
-  if (!c)
-    throw std::runtime_error("return type mismatch");
+  Expr* e = elaborate(s->value());
+  Expr* c = convert(e, t);
+  if (!c) {
+    std::stringstream ss;
+    ss << "return type mismatch (expected " 
+       << *t << " but got " << *s->value()->type() << ")";
+    throw std::runtime_error(ss.str());
+  }
 
   s->first = c;
   return s;
