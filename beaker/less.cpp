@@ -174,30 +174,31 @@ is_less(Expr const* a, Expr const* b)
     Expr const* b;
 
     bool operator()(Literal_expr const* a) { return is_less(a, cast<Literal_expr>(b)); }
-    bool operator()(Id_expr const* a) { throw std::runtime_error("comparing Id_expr"); }
-    bool operator()(Add_expr const* a) { throw std::runtime_error("comparing Add_expr"); }
-    bool operator()(Sub_expr const* a) { throw std::runtime_error("comparing Sub_expr"); }
-    bool operator()(Mul_expr const* a) { throw std::runtime_error("comparing Mul_expr"); }
-    bool operator()(Div_expr const* a) { throw std::runtime_error("comparing Div_expr"); }
-    bool operator()(Rem_expr const* a) { throw std::runtime_error("comparing Rem_expr"); }
-    bool operator()(Neg_expr const* a) { throw std::runtime_error("comparing Neg_expr"); }
-    bool operator()(Pos_expr const* a) { throw std::runtime_error("comparing Pos_expr"); }
-    bool operator()(Eq_expr const* a) { throw std::runtime_error("comparing Eq_expr"); }
-    bool operator()(Ne_expr const* a) { throw std::runtime_error("comparing Ne_expr"); }
-    bool operator()(Lt_expr const* a) { throw std::runtime_error("comparing Lt_expr"); }
-    bool operator()(Gt_expr const* a) { throw std::runtime_error("comparing Gt_expr"); }
-    bool operator()(Le_expr const* a) { throw std::runtime_error("comparing Le_expr"); }
-    bool operator()(Ge_expr const* a) { throw std::runtime_error("comparing Ge_expr"); }
-    bool operator()(And_expr const* a) { throw std::runtime_error("comparing And_expr"); }
-    bool operator()(Or_expr const* a) { throw std::runtime_error("comparing Or_expr"); }
-    bool operator()(Not_expr const* a) { throw std::runtime_error("comparing Not_expr"); }
-    bool operator()(Call_expr const* a) { throw std::runtime_error("comparing Call_expr"); }
-    bool operator()(Member_expr const* a) { throw std::runtime_error("comparing Member_expr"); }
-    bool operator()(Index_expr const* a) { throw std::runtime_error("comparing Index_expr"); }
-    bool operator()(Value_conv const* a) { throw std::runtime_error("comparing Value_conv"); }
-    bool operator()(Block_conv const* a) { throw std::runtime_error("comparing Block_conv"); }
-    bool operator()(Default_init const* a) { throw std::runtime_error("comparing Default_init"); }
-    bool operator()(Copy_init const* a) { throw std::runtime_error("comparing Copy_init"); }
+    bool operator()(Id_expr const* a) { lingo_unreachable(); }
+    bool operator()(Add_expr const* a) { lingo_unreachable(); }
+    bool operator()(Sub_expr const* a) { lingo_unreachable(); }
+    bool operator()(Mul_expr const* a) { lingo_unreachable(); }
+    bool operator()(Div_expr const* a) { lingo_unreachable(); }
+    bool operator()(Rem_expr const* a) { lingo_unreachable(); }
+    bool operator()(Neg_expr const* a) { lingo_unreachable(); }
+    bool operator()(Pos_expr const* a) { lingo_unreachable(); }
+    bool operator()(Eq_expr const* a) { lingo_unreachable(); }
+    bool operator()(Ne_expr const* a) { lingo_unreachable(); }
+    bool operator()(Lt_expr const* a) { lingo_unreachable(); }
+    bool operator()(Gt_expr const* a) { lingo_unreachable(); }
+    bool operator()(Le_expr const* a) { lingo_unreachable(); }
+    bool operator()(Ge_expr const* a) { lingo_unreachable(); }
+    bool operator()(And_expr const* a) { lingo_unreachable(); }
+    bool operator()(Or_expr const* a) { lingo_unreachable(); }
+    bool operator()(Not_expr const* a) { lingo_unreachable(); }
+    bool operator()(Call_expr const* a) { lingo_unreachable(); }
+    bool operator()(Member_expr const* a) { lingo_unreachable(); }
+    bool operator()(Index_expr const* a) { lingo_unreachable(); }
+    bool operator()(Value_conv const* a) { lingo_unreachable(); }
+    bool operator()(Block_conv const* a) { lingo_unreachable(); }
+    bool operator()(Default_init const* a) { lingo_unreachable(); }
+    bool operator()(Copy_init const* a) { lingo_unreachable(); }
+    bool operator()(Reference_init const* a) { lingo_unreachable(); }
   };
 
   std::type_index t1 = typeid(*a);

@@ -207,6 +207,10 @@ defines_object(Decl const* d)
 }
 
 
+// Returns true if the declaration is a reference.
+bool is_reference(Decl const*);
+
+
 // -------------------------------------------------------------------------- //
 //                              Generic visitors
 

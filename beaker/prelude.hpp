@@ -55,6 +55,7 @@ struct Block_conv;
 struct Init;
 struct Default_init;
 struct Copy_init;
+struct Reference_init;
 
 struct Type;
 struct Id_type;

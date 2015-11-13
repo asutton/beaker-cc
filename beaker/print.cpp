@@ -96,7 +96,7 @@ operator<<(std::ostream& os, Block_type const& t)
 std::ostream&
 operator<<(std::ostream& os, Reference_type const& t)
 {
-  return os << "ref " << *t.type();
+  return os << *t.type() << '&';
 }
 
 
@@ -143,6 +143,7 @@ operator<<(std::ostream& os, Expr const& e)
     void operator()(Block_conv const* e) { os << *e; }
     void operator()(Default_init const* e) { os << *e; }
     void operator()(Copy_init const* e) { os << *e; }
+    void operator()(Reference_init const* e) { os << *e; }
   };
   apply(&e, Fn{os});
   return os;
@@ -317,7 +318,6 @@ operator<<(std::ostream& os, Block_conv const& e)
 std::ostream&
 operator<<(std::ostream& os, Default_init const& e)
 {
-  // return os;
   return os << "__default_init(" << *e.type() << ")";
 }
 
@@ -326,5 +326,11 @@ std::ostream&
 operator<<(std::ostream& os, Copy_init const& e)
 {
   return os << "__copy_init(" << *e.type() << ',' << *e.value() << ")";
-  // return os << *e.value();
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Reference_init const& e)
+{
+  return os << "__ref_init(" << *e.type() << ',' << *e.object() << ")";
 }

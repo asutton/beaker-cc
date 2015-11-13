@@ -235,6 +235,7 @@ Elaborator::elaborate(Expr* e)
     Expr* operator()(Block_conv* e) const { return elab.elaborate(e); }
     Expr* operator()(Default_init* e) const { return elab.elaborate(e); }
     Expr* operator()(Copy_init* e) const { return elab.elaborate(e); }
+    Expr* operator()(Reference_init* e) const { return elab.elaborate(e); }
   };
 
   return apply(e, Fn{*this});
@@ -280,8 +281,11 @@ Elaborator::elaborate(Id_expr* e)
   // If the referenced declaration is a variable of
   // type T, then the type is T&. Otherwise, it is 
   // just T.
+  //
+  // TODO: Why isn't a function identifier also a
+  // reference.
   Type const* t = d->type();
-  if (defines_object(d))
+  if (defines_object(d) && !is<Reference_type>(t))
     t = t->ref();
   e->type_ = t;
 
@@ -775,6 +779,21 @@ Elaborator::elaborate(Copy_init* e)
   // Elaborate the type.
   e->type_ = elaborate(e->type_);
 
+  // If copying into a reference, we're actually
+  // performing reference initialization. Create
+  // a new node and elaborate it.
+  if (is<Reference_type>(e->type())) {
+    Reference_init* init = new Reference_init(e->type(), e->value());
+    return elaborate(init);
+  } 
+
+  // Otherwise, this actually a copy.
+  //
+  // TOOD: This should perform a lookup to find a
+  // function that implements copies. It could be
+  // bitwise copy, a memberwise copy, or a copy
+  // constructor.
+
   // Convert the value to the resulting type.
   Expr* c = require_converted(*this, e->first, e->type_);
   if (!c) {
@@ -783,8 +802,50 @@ Elaborator::elaborate(Copy_init* e)
        << *e->type() << " but got " << *e->value()->type() << ')';
     throw Type_error({}, ss.str());
   }
-
   e->first = c;
+
+  return e;
+}
+
+
+// Note that this is only ever called from the
+// elaborator for copy initialization. The type must
+// already be elaborated.
+Expr*
+Elaborator::elaborate(Reference_init* e)
+{
+  Expr* obj = elaborate(e->object());
+
+  // A reference can only be bound to an object.
+  if (!is<Reference_type>(obj->type())) {
+    throw Type_error({}, "binding reference to temporary");
+  }
+
+  // TODO: Allow t2 to be derived from t1.
+  //
+  //    struct B { };
+  //    struct D : B { };
+  //
+  //    var obj : D;
+  //    var ref : B& = obj;
+  //
+  // TODO: Allow t2 to be less cv qualified than t1.
+  // That would allow bindings to constants:
+  //
+  //    var T x;
+  //    var T const& c = x;
+  Type const* t1 = e->type();
+  Type const* t2 = obj->type();
+  if (t1->nonref() != t2->nonref()) {
+    std::stringstream ss;
+    ss << "binding reference to an object of a different type"
+       << "(expected " << *t1 << " but got " << *t2 << ')';
+    throw Type_error({}, ss.str());
+  }
+
+  // Update the expression.
+  e->first = obj;
+  
   return e;
 }
 

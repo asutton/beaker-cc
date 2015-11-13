@@ -919,9 +919,7 @@ Parser::on_id_type(Token tok)
 Type const*
 Parser::on_reference_type(Type const* t)
 {
-  auto* p = get_reference_type(t);
-  std::cout << *p << '\n';
-  return p;
+  return get_reference_type(t);
 }
 
 

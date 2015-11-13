@@ -192,6 +192,7 @@ Generator::gen(Expr const* e)
     llvm::Value* operator()(Block_conv const* e) const { return g.gen(e); }
     llvm::Value* operator()(Default_init const* e) const { return g.gen(e); }
     llvm::Value* operator()(Copy_init const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Reference_init const* e) const { return g.gen(e); }
   };
 
   return apply(e, Fn{*this});
@@ -247,7 +248,15 @@ Generator::gen(Literal_expr const* e)
 llvm::Value*
 Generator::gen(Id_expr const* e)
 {
-  return stack.lookup(e->declaration())->second;
+  auto const* bind = stack.lookup(e->declaration());
+  llvm::Value* result = bind->second;
+
+  // Fetch the value from a reference.
+  Decl const* decl = bind->first;
+  if (is_reference(decl))
+    return build.CreateLoad(result);
+
+  return result;
 }
 
 
@@ -460,6 +469,13 @@ Generator::gen(Copy_init const* e)
 }
 
 
+llvm::Value*
+Generator::gen(Reference_init const* e)
+{
+  return gen(e->object());
+}
+
+
 // -------------------------------------------------------------------------- //
 // Code generation for statements
 //
@@ -621,13 +637,17 @@ Generator::gen_local(Variable_decl const* d)
   // the function. Not at the point where we get it.
   llvm::BasicBlock& b = fn->getEntryBlock();
   llvm::IRBuilder<> tmp(&b, b.begin());
-  llvm::Value* ptr = tmp.CreateAlloca(get_type(d->type()));
+  llvm::Type* type = get_type(d->type());
+  String name = d->name()->spelling();
+  llvm::Value* ptr = tmp.CreateAlloca(type, nullptr, name);
 
   // Save the decl binding.
   stack.top().bind(d, ptr);
 
-  // Initialize the object.
+  // Generate the initializer.
   llvm::Value* init = gen(d->init());
+  
+  // Store the result in the object.
   build.CreateStore(init, ptr);
 }
 

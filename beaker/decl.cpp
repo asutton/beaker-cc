@@ -18,3 +18,11 @@ Function_decl::return_type() const
   return type()->return_type();
 }
 
+
+// Returns true when the declaration is declared as
+// a reference to an object.
+bool
+is_reference(Decl const* d)
+{
+  return is<Reference_type>(d->type());
+}

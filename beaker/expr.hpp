@@ -68,6 +68,7 @@ struct Expr::Visitor
   virtual void visit(Block_conv const*) = 0;
   virtual void visit(Default_init const*) = 0;
   virtual void visit(Copy_init const*) = 0;
+  virtual void visit(Reference_init const*) = 0;
 };
 
 
@@ -100,6 +101,7 @@ struct Expr::Mutator
   virtual void visit(Block_conv*) = 0;
   virtual void visit(Default_init*) = 0;
   virtual void visit(Copy_init*) = 0;
+  virtual void visit(Reference_init*) = 0;
 };
 
 
@@ -510,6 +512,22 @@ struct Copy_init : Init
 };
 
 
+// Performs reference initialization.
+struct Reference_init : Init
+{
+  Reference_init(Type const* t, Expr* e)
+    : Init(t), first(e)
+  { }
+
+  Expr* object() const { return first; }
+
+  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Mutator& v)       { v.visit(this); }
+
+  Expr* first;
+};
+
+
 // -------------------------------------------------------------------------- //
 // Generic visitor
 
@@ -545,6 +563,7 @@ struct Generic_expr_visitor : Expr::Visitor, lingo::Generic_visitor<F, T>
   void visit(Block_conv const* e) { this->invoke(e); }
   void visit(Default_init const* e) { this->invoke(e); }
   void visit(Copy_init const* e) { this->invoke(e); }
+  void visit(Reference_init const* e) { this->invoke(e); }
 };
 
 
@@ -593,6 +612,7 @@ struct Generic_expr_mutator : Expr::Mutator, lingo::Generic_mutator<F, T>
   void visit(Block_conv* e) { this->invoke(e); }
   void visit(Default_init* e) { this->invoke(e); }
   void visit(Copy_init* e) { this->invoke(e); }
+  void visit(Reference_init* e) { this->invoke(e); }
 };
 
 
