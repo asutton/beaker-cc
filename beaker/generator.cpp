@@ -535,7 +535,7 @@ Generator::makeBranch(llvm::BasicBlock* dest, llvm::BasicBlock* src) {
 void
 Generator::gen(Empty_stmt const* s)
 {
-  //empty
+  //empty?
 }
 
 
@@ -596,16 +596,15 @@ Generator::gen(If_then_stmt const* s)
   //if true
   build.SetInsertPoint(thenBB);
   gen(s->body());
-  //build.CreateBr(mergeBB);
   makeBranch(mergeBB, build.GetInsertBlock());
 
   //merge
+  //getUniquePred???
   if(mergeBB->getSinglePredecessor()) {
     theFunc->getBasicBlockList().push_back(mergeBB);
     build.SetInsertPoint(mergeBB);
   }
 
-  //throw std::runtime_error("if_then: not implemented");
 }
 
 
@@ -630,17 +629,16 @@ Generator::gen(If_else_stmt const* s)
   //if true
   build.SetInsertPoint(thenBB);
   gen(s->true_branch());
-  //build.CreateBr(mergeBB);
   makeBranch(mergeBB, build.GetInsertBlock());
 
   //else false
   theFunc->getBasicBlockList().push_back(elseBB);
   build.SetInsertPoint(elseBB);
   gen(s->false_branch());
-  // build.CreateBr(mergeBB);
   makeBranch(mergeBB, build.GetInsertBlock());
 
   //merge
+  //getUniquePred??
   if(mergeBB->getSinglePredecessor()) {
     theFunc->getBasicBlockList().push_back(mergeBB);
     build.SetInsertPoint(mergeBB);
@@ -678,36 +676,31 @@ Generator::gen(While_stmt const* s)
   theFunc->getBasicBlockList().push_back(loopBB);  
   build.SetInsertPoint(loopBB);
   gen(s->body());
-  // build.CreateBr(condBB);
   makeBranch(condBB, build.GetInsertBlock());
 
 
   //after exit loop
+  //do I need to check this??
   // if(endBB->getUniquePredecessor()) {
     theFunc->getBasicBlockList().push_back(endBB);
     build.SetInsertPoint(endBB);
   // }  
-  //throw std::runtime_error("while: not implemented");
 }
 
 
 void
 Generator::gen(Break_stmt const* s)
 {
-  // build.CreateBr(loop_exit.top());
   makeBranch(loop_exit.top(), build.GetInsertBlock());
   loop_exit.pop();
-  //throw std::runtime_error("break: not implemented");
 }
 
 
 void
 Generator::gen(Continue_stmt const* s)
 {
-  // build.CreateBr(loop_entry.top());
   makeBranch(loop_entry.top(), build.GetInsertBlock());
   loop_entry.pop();
-  //throw std::runtime_error("continue: not implemented");
 }
 
 
@@ -899,16 +892,16 @@ Generator::gen(Function_decl const* d)
   // Generate the body of the function.
   gen(d->body());
 
+
+  // TODO: Create an exit block and allow code to
+  // jump directly to that block after storing
+  // the return value.
   fn->getBasicBlockList().push_back(retBB);  
   build.SetInsertPoint(retBB);
 
   //load return at end of function
   llvm::Value* loadret = build.CreateLoad(ret);
   build.CreateRet(loadret);
-
-  // TODO: Create an exit block and allow code to
-  // jump directly to that block after storing
-  // the return value.
 
   // Reset stateful info.
   ret = nullptr;
