@@ -4,7 +4,7 @@
 #ifndef BEAKER_LEXER_HPP
 #define BEAKER_LEXER_HPP
 
-#include "string.hpp"
+#include "prelude.hpp"
 #include "file.hpp"
 #include "line.hpp"
 #include "symbol.hpp"

@@ -5,7 +5,6 @@
 #define BEAKER_PARSER_HPP
 
 #include "prelude.hpp"
-#include "string.hpp"
 #include "token.hpp"
 #include "specifier.hpp"
 

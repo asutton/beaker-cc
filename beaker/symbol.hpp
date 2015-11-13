@@ -4,9 +4,7 @@
 #ifndef BEAKER_SYMBOL_HPP
 #define BEAKER_SYMBOL_HPP
 
-#include "string.hpp"
-
-#include "lingo/node.hpp"
+#include "prelude.hpp"
 
 #include <unordered_map>
 #include <typeinfo>

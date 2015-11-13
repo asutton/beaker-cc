@@ -4,7 +4,8 @@
 #ifndef BEAKER_PRELUDE_HPP
 #define BEAKER_PRELUDE_HPP
 
-#include "lingo/error.hpp"
+#include "lingo/assert.hpp"
+#include "lingo/string.hpp"
 #include "lingo/node.hpp"
 #include "lingo/print.hpp"
 
@@ -14,17 +15,15 @@
 #include <type_traits>
 
 
-// Lingo casting
+// Bring lingo into scope.
+using namespace lingo;
+
+
+// Bring specific functions in as overloads
+// to support argument dependent lookup.
 using lingo::is;
 using lingo::as;
 using lingo::cast;
-
-
-// Lingo node concepts
-using lingo::is_nullary_node;
-using lingo::is_unary_node;
-using lingo::is_binary_node;
-using lingo::is_ternary_node;
 
 
 struct Expr;
