@@ -524,11 +524,23 @@ Generator::gen(Stmt const* s)
   apply(s, Fn{*this});
 }
 
+//Helper function for statements
+void 
+Generator::makeBranch(llvm::BasicBlock* dest, llvm::BasicBlock* src) {
+  // llvm::BasicBlock* src = build.GetInsertBlock();
+  // llvm::Function* f = src->getParent();
+  if(!src->getTerminator()) {
+    // std::cout<< "creating br\n";
+    build.CreateBr(dest);
+    // f->getBasicBlockList().push_back(dest);
+    // build.SetInsertPoint(dest);
+  }
+}
 
 void
 Generator::gen(Empty_stmt const* s)
 {
-  throw std::runtime_error("empty: not implemented");
+  //empty
 }
 
 
@@ -566,9 +578,7 @@ Generator::gen(Return_stmt const* s)
   llvm::Value* v = gen(s->value());
   
   build.CreateStore(v, ret);
-
-  build.CreateBr(retBB);
-  // makeBranch(retBB, build.GetInsertBlock());
+  makeBranch(retBB, build.GetInsertBlock());
 }
 
 
@@ -595,8 +605,10 @@ Generator::gen(If_then_stmt const* s)
   makeBranch(mergeBB, build.GetInsertBlock());
 
   //merge
-  theFunc->getBasicBlockList().push_back(mergeBB);
-  build.SetInsertPoint(mergeBB);
+  if(mergeBB->getSinglePredecessor()) {
+    theFunc->getBasicBlockList().push_back(mergeBB);
+    build.SetInsertPoint(mergeBB);
+  }
 
   //throw std::runtime_error("if_then: not implemented");
 }
@@ -634,8 +646,12 @@ Generator::gen(If_else_stmt const* s)
   makeBranch(mergeBB, build.GetInsertBlock());
 
   //merge
-  theFunc->getBasicBlockList().push_back(mergeBB);
-  build.SetInsertPoint(mergeBB);
+
+  if(mergeBB->getSinglePredecessor()) {
+    theFunc->getBasicBlockList().push_back(mergeBB);
+    build.SetInsertPoint(mergeBB);
+  }
+
 }
 
 
@@ -673,9 +689,10 @@ Generator::gen(While_stmt const* s)
 
 
   //after exit loop
-  theFunc->getBasicBlockList().push_back(endBB);
-  build.SetInsertPoint(endBB);
-  //throw std::runtime_error("while: not implemented");
+  if(endBB->getSinglePredecessor()) {
+    theFunc->getBasicBlockList().push_back(endBB);
+    build.SetInsertPoint(endBB);
+  }  //throw std::runtime_error("while: not implemented");
 }
 
 

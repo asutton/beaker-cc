@@ -119,16 +119,7 @@ struct Generator
 
   struct Symbol_sentinel;
 
-  //Helper function for statements
-  void makeBranch(llvm::BasicBlock* dest, llvm::BasicBlock* src) {
-    // llvm::BasicBlock* src = build.GetInsertBlock();
-    if(!src->getTerminator()) {
-      std::cout<< "test\n";
-      build.CreateBr(dest);
-      std::cout<< "test2\n";
-
-    }
-  }
+  void makeBranch(llvm::BasicBlock*, llvm::BasicBlock*);
 };
 
 

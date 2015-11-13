@@ -1,0 +1,18 @@
+
+def f(n : int) -> int 
+{ 
+  if (n == 0){
+    n = 1;
+    return n;
+  }
+  else {
+    n = 2;
+    return n;
+  }
+}
+
+
+def main() -> int
+{
+  return f(-5);
+}
