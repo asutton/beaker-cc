@@ -251,7 +251,7 @@ Generator::gen(Id_expr const* e)
   auto const* bind = stack.lookup(e->declaration());
   llvm::Value* result = bind->second;
 
-  // Fetch the value from a reference.
+  // Fetch the value from a reference declaration.
   Decl const* decl = bind->first;
   if (is_reference(decl))
     return build.CreateLoad(result);
