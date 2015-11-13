@@ -330,7 +330,7 @@ Generator::gen(Or_expr const* e)
 llvm::Value*
 Generator::gen(Not_expr const* e)
 {
-  llvm:Value* op = gen(operand());
+  llvm:Value* op = gen(e->operand());
   return build.CreateNot(op)
 }
 
@@ -338,7 +338,13 @@ Generator::gen(Not_expr const* e)
 llvm::Value*
 Generator::gen(Call_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+    llvm::Value* callee = gen(e->target())
+    std::vector<llvm::Value*> args;
+    for(Expr const* ePtr : e->arguments()){
+        args.push_back(gen(ePtr));
+    }
+
+    return build.CreateCall(callee, args)
 }
 
 
@@ -448,7 +454,7 @@ Generator::gen(Stmt const* s)
 void
 Generator::gen(Empty_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+    return
 }
 
 
