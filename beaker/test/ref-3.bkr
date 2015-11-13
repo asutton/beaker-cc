@@ -1,0 +1,14 @@
+
+def f(x : int&) -> int
+{
+  x = 3;
+  return 0;
+}
+
+def main() -> int
+{
+  var x : int = 10;
+  f(x);
+  return x;
+}
+
