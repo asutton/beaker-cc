@@ -21,6 +21,8 @@ using namespace std;
 int
 main(int argc, char* argv[])
 {
+  init_colors();
+
   // Prepare the symbol table.
   Symbol_table syms;
   init_symbols(syms);

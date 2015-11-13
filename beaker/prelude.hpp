@@ -8,6 +8,7 @@
 #include "lingo/string.hpp"
 #include "lingo/node.hpp"
 #include "lingo/print.hpp"
+#include "lingo/io.hpp"
 
 #include <iosfwd>
 #include <vector>
