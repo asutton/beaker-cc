@@ -527,13 +527,8 @@ Generator::gen(Stmt const* s)
 //Helper function for statements
 void 
 Generator::makeBranch(llvm::BasicBlock* dest, llvm::BasicBlock* src) {
-  // llvm::BasicBlock* src = build.GetInsertBlock();
-  // llvm::Function* f = src->getParent();
   if(!src->getTerminator()) {
-    // std::cout<< "creating br\n";
     build.CreateBr(dest);
-    // f->getBasicBlockList().push_back(dest);
-    // build.SetInsertPoint(dest);
   }
 }
 
@@ -646,7 +641,6 @@ Generator::gen(If_else_stmt const* s)
   makeBranch(mergeBB, build.GetInsertBlock());
 
   //merge
-
   if(mergeBB->getSinglePredecessor()) {
     theFunc->getBasicBlockList().push_back(mergeBB);
     build.SetInsertPoint(mergeBB);
@@ -689,10 +683,11 @@ Generator::gen(While_stmt const* s)
 
 
   //after exit loop
-  if(endBB->getSinglePredecessor()) {
+  // if(endBB->getUniquePredecessor()) {
     theFunc->getBasicBlockList().push_back(endBB);
     build.SetInsertPoint(endBB);
-  }  //throw std::runtime_error("while: not implemented");
+  // }  
+  //throw std::runtime_error("while: not implemented");
 }
 
 
