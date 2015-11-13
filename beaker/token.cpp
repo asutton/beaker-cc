@@ -51,6 +51,7 @@ spelling(Token_kind k)
     case int_kw: return "int";
     case return_kw: return "return";
     case struct_kw: return "struct";
+    case this_kw: return "this";
     case var_kw: return "var";
     case while_kw: return "while";
 
@@ -107,6 +108,7 @@ init_symbols(Symbol_table& syms)
   syms.put<Symbol>("while", while_kw);
   syms.put<Symbol>("return", return_kw);
   syms.put<Symbol>("struct", struct_kw);
+  syms.put<Symbol>("this", this_kw);
   syms.put<Symbol>("var", var_kw);
 
   // Reserved names.

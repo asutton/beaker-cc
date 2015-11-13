@@ -80,6 +80,21 @@ Scope_stack::function() const
 }
 
 
+// Returns the current record. The current function is found
+// by working outwards through the declaration context stack.
+// If there is no current function, this returns nullptr.
+Record_decl*
+Scope_stack::record() const
+{
+  for (auto iter = rbegin(); iter != rend(); ++iter) {
+    Scope const& s = *iter;
+    if (Record_decl* fn = as<Record_decl>(s.decl))
+      return fn;
+  }
+  return nullptr;
+}
+
+
 // -------------------------------------------------------------------------- //
 // Elaboration of types
 
@@ -867,6 +882,7 @@ Elaborator::elaborate(Decl* d)
     Decl* operator()(Parameter_decl* d) const { return elab.elaborate(d); }
     Decl* operator()(Record_decl* d) const { return elab.elaborate(d); }
     Decl* operator()(Field_decl* d) const { return elab.elaborate(d); }
+    Decl* operator()(Method_decl* d) const { return elab.elaborate(d); }
     Decl* operator()(Module_decl* d) const { return elab.elaborate(d); }
   };
 
@@ -955,9 +971,14 @@ Decl*
 Elaborator::elaborate(Record_decl* d)
 {
   stack.declare(d);
+
+  // FIXME: This isn't quite right. We need a legitimate
+  // two-level elaboration here. First, declare evertything,
+  // then handle the definitions.
   Scope_sentinel scope(*this, d);
   for (Decl*& f : d->fields_)
     f = elaborate(f);
+
   return d;
 }
 
@@ -967,6 +988,51 @@ Elaborator::elaborate(Field_decl* d)
 {
   d->type_ = elaborate(d->type_);
   stack.declare(d);
+  return d;
+}
+
+
+// Elaborate the type of a method declaration.
+Decl*
+Elaborator::elaborate(Method_decl* d)
+{
+  // Generate the type of the implicit this parameter.
+  //
+  // TODO: Handle constant references.
+  Record_decl* rec = stack.record();
+  Type const* type = get_reference_type(get_record_type(rec));
+
+  // Re-build the function type.
+  Function_type const* ft = cast<Function_type>(elaborate(d->type()));
+  Type_seq pt = ft->parameter_types();
+  pt.insert(pt.begin(), type);
+  Type const* rt = ft->return_type();
+  Type const* mt = get_function_type(pt, rt);
+  d->type_ = mt;
+
+  // Npw declare the method.
+  stack.declare(d);
+
+  // Actually build the implicit this parameter and add it
+  // to the front of the list of parameters.
+  Symbol const* name = syms.get("this");
+  Parameter_decl* self = new Parameter_decl(name, type);
+  d->parms_.insert(d->parms_.begin(), self);
+
+  // Now, elaborate and declare parameters.
+  Scope_sentinel scope(*this, d);
+  for (Decl*& p : d->parms_)
+    p = elaborate(p);
+
+
+  // Check the body of the method. It must be defined.
+  d->body_ = elaborate(d->body());
+
+  // TODO: Are we actually checking returns match
+  // the return type?
+
+  // TODO: Build a control flow graph and ensure that
+  // every branch returns a value.
   return d;
 }
 

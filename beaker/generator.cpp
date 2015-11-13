@@ -147,11 +147,21 @@ Generator::get_type(Reference_type const* t)
 
 
 // Return the structure type corresponding to the
-// declaration of t.
+// declaration of t. If, for some reason, we encounter
+// the type before its declaration, just emit the
+// definition now.
 llvm::Type*
 Generator::get_type(Record_type const* t)
 {
-  return types.lookup(t->declaration())->second;
+  auto const* bind = types.lookup(t->declaration());
+  if (!bind) {
+    // Note that we have to do a 2nd lookup because
+    // we don't return anything from generating
+    // declarations. 
+    gen(t->declaration());
+    bind = types.lookup(t->declaration());
+  }
+  return bind->second;
 }
 
 
@@ -624,6 +634,7 @@ Generator::gen(Decl const* d)
     void operator()(Parameter_decl const* d) { return g.gen(d); }
     void operator()(Record_decl const* d) { return g.gen(d); }
     void operator()(Field_decl const* d) { return g.gen(d); }
+    void operator()(Method_decl const* d) { return g.gen(d); }
     void operator()(Module_decl const* d) { return g.gen(d); }
   };
   return apply(d, Fn{*this});
@@ -796,15 +807,26 @@ Generator::gen(Parameter_decl const* d)
 void
 Generator::gen(Record_decl const* d)
 {
+  // If we've already created a type, don't do
+  // anything else.
+  if (types.lookup(d))
+    return;
+
   // If the record is empty, generate a struct
   // with exactly one byte so that we never have
   // a type with 0 size.
+  //
+  // FIXME: This isn't right because we are currently
+  // mixing methods and fields in the same thing.
+  // They need to be separate.
   std::vector<llvm::Type*> ts;
   if (d->fields().empty()) {
     ts.push_back(build.getInt8Ty());
   } else {
+    // Construct the type over only the fields.
     for (Decl const* f : d->fields())
-      ts.push_back(get_type(f->type()));
+      if (Field_decl const* f1 = as<Field_decl>(f))
+        ts.push_back(get_type(f1->type()));
   }
 
   // This will automatically be added to the module,
@@ -818,6 +840,17 @@ void
 Generator::gen(Field_decl const* d)
 {
   // NOTE: We should never actually get here.
+}
+
+
+
+// This is just like generating a function except that
+// the name must be mangled to include the name of the
+// class. Or something like that...
+void
+Generator::gen(Method_decl const* d)
+{
+  lingo_unimplemented();
 }
 
 

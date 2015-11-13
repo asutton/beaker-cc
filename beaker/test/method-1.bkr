@@ -1,0 +1,5 @@
+
+struct S
+{
+  def x() -> int { return 0; }
+}

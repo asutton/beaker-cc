@@ -74,6 +74,7 @@ struct Function_decl;
 struct Parameter_decl;
 struct Record_decl;
 struct Field_decl;
+struct Method_decl;
 struct Module_decl;
 
 struct Stmt;

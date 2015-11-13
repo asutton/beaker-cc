@@ -374,6 +374,7 @@ Evaluator::eval(Decl const* d)
     void operator()(Parameter_decl const* d) { ev.eval(d); }
     void operator()(Record_decl const* d) { ev.eval(d); }
     void operator()(Field_decl const* d) { ev.eval(d); }
+    void operator()(Method_decl const* d) { ev.eval(d); }
     void operator()(Module_decl const* d) { ev.eval(d); }
   };
 
@@ -502,6 +503,14 @@ Evaluator::eval(Record_decl const*)
 // There is no evaluation for a field.
 void
 Evaluator::eval(Field_decl const*)
+{
+  return;
+}
+
+
+// There is no evaluation for a method.
+void
+Evaluator::eval(Method_decl const*)
 {
   return;
 }

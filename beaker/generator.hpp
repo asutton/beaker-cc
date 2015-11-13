@@ -104,6 +104,7 @@ struct Generator
   void gen(Parameter_decl const*);
   void gen(Record_decl const*);
   void gen(Field_decl const*);
+  void gen(Method_decl const*);
   void gen(Module_decl const*);
 
   void gen_local(Variable_decl const*);

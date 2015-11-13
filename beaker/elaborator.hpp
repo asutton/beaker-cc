@@ -55,6 +55,7 @@ struct Scope_stack : Stack<Scope>
   Decl*          context() const;
   Module_decl*   module() const;
   Function_decl* function() const;
+  Record_decl*   record() const;
 
   void declare(Decl*);
 };
@@ -66,7 +67,7 @@ class Elaborator
 {
   struct Scope_sentinel;
 public:
-  Elaborator(Location_map&);
+  Elaborator(Location_map&, Symbol_table&);
 
   Type const* elaborate(Type const*);
   Type const* elaborate(Id_type const*);
@@ -113,6 +114,7 @@ public:
   Decl* elaborate(Parameter_decl*);
   Decl* elaborate(Record_decl*);
   Decl* elaborate(Field_decl*);
+  Decl* elaborate(Method_decl*);
   Decl* elaborate(Module_decl*);
 
   Stmt* elaborate(Stmt*);
@@ -132,14 +134,15 @@ public:
   Function_decl* main = nullptr;
 
 private:
-  Location_map locs;
+  Location_map& locs;
+  Symbol_table& syms;
   Scope_stack  stack;
 };
 
 
 inline
-Elaborator::Elaborator(Location_map& loc)
-  : locs(loc)
+Elaborator::Elaborator(Location_map& loc, Symbol_table& s)
+  : locs(loc), syms(s)
 { }
 
 

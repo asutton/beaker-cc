@@ -44,7 +44,8 @@ public:
   Decl* function_decl(Specifier);
   Decl* parameter_decl();
   Decl* record_decl(Specifier);
-  Decl* field_decl();
+  Decl* field_decl(Specifier);
+  Decl* method_decl(Specifier);
   Specifier specifier_seq();
 
   // Statement parsers
@@ -108,6 +109,7 @@ private:
   Decl* on_function(Specifier, Token, Decl_seq const&, Type const*, Stmt*);
   Decl* on_record(Specifier, Token, Decl_seq const&);
   Decl* on_field(Specifier, Token, Type const*);
+  Decl* on_method(Specifier, Token, Decl_seq const&, Type const*, Stmt*);
   Decl* on_module(Decl_seq const&);
 
   // FIXME: Remove _stmt from handlers.

@@ -520,7 +520,14 @@ Parser::record_decl(Specifier spec)
   require(lbrace_tok);
   Decl_seq fs;
   while (lookahead() != rbrace_tok) {
-    Decl* f = field_decl();
+    Specifier spec = specifier_seq();
+    Decl* f;
+    if (lookahead() == def_kw)
+      f = method_decl(spec);
+    else if(lookahead() == identifier_tok)
+      f = field_decl(spec);
+    else
+      Syntax_error(ts_.location(), "invalid member declaration");
     fs.push_back(f);
   }
   match(rbrace_tok);
@@ -531,18 +538,65 @@ Parser::record_decl(Specifier spec)
 // Parse a field declaration.
 //
 //    field-decl -> [specifier-seq] identifier object-type
+//
+// Note that the specifier-seq is parsed above.
 Decl*
-Parser::field_decl()
+Parser::field_decl(Specifier spec)
 {
-  // specifier-seq
-  Specifier spec = specifier_seq();
-
   // actual declaration
   Token n = match(identifier_tok);
   match(colon_tok);
   Type const* t = type();
   match(semicolon_tok);
   return on_field(spec, n, t);
+}
+
+
+// Parse a method declaration.
+//
+//
+//    method-decl -> 'def' identifier parameter-clause return-type function-definition
+//
+// Note that methods must be declared inside
+// the class.
+//
+// TODO: Support out-of-class definitions?
+//
+// TODO: Support specifiers to modify the "this" 
+// parameter. Maybe before the return type? Maybe
+// as part of the specifiers?
+//
+//    struct R {
+//      const def f() -> void { }   // Why not...
+//      virtual def f() -> void { } // Sure...
+Decl*
+Parser::method_decl(Specifier spec)
+{
+  require(def_kw);
+  Token n = match(identifier_tok);
+
+  // parameter-clause
+  Decl_seq parms;
+  match(lparen_tok);
+  while (lookahead() != rparen_tok) {
+    Decl* p = parameter_decl();
+    parms.push_back(p);
+
+    if (match_if(comma_tok))
+      continue;
+    else
+      break;
+  }
+  match(rparen_tok);
+
+  // return-type
+  match(arrow_tok);
+  Type const* t = type();
+
+  // function-definition.
+  Stmt* s = block_stmt();
+
+  return on_method(spec, n, parms, t, s);
 }
 
 
@@ -1200,6 +1254,14 @@ Decl*
 Parser::on_record(Specifier spec, Token n, Decl_seq const& fs)
 {
   return new Record_decl(n.symbol(), fs);
+}
+
+
+Decl*
+Parser::on_method(Specifier spec, Token tok, Decl_seq const& p, Type const* t, Stmt* b)
+{
+  Type const* f = get_function_type(p, t);
+  return new Method_decl(tok.symbol(), f, p, b);
 }
 
 

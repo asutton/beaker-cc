@@ -54,7 +54,7 @@ main(int argc, char* argv[])
     // Perform semantic analysis.
     //
     // TODO: Implement a parse-only phase.
-    Elaborator elab(locs);
+    Elaborator elab(locs, syms);
     elab.elaborate(m);
 
     // Translate to LLVM.
