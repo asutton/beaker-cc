@@ -313,7 +313,7 @@ Evaluator::eval(Field_expr const* e)
 {
   Value obj = eval(e->container());
   Value* ref = obj.get_reference();
-  return &ref->get_tuple().data[e->field()];
+  return &ref->get_tuple().data[e->field()->index()];
 }
 
 

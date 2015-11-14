@@ -691,47 +691,34 @@ Elaborator::elaborate(Dot_expr* e)
 
   // Re-open the class scope so we can perform lookups
   // in the usual way.
-  Record_decl* d = t->declaration();
-  Scope_sentinel scope(*this, d);
-  for (Decl* d1 : d->members())
-    stack.top().bind(d1->name(), d1);
+  //
+  // TODO: Factor this into a separate function.
+  Record_decl* rec = t->declaration();
+  Scope_sentinel scope(*this, rec);
+  for (Decl* f : rec->fields())
+    stack.top().bind(f->name(), f);
+  for (Decl* m : rec->members())
+    stack.top().bind(m->name(), m);
 
-  // Elaborate the member expression. This
-  // must resolve to a declaration.
+  // Elaborate the member expression. This must
+  // resolve to a decl-expr.
   //
   // TODO: I think that this could resolve to an
-  // overload set.
+  // overload set, not a declaration.
   Decl_expr* e2 = as<Decl_expr>(elaborate(e->member()));
   if (!e2) {
     std::stringstream ss;
     ss << "invalid member reference";
     throw Type_error({}, ss.str());
   }
+  Decl* d = e2->declaration();
 
-#if 0
-  // Find the offset in the class of the member.
-  // And stash it in the member expression.
-  //
-  // FIXME: If e2 refers to a method declaration,
-  // then there won't be an offset. Maybe do the
-  // general processing in a Dot_expr, and then
-  // create different kinds of expressions based
-  // on elaboration.
-  int pos = -1;
-  for (std::size_t i = 0; i < d->fields().size(); ++i) {
-    if (e2->declaration() == d->fields()[i]) {
-      e->pos_ = i;
-      break;
-    }
-  }
-  // assert(e->pos_ != -1);
-#endif
-
-  // Finally set the type of the expression.
-  e->type_ = e2->type();
-  e->first = e1;
-  e->second = e2;
-  return e;
+  // Create a specific kind of dot expression.
+  if (Field_decl* f = as<Field_decl>(d))
+    return new Field_expr(e1, e2, f);
+  if (Method_decl* m = as<Method_decl>(d))
+    return new Method_expr(e1, e2, m);
+  lingo_unreachable();
 }
 
 

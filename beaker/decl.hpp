@@ -157,12 +157,17 @@ struct Record_decl : Decl
 
 
 // A member variable of a record.
+//
+// TODO: Cache the field index?
 struct Field_decl : Decl
 {
   using Decl::Decl;
 
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
+
+  Record_decl const* context() const;
+  int                index() const;
 };
 
 

@@ -374,10 +374,12 @@ struct Call_expr : Expr
 
 // The expression e1.e2. This is an unresolved
 // expression.
+//
+// The type of the expression is always that of e2.
 struct Dot_expr : Expr
 {
   Dot_expr(Expr* e1, Expr* e2)
-    : first(e1), second(e2)
+    : Expr(e2->type()), first(e1), second(e2)
   { }
 
   void accept(Visitor& v) const { v.visit(this); }
@@ -391,30 +393,41 @@ struct Dot_expr : Expr
 };
 
 
-// An expression of the form e.n where e has
-// record type and n is nthe field of e.
+// An expression of the form e.f where e has record
+// type and f is a field of that type.
 //
-// TODO: When we add inheritance, the "field"
-// member will become a "path": a vector of
-// offsets into nested based types.
+// TODO: When we add inheritance, the "field" member
+// will become a "path": a vector of offsets into
+// nested based types. For example:
+//
+//    struct B { x : int; }
+//    struct D : B { y : int; }
+//
+//    var d : D;
+//    var n : int = d.x; // Refers to d.0.0
+//
+// Of course, this assumes that we treat base class
+// objects as complete sub-objects and don't just
+// inherit members.
 struct Field_expr : Dot_expr
 {
-  Field_expr(Expr* e1, Expr* e2, int n)
-    : Dot_expr(e1, e2), pos(n)
+  Field_expr(Expr* e1, Expr* e2, Decl* v)
+    : Dot_expr(e1, e2), var(v)
   { }
 
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
 
   Record_decl* record() const;
-  int          field() const { return pos; }
+  Field_decl*  field() const;
+  int          index() const;
 
-  int pos;
+  Decl* var;
 };
 
 
 // An expression of the form e.m where m is
-// a method in e.
+// a method in the type of e.
 struct Method_expr : Dot_expr
 {
   Method_expr(Expr* e1, Expr* e2, Decl* d)
@@ -425,7 +438,7 @@ struct Method_expr : Dot_expr
   void accept(Mutator& v)       { v.visit(this); }
 
   Record_decl* record() const;
-  Decl*        method() const { return fn; }
+  Method_decl* method() const;
 
   Decl* fn;
 };

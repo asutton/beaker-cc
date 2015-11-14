@@ -444,8 +444,8 @@ Generator::gen(Field_expr const* e)
 {
   llvm::Value* obj = gen(e->container());
   std::vector<llvm::Value*> args {
-    build.getInt32(0),         // 0th element from base
-    build.getInt32(e->field()) // nth element in struct
+    build.getInt32(0),                  // 0th element from base
+    build.getInt32(e->field()->index()) // nth element in struct
   };
   return build.CreateGEP(obj, args);
 }
