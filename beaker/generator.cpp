@@ -401,27 +401,15 @@ Generator::gen(Not_expr const* e)
 }
 
 
+// Note that method calls have been explicitly
+// rewritten to free function calls.
 llvm::Value*
 Generator::gen(Call_expr const* e)
 {
-  // Generate arguments first.
+  llvm::Value* fn = gen(e->target());
   std::vector<llvm::Value*> args;
   for (Expr const* a : e->arguments())
     args.push_back(gen(a));
-
-  // If this is actually a method call, then we
-  // need to adjust the arguments.
-  //
-  // FIXME: Make method calls different
-  // than function calls so we don't have
-  // to test the tree.
-  llvm::Value* fn;
-  if (Method_expr* mem = as<Method_expr>(e->target())) {
-    fn = gen(mem->member());
-  } else {
-    fn = gen(e->target());
-  }
-
   return build.CreateCall(fn, args);
 }
 
