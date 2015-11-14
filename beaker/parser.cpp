@@ -17,17 +17,34 @@
 //
 //    primary-expr -> literal | identifier | '(' expr ')'
 //
-//    literal -> integer-literal | boolean-literal
+//    literal -> integer-literal
+//             | boolean-literal
+//             | character-literal
+//             | string-literal
 Expr*
 Parser::primary_expr()
 {
-  // FIXME: switch on the token kind.
+  // identifier
   if (Token tok = match_if(identifier_tok))
     return on_id(tok);
+
+  // boolean-literal
   if (Token tok = match_if(boolean_tok))
     return on_bool(tok);
+
+  // integer-literal
   if (Token tok = match_if(integer_tok))
     return on_int(tok);
+
+  // character-literal
+  if (Token tok = match_if(character_tok))
+    return on_char(tok);
+
+  // string-literal
+  if (Token tok = match_if(string_tok))
+    return on_str(tok);
+
+  // paren-expr
   if (match_if(lparen_tok)) {
     Expr* e = expr();
     match(rparen_tok);
@@ -277,6 +294,7 @@ Parser::expr()
 //
 //    primary-type -> 'bool'
 //                  | 'int'
+//                  | 'char'
 //                  | id-type
 //                  | function-type
 //
@@ -293,6 +311,10 @@ Parser::primary_type()
   // bool
   if (match_if(bool_kw))
     return get_boolean_type();
+
+  // char
+  if (match_if(char_kw))
+    return get_character_type();
 
   // int
   else if (match_if(int_kw))
@@ -325,6 +347,7 @@ Parser::primary_type()
 // Parse a postfix type.
 //
 //    postfix-type -> primary_type
+//                    postfix-type '&'
 //                    postfix-type '[]'
 //                  | postfix-type '[' expr ']'
 //
@@ -342,8 +365,12 @@ Parser::postfix_type()
 {
   Type const* t = primary_type();
   while (true) {
-    // Match array types.
-    if (match_if(lbrack_tok)) {
+    // reference-type
+    if (match_if(amp_tok))
+      t = on_reference_type(t);
+    
+    // array-types
+    else if (match_if(lbrack_tok)) {
       if (match_if(rbrack_tok))
         return on_block_type(t);
       Expr* e = expr();
@@ -380,7 +407,7 @@ Parser::type()
 //
 //    initializer-clause -> ';' | '=' expr ';'
 Decl*
-Parser::variable_decl()
+Parser::variable_decl(Specifier spec)
 {
   require(var_kw);
   Token n = match(identifier_tok);
@@ -391,20 +418,20 @@ Parser::variable_decl()
 
   // default initialization (var x : T;)
   if (match_if(semicolon_tok))
-    return on_variable(n, t);
+    return on_variable(spec, n, t);
 
   // value initialization (var x : T = e;)
   match(equal_tok);
   Expr* e = expr();
   match(semicolon_tok);
-  return on_variable(n, t, e);
+  return on_variable(spec, n, t, e);
 }
 
 
 // Parse a function declaration.
 //
-//    function-decl -> 'def' identifier parameter-clause return-type function-definition
-//
+//    function-decl -> 'def' identifier parameter-clause return-type ';'
+//                   | 'def' identifier parameter-clause return-type function-definition
 //    parameter-clause -> '(' [parameter-list] ')'
 //
 //    parameter-list -> parameter-decl | parameter-decl ',' parameter-list
@@ -412,8 +439,138 @@ Parser::variable_decl()
 //    return-type -> '->' type
 //
 //    function-definition -> block-stmt
+//
+// A function declaration may not have a definition.
 Decl*
-Parser::function_decl()
+Parser::function_decl(Specifier spec)
+{
+  require(def_kw);
+  Token n = match(identifier_tok);
+
+  // parameter-clause
+  Decl_seq parms;
+  match(lparen_tok);
+  while (lookahead() != rparen_tok) {
+    Decl* p = parameter_decl();
+    parms.push_back(p);
+
+    if (match_if(comma_tok))
+      continue;
+    else
+      break;
+  }
+  match(rparen_tok);
+
+  // return-type
+  match(arrow_tok);
+  Type const* t = type();
+
+  // function declaration
+  if (match_if(semicolon_tok))
+    return on_function(spec, n, parms, t);
+
+  // function-definition.
+  Stmt* s = block_stmt();
+
+  return on_function(spec, n, parms, t, s);
+}
+
+
+// Parse a parameter declaration.
+//
+//    parameter-decl ::= identifier ':' type
+//                     | type
+Decl*
+Parser::parameter_decl()
+{
+  // specifier-seq
+  Specifier spec = specifier_seq();
+
+  // If we have <token> :, then interpret
+  // this as a named parameter.
+  if (lookahead(1) == colon_tok) {
+    Token n = match(identifier_tok);
+    match(colon_tok);
+    Type const* t = type();
+    return on_parameter(spec, n, t);
+  }
+
+  // Otherwise, we probably just have a type.
+  else {
+    Type const* t = type();
+    return on_parameter(spec, t);
+  }
+}
+
+
+// Parse a record declaration.
+//
+//    record-decl -> 'struct' identifier record-body
+//
+//    record-body -> '{' field-seq '}'
+//
+//    field-seq -> field-seq | field-seq field-seq
+Decl*
+Parser::record_decl(Specifier spec)
+{
+  require(struct_kw);
+  Token n = match(identifier_tok);
+
+  // record-body and field-seq
+  require(lbrace_tok);
+  Decl_seq fs;
+  while (lookahead() != rbrace_tok) {
+    Specifier spec = specifier_seq();
+    Decl* f;
+    if (lookahead() == def_kw)
+      f = method_decl(spec);
+    else if(lookahead() == identifier_tok)
+      f = field_decl(spec);
+    else
+      Syntax_error(ts_.location(), "invalid member declaration");
+    fs.push_back(f);
+  }
+  match(rbrace_tok);
+  return on_record(spec, n, fs);
+}
+
+
+// Parse a field declaration.
+//
+//    field-decl -> [specifier-seq] identifier object-type
+//
+// Note that the specifier-seq is parsed above.
+Decl*
+Parser::field_decl(Specifier spec)
+{
+  // actual declaration
+  Token n = match(identifier_tok);
+  match(colon_tok);
+  Type const* t = type();
+  match(semicolon_tok);
+  return on_field(spec, n, t);
+}
+
+
+// Parse a method declaration.
+//
+//
+//    method-decl -> 'def' identifier parameter-clause return-type function-definition
+//
+// Note that methods must be declared inside
+// the class.
+//
+// TODO: Support out-of-class definitions?
+//
+// TODO: Support specifiers to modify the "this" 
+// parameter. Maybe before the return type? Maybe
+// as part of the specifiers?
+//
+//    struct R {
+//      const def f() -> void { }   // Why not...
+//      virtual def f() -> void { } // Sure...
+Decl*
+Parser::method_decl(Specifier spec)
 {
   require(def_kw);
   Token n = match(identifier_tok);
@@ -439,77 +596,47 @@ Parser::function_decl()
   // function-definition.
   Stmt* s = block_stmt();
 
-  return on_function_decl(n, parms, t, s);
+  return on_method(spec, n, parms, t, s);
 }
 
 
-// Parse a parameter declaration.
+// Parse a sequence of declaration specifiers.
 //
-//    parameter-decl ::= identifier object-type
-Decl*
-Parser::parameter_decl()
+//    specifier-seq -> specifier | specifier-seq specifier
+Specifier
+Parser::specifier_seq()
 {
-  Token n = match(identifier_tok);
-
-  // object-type
-  match(colon_tok);
-  Type const* t = type();
-
-  return on_parameter_decl(n, t);
-}
-
-
-// Parse a record declaration.
-//
-//    record-decl -> 'struct' identifier record-body
-//
-//    record-body -> '{' field-seq '}'
-//
-//    field-seq -> field-seq | field-seq field-seq
-Decl*
-Parser::record_decl()
-{
-  require(struct_kw);
-  Token n = match(identifier_tok);
-
-  // record-body and field-seq
-  require(lbrace_tok);
-  Decl_seq fs;
-  while (lookahead() != rbrace_tok)
-    fs.push_back(field_decl());
-  match(rbrace_tok);
-  return on_record(n, fs);
-}
-
-
-// Parse a field declaration.
-//
-//    field-decl -> identifier object-type
-Decl*
-Parser::field_decl()
-{
-  Token n = match(identifier_tok);
-  match(colon_tok);
-  Type const* t = type();
-  match(semicolon_tok);
-  return on_field(n, t);
+  Specifier spec = no_spec;
+  while (true) {
+    if (match_if(foreign_kw))
+      spec |= foreign_spec;
+    else
+      break;
+  }
+  return spec;
 }
 
 
 // Parse a declaration.
 //
-//    decl -> variable-decl
-//          | function-decl
+//    decl -> [specifier-seq] entity-decl
+//
+//    entity-decl -> variable-decl
+//                 | function-decl
 Decl*
 Parser::decl()
 {
+  // optional specifier-seq
+  Specifier spec = specifier_seq();
+
+  // entity-decl
   switch (lookahead()) {
     case var_kw:
-      return variable_decl();
+      return variable_decl(spec);
     case def_kw:
-      return function_decl();
+      return function_decl(spec);
     case struct_kw:
-      return record_decl();
+      return record_decl(spec);
     default:
       // TODO: Is this a recoverable error?
       error("invalid declaration");
@@ -702,6 +829,7 @@ Parser::stmt()
 
     case var_kw:
     case def_kw:
+    case foreign_kw:
       return declaration_stmt();
 
     default:
@@ -734,7 +862,7 @@ Parser::module()
       consume_thru(term_);
     }
   }
-  return on_module_decl(decls);
+  return on_module(decls);
 }
 
 
@@ -840,6 +968,17 @@ Parser::on_id_type(Token tok)
 }
 
 
+// TODO: Ensure that we can actually construt
+// a reference-to-T.
+Type const*
+Parser::on_reference_type(Type const* t)
+{
+  return get_reference_type(t);
+}
+
+
+// TODO: Ensure that we can actually construt
+// a array-of-T.
 Type const*
 Parser::on_array_type(Type const* t , Expr* n)
 {
@@ -847,6 +986,8 @@ Parser::on_array_type(Type const* t , Expr* n)
 }
 
 
+// TODO: Ensure that we can actually construt
+// a array-of-T.
 Type const*
 Parser::on_block_type(Type const* t)
 {
@@ -882,6 +1023,41 @@ Parser::on_int(Token tok)
 {
   Type const* t = get_integer_type();
   int v = tok.integer_symbol()->value();
+  return init<Literal_expr>(tok.location(), t, v);
+}
+
+
+Expr*
+Parser::on_char(Token tok)
+{
+  Type const* t = get_character_type();
+  int v = tok.character_symbol()->value();
+  return init<Literal_expr>(tok.location(), t, v);
+}
+
+
+// Build a new string literal. String literals
+// are arrays of characters.
+Expr*
+Parser::on_str(Token tok)
+{
+  // Build the string value.
+  String_sym const* s = tok.string_symbol();
+  Array_value v {
+     s->value().c_str(),
+     s->value().size()
+  };
+
+  // Create the extent of the literal array. This is
+  // explicitly more than the length of the string,
+  // and includes the null character.
+  Type const* z = get_integer_type();
+  Expr* n = new Literal_expr(z, v.len + 1);
+
+  // Create the array type.
+  Type const* c = get_character_type();
+  Type const* t = get_array_type(c, n);
+
   return init<Literal_expr>(tok.location(), t, v);
 }
 
@@ -1018,31 +1194,56 @@ Parser::on_dot(Expr* e1, Expr* e2)
 }
 
 
+// TODO: Check declaration specifiers. Not every specifier
+// makes sense in every combination or for every declaration.
+// A foreign parameter is not particularly useful.
+
+
 Decl*
-Parser::on_variable(Token tok, Type const* t)
+Parser::on_variable(Specifier spec, Token tok, Type const* t)
 {
   Expr* init = new Default_init(t);
-  return new Variable_decl(tok.symbol(), t, init);
+  return new Variable_decl(spec, tok.symbol(), t, init);
 }
 
 
 Decl*
-Parser::on_variable(Token tok, Type const* t, Expr* e)
+Parser::on_variable(Specifier spec, Token tok, Type const* t, Expr* e)
 {
   Expr* init = new Copy_init(t, e);
-  return new Variable_decl(tok.symbol(), t, init);
+  return new Variable_decl(spec, tok.symbol(), t, init);
+}
+
+
+// Create an unnamed parameter.
+Decl*
+Parser::on_parameter(Specifier spec, Type const* t)
+{
+  // Create (or get) an empty identifier.
+  Symbol const* s = syms_.put<Identifier_sym>("", identifier_tok);
+  return new Parameter_decl(spec, s, t);
 }
 
 
 Decl*
-Parser::on_parameter_decl(Token tok, Type const* t)
+Parser::on_parameter(Specifier spec, Token tok, Type const* t)
 {
   return new Parameter_decl(tok.symbol(), t);
 }
 
 
+// Create a function with no body. This is a declaration
+// but not a definition.
 Decl*
-Parser::on_function_decl(Token tok, Decl_seq const& p, Type const* t, Stmt* b)
+Parser::on_function(Specifier spec, Token tok, Decl_seq const& p, Type const* t)
+{
+  Type const* f = get_function_type(p, t);
+  return new Function_decl(tok.symbol(), f, p, nullptr);
+}
+
+
+Decl*
+Parser::on_function(Specifier spec, Token tok, Decl_seq const& p, Type const* t, Stmt* b)
 {
   Type const* f = get_function_type(p, t);
   return new Function_decl(tok.symbol(), f, p, b);
@@ -1050,14 +1251,22 @@ Parser::on_function_decl(Token tok, Decl_seq const& p, Type const* t, Stmt* b)
 
 
 Decl*
-Parser::on_record(Token n, Decl_seq const& fs)
+Parser::on_record(Specifier spec, Token n, Decl_seq const& fs)
 {
   return new Record_decl(n.symbol(), fs);
 }
 
 
 Decl*
-Parser::on_field(Token n, Type const* t)
+Parser::on_method(Specifier spec, Token tok, Decl_seq const& p, Type const* t, Stmt* b)
+{
+  Type const* f = get_function_type(p, t);
+  return new Method_decl(tok.symbol(), f, p, b);
+}
+
+
+Decl*
+Parser::on_field(Specifier spec, Token n, Type const* t)
 {
   return new Field_decl(n.symbol(), t);
 }
@@ -1066,7 +1275,7 @@ Parser::on_field(Token n, Type const* t)
 // FIXME: The name of the module should be the name of the
 // file, or maybe even the absolute path of the file.
 Decl*
-Parser::on_module_decl(Decl_seq const& d)
+Parser::on_module(Decl_seq const& d)
 {
   Symbol const* sym = syms_.get("<input>");
   return new Module_decl(sym, d);

@@ -6,5 +6,5 @@ var z : int;
 def f() -> int
 {
   z = a[3][2];
-  return 0;
+  return z;
 }

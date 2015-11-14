@@ -1,0 +1,16 @@
+
+// Guarantee that string literals are unified
+// in the code generator.
+
+def f1() -> int
+{
+  "abc";
+  "abc";
+  "abc";
+  "abc";
+  "def";
+  "def";
+  "def";
+  return 0;
+}
+

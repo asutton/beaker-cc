@@ -8,3 +8,9 @@ struct S1 {
 
 var v1 : S0;
 var v2 : S1;
+
+def main() -> int
+{
+  v2.y = 5;
+  return v2.y;
+}

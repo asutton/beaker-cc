@@ -4,7 +4,7 @@
 #ifndef BEAKER_LEXER_HPP
 #define BEAKER_LEXER_HPP
 
-#include "string.hpp"
+#include "prelude.hpp"
 #include "file.hpp"
 #include "line.hpp"
 #include "symbol.hpp"
@@ -177,6 +177,8 @@ public:
 
   Token integer();
   Token word();
+  Token character();
+  Token string();
 
   Token eof();
   Token error();
@@ -186,6 +188,8 @@ private:
   Token on_token();
   Token on_word();
   Token on_integer();
+  Token on_character();
+  Token on_string();
 
   // Lexing support
   char peek() const;
@@ -451,7 +455,7 @@ Lexer::ampersand()
   if (peek() == '&')
     return symbol1();
   else
-    return error();
+    return symbol0();
 }
 
 

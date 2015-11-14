@@ -21,6 +21,8 @@ using namespace std;
 int
 main(int argc, char* argv[])
 {
+  init_colors();
+
   // Prepare the symbol table.
   Symbol_table syms;
   init_symbols(syms);
@@ -51,7 +53,7 @@ main(int argc, char* argv[])
     // Perform semantic analysis.
     //
     // TODO: Implement a parse-only phase.
-    Elaborator elab(locs);
+    Elaborator elab(locs, syms);
     elab.elaborate(m);
 
     // Find an entry point for evaluation.
@@ -64,7 +66,7 @@ main(int argc, char* argv[])
     if (elab.main) {
       Evaluator ev;
       Value v = ev.exec(elab.main);
-      std::cout << v << '\n';
+      std::cout << "result: " << v << '\n';
     } else {
       std::cout << "no main\n";
     }

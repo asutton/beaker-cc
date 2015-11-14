@@ -4,7 +4,7 @@
 #ifndef BEAKER_ERROR_HPP
 #define BEAKER_ERROR_HPP
 
-#include "string.hpp"
+#include "prelude.hpp"
 #include "location.hpp"
 
 #include <stdexcept>

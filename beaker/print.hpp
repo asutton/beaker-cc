@@ -11,6 +11,7 @@
 std::ostream& operator<<(std::ostream&, Type const&);
 std::ostream& operator<<(std::ostream&, Id_type const&);
 std::ostream& operator<<(std::ostream&, Boolean_type const&);
+std::ostream& operator<<(std::ostream&, Character_type const&);
 std::ostream& operator<<(std::ostream&, Integer_type const&);
 std::ostream& operator<<(std::ostream&, Function_type const&);
 std::ostream& operator<<(std::ostream&, Block_type const&);
@@ -44,6 +45,7 @@ std::ostream& operator<<(std::ostream&, Value_conv const&);
 std::ostream& operator<<(std::ostream&, Block_conv const&);
 std::ostream& operator<<(std::ostream&, Default_init const&);
 std::ostream& operator<<(std::ostream&, Copy_init const&);
+std::ostream& operator<<(std::ostream&, Reference_init const&);
 
 
 #endif

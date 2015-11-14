@@ -4,7 +4,7 @@
 #ifndef BEAKER_FILE_HPP
 #define BEAKER_FILE_HPP
 
-#include "string.hpp"
+#include "prelude.hpp"
 
 #include <boost/filesystem.hpp>
 

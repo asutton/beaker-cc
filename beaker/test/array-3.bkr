@@ -1,0 +1,31 @@
+
+foreign def putchar(int) -> int;
+foreign def puts(char[]) -> int;
+
+var x : int[3];
+
+
+def f1() -> int[3]
+{
+  x[0] = 0;
+  x[1] = 1;
+  x[2] = 2;
+  return x;
+}
+
+
+def f2(x : int[3]) -> int
+{
+  putchar(97 + x[0]); puts("");
+  putchar(97 + x[1]); puts("");
+  putchar(97 + x[2]); puts("");
+  return 0;
+}
+
+
+def main() -> int
+{
+  var x : int[3] = f1();
+  var y : int    = f2(x);
+  return 0;
+}

@@ -12,7 +12,7 @@
 // The environment maintains all active bindings at
 // a certain point in the program.
 template<typename S, typename T>
-class Environment : std::unordered_map<S, T>
+struct Environment : std::unordered_map<S, T>
 {
 private:
   using Map = std::unordered_map<S, T>;
@@ -21,9 +21,12 @@ public:
   using Value = T;
   using Binding = typename Map::value_type;
 
-  Binding const& bind(S const&, T const&);
-  Binding const& rebind(S const&, T const&);
+  Binding& bind(S const&, T const&);
+  Binding& rebind(S const&, T const&);
+  
   Binding const& get(S const&) const;
+  Binding&       get(S const&);
+  
   Binding const* lookup(S const&) const;
   Binding*       lookup(S const&);
 };
@@ -34,7 +37,7 @@ public:
 // environment.
 template<typename S, typename T>
 inline auto
-Environment<S, T>::bind(S const& sym, T const& ent) -> Binding const& 
+Environment<S, T>::bind(S const& sym, T const& ent) -> Binding& 
 {
   assert(!this->count(sym));
   auto ins = this->emplace(sym, ent);
@@ -46,7 +49,7 @@ Environment<S, T>::bind(S const& sym, T const& ent) -> Binding const&
 // the bindign does not exist.
 template<typename S, typename T>
 inline auto
-Environment<S, T>::rebind(S const& sym, T const& ent) -> Binding const& 
+Environment<S, T>::rebind(S const& sym, T const& ent) -> Binding& 
 {
   auto iter = this->find(sym);
   iter->second = ent;
@@ -59,6 +62,16 @@ Environment<S, T>::rebind(S const& sym, T const& ent) -> Binding const&
 template<typename S, typename T>
 inline auto
 Environment<S, T>::get(S const& sym) const -> Binding const&
+{
+  assert(this->count(sym));
+  auto iter = this->find(sym);
+  return *iter;
+}
+
+
+template<typename S, typename T>
+inline auto
+Environment<S, T>::get(S const& sym) -> Binding&
 {
   assert(this->count(sym));
   auto iter = this->find(sym);

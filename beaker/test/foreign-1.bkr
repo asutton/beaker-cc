@@ -1,0 +1,5 @@
+
+
+foreign def puts(char[]) -> int;
+
+foreign var gv : int;

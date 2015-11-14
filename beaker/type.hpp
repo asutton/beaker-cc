@@ -12,6 +12,7 @@
 //
 //    t ::= bool                -- boolean type
 //          int                 -- integer type
+//          char                -- narrow characters
 //          (t1, ..., tn) -> t  -- function types
 //          t[n]                -- array types
 //          t[]                 -- block types
@@ -44,6 +45,7 @@ struct Type::Visitor
 {
   virtual void visit(Id_type const*) = 0;
   virtual void visit(Boolean_type const*) = 0;
+  virtual void visit(Character_type const*) = 0;
   virtual void visit(Integer_type const*) = 0;
   virtual void visit(Function_type const*) = 0;
   virtual void visit(Array_type const*) = 0;
@@ -71,6 +73,13 @@ struct Id_type : Type
 
 // The type bool.
 struct Boolean_type : Type
+{
+  void accept(Visitor& v) const { v.visit(this); };
+};
+
+
+// The type char.
+struct Character_type : Type
 {
   void accept(Visitor& v) const { v.visit(this); };
 };
@@ -114,6 +123,7 @@ struct Array_type : Type
 
   Type const* type() const   { return first; }
   Expr*       extent() const { return second; }
+  int         size() const;
 
   Type const* first;
   Expr*       second;
@@ -181,6 +191,7 @@ struct Record_type : Type
 Type const* get_type_kind();
 Type const* get_id_type(Symbol const*);
 Type const* get_boolean_type();
+Type const* get_character_type();
 Type const* get_integer_type();
 Type const* get_function_type(Type_seq const&, Type const*);
 Type const* get_function_type(Decl_seq const&, Type const*);
@@ -188,6 +199,44 @@ Type const* get_array_type(Type const*, Expr*);
 Type const* get_block_type(Type const*);
 Type const* get_reference_type(Type const*);
 Type const* get_record_type(Record_decl*);
+
+
+// -------------------------------------------------------------------------- //
+//                              Type queries
+
+// The scalar types are bool, char, and int.
+inline bool
+is_scalar(Type const* t)
+{
+  return is<Boolean_type>(t)
+      || is<Character_type>(t)
+      || is<Integer_type>(t);
+}
+
+
+// The aggregate types are record types and array
+// types.
+//
+// TODO: I don't believe that block types are aggregate.
+// I think they are scalar (pointers).
+inline bool
+is_aggregate(Type const* t)
+{
+  return is<Record_type>(t)
+      || is<Array_type>(t);
+}
+
+
+// Returns true if this is the type of a string
+// literal: char[N].
+inline bool
+is_string(Type const* t)
+{
+  if (Array_type const* a = as<Array_type>(t))
+    return a->type() == get_character_type();
+  else
+    return false;
+}
 
 
 // -------------------------------------------------------------------------- //
@@ -202,6 +251,7 @@ struct Generic_type_visitor : Type::Visitor, lingo::Generic_visitor<F, T>
 
   void visit(Id_type const* t) { this->invoke(t); }
   void visit(Boolean_type const* t) { this->invoke(t); }
+  void visit(Character_type const* t) { this->invoke(t); }
   void visit(Integer_type const* t) { this->invoke(t); }
   void visit(Function_type const* t) { this->invoke(t); }
   void visit(Array_type const* t) { this->invoke(t); }

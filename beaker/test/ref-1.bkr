@@ -1,0 +1,9 @@
+
+
+def main() -> int
+{
+  var x : int = 10;
+  var r : int& = x;
+  var y : int = r;
+  return y;
+}

@@ -4,6 +4,8 @@
 #include "type.hpp"
 #include "decl.hpp"
 #include "less.hpp"
+#include "value.hpp"
+#include "evaluator.hpp"
 
 #include <set>
 
@@ -45,6 +47,16 @@ Record_type::declaration() const
 }
 
 
+// Returns the size of the array as an
+// integer value.
+int
+Array_type::size() const
+{
+  Value v = evaluate(extent());
+  return v.get_integer();
+}
+
+
 // -------------------------------------------------------------------------- //
 // Type accessors
 
@@ -71,10 +83,19 @@ get_id_type(Symbol const* s)
   return new Id_type(s);
 }
 
+
 Type const*
 get_boolean_type()
 {
   static Boolean_type t;
+  return &t;
+}
+
+
+Type const*
+get_character_type()
+{
+  static Character_type t;
   return &t;
 }
 

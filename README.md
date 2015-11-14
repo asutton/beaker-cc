@@ -28,6 +28,13 @@ git submodule update --init --recursive
 This will pull the required versions of asutton/lingo and
 csll/llvm into your working directory.
 
+Note that if you have a fork of beaker, you will need to
+update lingo submodule.
+
+~~~
+git submodule update --remote --merge
+~~~
+
 The build is configured by CMake.
 
 ~~~
@@ -36,6 +43,7 @@ cd build
 cmake ..
 make
 ~~~
+
 
 
 ## Running the compiler

@@ -8,7 +8,6 @@ add_definitions(${LLVM_DEFINITIONS})
 
 # The Core Beaker library
 add_library(beaker STATIC
-  string.cpp
   file.cpp
   line.cpp
   location.cpp
@@ -16,6 +15,7 @@ add_library(beaker STATIC
   expr.cpp
   type.cpp
   decl.cpp
+  specifier.cpp
   value.cpp
   print.cpp
   less.cpp
@@ -34,13 +34,13 @@ add_library(beaker STATIC
 
 # Libraries requried for executable targets.
 set(libs
+  beaker
+  lingo
   ${CMAKE_DL_LIBS}
   ${CMAKE_THREAD_LIBS_INIT}
   ${Boost_SYSTEM_LIBRARIES}
   ${Boost_FILESYSTEM_LIBRARIES}
-  ${LLVM_LIBRARIES}
-  lingo
-  beaker)
+  ${LLVM_LIBRARIES})
 
 
 # Create the beaker compiler.

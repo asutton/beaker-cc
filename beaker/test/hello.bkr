@@ -1,0 +1,8 @@
+
+
+foreign def puts(char[]) -> int;
+
+def main() -> int
+{
+  return puts("hello world\n");
+}

@@ -28,6 +28,8 @@ enum Token_kind
   rparen_tok,
   lbrack_tok,
   rbrack_tok,
+  squote_tok,
+  dquote_tok,
   comma_tok,
   colon_tok,
   semicolon_tok,
@@ -47,24 +49,30 @@ enum Token_kind
   and_tok,
   or_tok,
   not_tok,
+  amp_tok,
   arrow_tok,
 
   // Keywords
   bool_kw,
   break_kw,
+  char_kw,
   continue_kw,
   def_kw,
   else_kw,
+  foreign_kw,
   if_kw,
   int_kw,
   return_kw,
   struct_kw,
+  this_kw,
   var_kw,
   while_kw,
 
   // Multi-valued tokens
   boolean_tok,      // true | false
   integer_tok,      // digit+
+  character_tok,    // narrow characters
+  string_tok,       // narrow string literals
   identifier_tok,   // letter (letter | digit)*
 };
 
@@ -96,9 +104,12 @@ public:
   String const& spelling() const;
   Location      location() const;
 
-  Symbol const*        symbol() const;
-  Boolean_sym const*   boolean_symbol() const;
-  Integer_sym const*   integer_symbol() const;
+  Symbol const*         symbol() const;
+  Identifier_sym const* identifier_symbol() const;
+  Boolean_sym const*    boolean_symbol() const;
+  Integer_sym const*    integer_symbol() const;
+  Character_sym const*  character_symbol() const;
+  String_sym const*     string_symbol() const;
 
 private:
   Location      loc_;
@@ -170,6 +181,14 @@ Token::symbol() const
 }
 
 
+// Return the identifier symbol for the token.
+inline Identifier_sym const*
+Token::identifier_symbol() const
+{
+  return cast<Identifier_sym>(sym_);
+}
+
+
 // Return the boolean symbol for the token.
 inline Boolean_sym const*
 Token::boolean_symbol() const
@@ -183,6 +202,22 @@ inline Integer_sym const*
 Token::integer_symbol() const
 {
   return cast<Integer_sym>(sym_);
+}
+
+
+// Return the character symbol for the token.
+inline Character_sym const*
+Token::character_symbol() const
+{
+  return cast<Character_sym>(sym_);
+}
+
+
+// Return the string symbol for the token.
+inline String_sym const*
+Token::string_symbol() const
+{
+  return cast<String_sym>(sym_);
 }
 
 
@@ -223,6 +258,7 @@ public:
   bool eof() const;
 
   Token peek() const;
+  Token peek(int) const;
   Token get();
   void put(Token);
 
@@ -259,6 +295,25 @@ Token_stream::peek() const
     return Token();
   else
     return *pos_;
+}
+
+
+// Returns the nth token past the current position.
+inline Token
+Token_stream::peek(int n) const
+{
+  // Get the nth token, but restore the stream position
+  // afterwards. Note that this will gracefully handle
+  // an eof during lookahead.
+  Position i = pos_;
+  while (i != buf_.end() && n) {
+    ++i;
+    --n;
+  }
+  if (i == buf_.end())
+    return Token();
+  else
+    return *i;
 }
 
 
