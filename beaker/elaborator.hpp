@@ -4,10 +4,6 @@
 #ifndef BEAKER_ELABORATOR_HPP
 #define BEAKER_ELABORATOR_HPP
 
-#include "prelude.hpp"
-#include "location.hpp"
-#include "environment.hpp"
-
 // The elaborator is responsible for a number of static
 // analyses. In particular, it resolves identifiers and
 // types expressions.
@@ -17,16 +13,17 @@
 // errors and continuing elaboration. There may be some
 // cases where elaboration must stop.
 
-#include <stack>
-#include <unordered_map>
-#include <vector>
+#include "prelude.hpp"
+#include "location.hpp"
+#include "environment.hpp"
+#include "overload.hpp"
 
 
 // A scope defines a maximal lexical region of a program
 // where no bindings are destroyed. A scope optionally
 // assocaites a declaration with its bindings. This is
 // used to maintain the current declaration context.
-struct Scope : Environment<Symbol const*, Decl*>
+struct Scope : Environment<Symbol const*, Overload>
 {
   Scope()
     : decl(nullptr)
@@ -56,8 +53,6 @@ struct Scope_stack : Stack<Scope>
   Module_decl*   module() const;
   Function_decl* function() const;
   Record_decl*   record() const;
-
-  void declare(Decl*);
 };
 
 
@@ -141,6 +136,13 @@ public:
   Stmt* elaborate(Continue_stmt*);
   Stmt* elaborate(Expression_stmt*);
   Stmt* elaborate(Declaration_stmt*);
+
+  void declare(Decl*);
+  void redeclare(Decl*);
+  void overload(Overload&, Decl*);
+
+  Overload* lookup(Symbol const*);
+  Decl*     lookup_single(Symbol const*);
 
   // Found symbols.
   Function_decl* main = nullptr;

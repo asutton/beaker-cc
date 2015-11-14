@@ -17,32 +17,6 @@
 // Lexical scoping
 
 
-// Create a declarative binding for d. This also checks
-// that the we are not redefining a symbol in the current
-// scope.
-void
-Scope_stack::declare(Decl* d)
-{
-  Scope& scope = current();
-
-  // TODO: If we allow overloading, then this is
-  // where we would handle that.
-  if (scope.lookup(d->name())) {
-    // TODO: Add a note that points to the previous
-    // definition.
-    std::stringstream ss;
-    ss << "redefinition of '" << *d->name() << "'\n";
-    throw Lookup_error({}, ss.str());
-  }
-
-  // Create the binding.
-  scope.bind(d->name(), d);
-
-  // Set d's declaration context.
-  d->cxt_ = context();
-}
-
-
 // Returns the innermost declaration context.
 Decl*
 Scope_stack::context() const
@@ -96,6 +70,99 @@ Scope_stack::record() const
 
 
 // -------------------------------------------------------------------------- //
+// Declaration of entities
+
+
+// Determine if d can be overloaded with the existing
+// elements in the set.
+void
+Elaborator::overload(Overload& ovl, Decl* curr)
+{
+  // Check to make sure that curr does not conflict with any
+  // declarations in the current overload set.
+  for (Decl* prev : ovl) {
+    // If the two declarations have the same type, this
+    // is not overloading. It is redefinition.
+    if (prev->type() == curr->type()) {
+      std::stringstream ss;
+      ss << "redefinition of " << *curr->name() << '\n';
+      throw Type_error({}, ss.str());
+    }
+
+    if (!can_overload(prev, curr)) {
+      std::stringstream ss;
+      ss << "cannot overload " << *curr->name() << '\n';
+      throw Type_error({}, ss.str());
+    }
+  }
+
+  ovl.push_back(curr);
+}
+
+
+// Create a declarative binding for d. This also checks
+// that the we are not redefining a symbol in the current
+// scope.
+void
+Elaborator::declare(Decl* d)
+{
+  Scope& scope = stack.current();
+
+  // Set d's declaration context.
+  d->cxt_ = stack.context();
+
+  // If we've already seen the name, we should
+  // determine if it can be overloaded.
+  if (Scope::Binding* bind = scope.lookup(d->name()))
+    return overload(bind->second, d);
+
+  // Create a new overload set.
+  Scope::Binding& bind = scope.bind(d->name(), {});
+  Overload& ovl = bind.second;
+  ovl.push_back(d);
+}
+
+
+// When opening the scope of a previously declared
+// entity, simply push the declaration into its
+// overload set.
+void
+Elaborator::redeclare(Decl* d)
+{
+  Scope& scope = stack.current();
+  Overload* ovl;
+  if (Scope::Binding* bind = scope.lookup(d->name()))
+    ovl = &bind->second;
+  else
+    ovl = &scope.bind(d->name(), {}).second;
+  ovl->push_back(d);
+}
+
+
+Overload*
+Elaborator::lookup(Symbol const* sym)
+{
+  Scope::Binding* bind = stack.lookup(sym);
+  if (bind)
+    return &bind->second;
+  else
+    return nullptr;
+}
+
+
+Decl*
+Elaborator::lookup_single(Symbol const* sym)
+{
+  Overload* ovl = lookup(sym);
+  if (ovl) {
+    lingo_assert(ovl->size() == 1);
+    return ovl->front();
+  }
+  return nullptr;
+}
+
+
+// -------------------------------------------------------------------------- //
 // Elaboration of types
 
 
@@ -123,19 +190,17 @@ Elaborator::elaborate(Type const* t)
 Type const*
 Elaborator::elaborate(Id_type const* t)
 {
-  Scope::Binding const* b = stack.lookup(t->symbol());
-  if (!b) {
+  Decl* d = lookup_single(t->symbol());
+  if (!d) {
     std::stringstream ss;
     ss << "no matching declaration for '" << *t->symbol() << '\'';
     throw Lookup_error(locs.get(t), ss.str());
   }
 
   // Determine if the name is a type declaration.
-  Decl* d = b->second;
   if (Record_decl* r = as<Record_decl>(d)) {
     return get_record_type(r);
-  }
-  else {
+  } else {
     std::stringstream ss;
     ss << '\'' << *t->symbol() << "' does not name a type";
     throw Lookup_error(locs.get(t), ss.str());
@@ -283,13 +348,20 @@ Expr*
 Elaborator::elaborate(Id_expr* e)
 {
   // Lookup the declaration for the identifier.
-  Scope::Binding const* b = stack.lookup(e->symbol());
-  if (!b) {
+  Overload* ovl = lookup(e->symbol());
+  if (!ovl) {
     std::stringstream ss;
     ss << "no matching declaration for '" << *e->symbol() << '\'';
     throw Lookup_error(locs.get(e), ss.str());
   }
-  Decl* d = b->second;
+
+  // FIXME: Handle overload sets. Just return an
+  // overload-expr referring to the set.
+  if (ovl->size() > 1)
+    lingo_unimplemented();
+
+  // Get the declaration named by the symbol.
+  Decl* d = ovl->front();
 
   // An identifier always refers to an object, so
   // these expressions have reference type.
@@ -723,9 +795,9 @@ Elaborator::elaborate(Dot_expr* e)
   Record_decl* rec = t->declaration();
   Scope_sentinel scope(*this, rec);
   for (Decl* f : rec->fields())
-    stack.top().bind(f->name(), f);
+    redeclare(f);
   for (Decl* m : rec->members())
-    stack.top().bind(m->name(), m);
+    redeclare(m);
 
   // Elaborate the member expression. This must
   // resolve to a decl-expr.
@@ -949,7 +1021,7 @@ Elaborator::elaborate(Variable_decl* d)
   d->type_ = elaborate(d->type_);
 
   // Declare the variable.
-  stack.declare(d);
+  declare(d);
 
   // Elaborate the initializer. Note that the initializers
   // type must be the same as that of the declaration.
@@ -977,7 +1049,7 @@ Elaborator::elaborate(Function_decl* d)
   d->type_ = elaborate(d->type_);
 
   // Declare the function.
-  stack.declare(d);
+  declare(d);
 
   // Remember if we've seen a function named main().
   //
@@ -1013,7 +1085,7 @@ Decl*
 Elaborator::elaborate(Parameter_decl* d)
 {
   d->type_ = elaborate(d->type_);
-  stack.declare(d);
+  declare(d);
   return d;
 }
 
@@ -1021,7 +1093,7 @@ Elaborator::elaborate(Parameter_decl* d)
 Decl*
 Elaborator::elaborate(Record_decl* d)
 {
-  stack.declare(d);
+  declare(d);
 
   Scope_sentinel scope(*this, d);
 
@@ -1116,7 +1188,7 @@ Decl*
 Elaborator::elaborate_decl(Field_decl* d)
 {
   d->type_ = elaborate(d->type_);
-  stack.declare(d);
+  declare(d);
   return d;
 }
 
@@ -1149,7 +1221,7 @@ Elaborator::elaborate_decl(Method_decl* d)
   // within the function body.
 
   // Now declare the method.
-  stack.declare(d);
+  declare(d);
   return d;
 }
 
