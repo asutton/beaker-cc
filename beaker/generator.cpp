@@ -656,10 +656,10 @@ Generator::gen(If_else_stmt const* s)
 
   //merge
   //getUniquePred??
-  if(build.GetInsertBlock()->getSinglePredecessor()) {
+  // if(build.GetInsertBlock()->getSinglePredecessor()) {
     theFunc->getBasicBlockList().push_back(mergeBB);
     build.SetInsertPoint(mergeBB);
-  }
+  // }
 
 }
 
