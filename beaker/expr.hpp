@@ -6,6 +6,7 @@
 
 #include "prelude.hpp"
 #include "symbol.hpp"
+#include "overload.hpp"
 #include "value.hpp"
 
 
@@ -46,6 +47,7 @@ struct Expr::Visitor
   virtual void visit(Literal_expr const*) = 0;
   virtual void visit(Id_expr const*) = 0;
   virtual void visit(Decl_expr const*) = 0;
+  virtual void visit(Overload_expr const*) = 0;
   virtual void visit(Add_expr const*) = 0;
   virtual void visit(Sub_expr const*) = 0;
   virtual void visit(Mul_expr const*) = 0;
@@ -82,6 +84,7 @@ struct Expr::Mutator
   virtual void visit(Literal_expr*) = 0;
   virtual void visit(Id_expr*) = 0;
   virtual void visit(Decl_expr*) = 0;
+  virtual void visit(Overload_expr*) = 0;
   virtual void visit(Add_expr*) = 0;
   virtual void visit(Sub_expr*) = 0;
   virtual void visit(Mul_expr*) = 0;
@@ -164,6 +167,26 @@ struct Decl_expr : Id_expr
   Decl*         declaration() const { return decl; }
 
   Decl* decl;
+};
+
+
+// A reference to an overlaod set. These are
+// produced by the elaboration of id expressions.
+// Note that that overload expressions are
+// untyped.
+struct Overload_expr : Id_expr
+{
+  Overload_expr(Overload* o)
+    : Id_expr(o->name()), ovl(o)
+  { }
+
+  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Mutator& v)       { v.visit(this); }
+
+  Symbol const* name() const         { return ovl->name(); }
+  Overload*     declarations() const { return ovl; }
+
+  Overload* ovl;
 };
 
 
@@ -598,6 +621,12 @@ struct Reference_init : Init
 
 
 // -------------------------------------------------------------------------- //
+// Queries
+
+bool is_callable(Expr const*);
+
+
+// -------------------------------------------------------------------------- //
 // Generic visitor
 
 template<typename F, typename T>
@@ -610,6 +639,7 @@ struct Generic_expr_visitor : Expr::Visitor, lingo::Generic_visitor<F, T>
   void visit(Literal_expr const* e) { this->invoke(e); }
   void visit(Id_expr const* e) { this->invoke(e); }
   void visit(Decl_expr const* e) { this->invoke(e); }
+  void visit(Overload_expr const* e) { this->invoke(e); }
   void visit(Add_expr const* e) { this->invoke(e); }
   void visit(Sub_expr const* e) { this->invoke(e); }
   void visit(Mul_expr const* e) { this->invoke(e); }
@@ -662,6 +692,7 @@ struct Generic_expr_mutator : Expr::Mutator, lingo::Generic_mutator<F, T>
   void visit(Literal_expr* e) { this->invoke(e); }
   void visit(Id_expr* e) { this->invoke(e); }
   void visit(Decl_expr* e) { this->invoke(e); }
+  void visit(Overload_expr* e) { this->invoke(e); }
   void visit(Add_expr* e) { this->invoke(e); }
   void visit(Sub_expr* e) { this->invoke(e); }
   void visit(Mul_expr* e) { this->invoke(e); }

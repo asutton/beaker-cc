@@ -31,6 +31,7 @@ struct Expr;
 struct Literal_expr;
 struct Id_expr;
 struct Decl_expr;
+struct Overload_expr;
 struct Add_expr;
 struct Sub_expr;
 struct Mul_expr;

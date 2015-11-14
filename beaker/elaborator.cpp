@@ -355,10 +355,10 @@ Elaborator::elaborate(Id_expr* e)
     throw Lookup_error(locs.get(e), ss.str());
   }
 
-  // FIXME: Handle overload sets. Just return an
-  // overload-expr referring to the set.
+  // We can't resolve an overload without context,
+  // so return the resolved overload set.
   if (ovl->size() > 1)
-    lingo_unimplemented();
+    return new Overload_expr(ovl);
 
   // Get the declaration named by the symbol.
   Decl* d = ovl->front();
@@ -699,10 +699,26 @@ Elaborator::elaborate(Call_expr* e)
   // Apply lvalue to rvalue conversion and ensure that
   // the target has function type.
   Expr* f = require_value(*this, e->target());
-  Type const* t1 = f->type();
-  if (!is<Function_type>(t1))
-    throw Type_error({}, "cannot call to non-function");
-  Function_type const* t = cast<Function_type>(t1);
+  if (!is_callable(f))
+    throw Type_error({}, "object is not callable");
+
+  // Handle the case where f is an overload set.
+  //
+  // TODO: The parameter checking code needs to be
+  // shared by overload resolution and by single
+  // function calls.
+  if (Overload_expr* ovl = as<Overload_expr>(f)) {
+    lingo_unimplemented();
+
+    // if (!f) {
+    //   std::stringstream ss;
+    //   ss << "cannot resolve call to '" << *f->name() << '\'';
+    //   throw Type_error({}, ss.str());
+    // }
+  }
+
+  // Grab the function type.
+  Function_type const* t = cast<Function_type>(f->type());
 
   // If the target is a member expression, then
   // adjust the arguments to supply a first object
