@@ -207,7 +207,9 @@ Generator::gen(Expr const* e)
     llvm::Value* operator()(Or_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Not_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Call_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Member_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Dot_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Field_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Method_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Index_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Value_conv const* e) const { return g.gen(e); }
     llvm::Value* operator()(Block_conv const* e) const { return g.gen(e); }
@@ -409,8 +411,12 @@ Generator::gen(Call_expr const* e)
 
   // If this is actually a method call, then we
   // need to adjust the arguments.
+  //
+  // FIXME: Make method calls different
+  // than function calls so we don't have
+  // to test the tree.
   llvm::Value* fn;
-  if (Member_expr* mem = as<Member_expr>(e->target())) {
+  if (Method_expr* mem = as<Method_expr>(e->target())) {
     fn = gen(mem->member());
   } else {
     fn = gen(e->target());
@@ -424,25 +430,33 @@ Generator::gen(Call_expr const* e)
 // nested member expressions into a single GEP
 // instruction. We don't have to do anything more
 // complex than this.
+//
+// FIXME: Rewrite this.
 llvm::Value*
-Generator::gen(Member_expr const* e)
+Generator::gen(Dot_expr const* e)
 {
-  llvm::Value* obj = gen(e->scope());
+  lingo_unreachable();
+}
 
-  // If the member is a method, then just generate
-  // the code to produce the object. We'll use
-  // this as the argument in a function call.
-  //
-  // FIXME: I would prefer not to do this...
-  Decl_expr* mem = cast<Decl_expr>(e->member());
-  if (is<Method_decl>(mem->declaration()))
-    return obj;
 
+llvm::Value*
+Generator::gen(Field_expr const* e)
+{
+  llvm::Value* obj = gen(e->container());
   std::vector<llvm::Value*> args {
-    build.getInt32(0),            // 0th element from base
-    build.getInt32(e->position()) // nth element in struct
+    build.getInt32(0),         // 0th element from base
+    build.getInt32(e->field()) // nth element in struct
   };
   return build.CreateGEP(obj, args);
+}
+
+
+// Just generate the base object. This will be used
+// as the argument for the method call.
+llvm::Value*
+Generator::gen(Method_expr const* e)
+{
+  return gen(e->container());
 }
 
 

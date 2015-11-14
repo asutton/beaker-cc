@@ -63,7 +63,9 @@ struct Expr::Visitor
   virtual void visit(Or_expr const*) = 0;
   virtual void visit(Not_expr const*) = 0;
   virtual void visit(Call_expr const*) = 0;
-  virtual void visit(Member_expr const*) = 0;
+  virtual void visit(Dot_expr const*) = 0;
+  virtual void visit(Field_expr const*) = 0;
+  virtual void visit(Method_expr const*) = 0;
   virtual void visit(Index_expr const*) = 0;
   virtual void visit(Value_conv const*) = 0;
   virtual void visit(Block_conv const*) = 0;
@@ -97,7 +99,9 @@ struct Expr::Mutator
   virtual void visit(Or_expr*) = 0;
   virtual void visit(Not_expr*) = 0;
   virtual void visit(Call_expr*) = 0;
-  virtual void visit(Member_expr*) = 0;
+  virtual void visit(Dot_expr*) = 0;
+  virtual void visit(Field_expr*) = 0;
+  virtual void visit(Method_expr*) = 0;
   virtual void visit(Index_expr*) = 0;
   virtual void visit(Value_conv*) = 0;
   virtual void visit(Block_conv*) = 0;
@@ -125,7 +129,8 @@ struct Literal_expr : Expr
 };
 
 
-// An identifier that refers to a declaration.
+// An identifier that refers to a declaration. This
+// is an unresolved expression.
 struct Id_expr : Expr
 {
   Id_expr(Symbol const* s)
@@ -367,28 +372,62 @@ struct Call_expr : Expr
 };
 
 
-// The expression e1.e2 where e1 has record type.
-//
-// We cache the position of the resolved member
-// within its enclosing scope. This means we don't
-// have to re-compute it during evaluation or
-// codegen later on.
-struct Member_expr : Expr
+// The expression e1.e2. This is an unresolved
+// expression.
+struct Dot_expr : Expr
 {
-  Member_expr(Expr* e1, Expr* e2)
-    : pos_(-1), first(e1), second(e2)
+  Dot_expr(Expr* e1, Expr* e2)
+    : first(e1), second(e2)
   { }
 
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
 
-  int   position() const { return pos_; }
-  Expr* scope() const    { return first; }
-  Expr* member() const   { return second; }
+  Expr* container() const { return first; }
+  Expr* member() const    { return second; }
 
-  int   pos_;
   Expr* first;
   Expr* second;
+};
+
+
+// An expression of the form e.n where e has
+// record type and n is nthe field of e.
+//
+// TODO: When we add inheritance, the "field"
+// member will become a "path": a vector of
+// offsets into nested based types.
+struct Field_expr : Dot_expr
+{
+  Field_expr(Expr* e1, Expr* e2, int n)
+    : Dot_expr(e1, e2), pos(n)
+  { }
+
+  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Mutator& v)       { v.visit(this); }
+
+  Record_decl* record() const;
+  int          field() const { return pos; }
+
+  int pos;
+};
+
+
+// An expression of the form e.m where m is
+// a method in e.
+struct Method_expr : Dot_expr
+{
+  Method_expr(Expr* e1, Expr* e2, Decl* d)
+    : Dot_expr(e1, e2), fn(d)
+  { }
+
+  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Mutator& v)       { v.visit(this); }
+
+  Record_decl* record() const;
+  Decl*        method() const { return fn; }
+
+  Decl* fn;
 };
 
 
@@ -568,7 +607,9 @@ struct Generic_expr_visitor : Expr::Visitor, lingo::Generic_visitor<F, T>
   void visit(Or_expr const* e) { this->invoke(e); }
   void visit(Not_expr const* e) { this->invoke(e); }
   void visit(Call_expr const* e) { this->invoke(e); }
-  void visit(Member_expr const* e) { this->invoke(e); }
+  void visit(Dot_expr const* e) { this->invoke(e); }
+  void visit(Field_expr const* e) { this->invoke(e); }
+  void visit(Method_expr const* e) { this->invoke(e); }
   void visit(Index_expr const* e) { this->invoke(e); }
   void visit(Value_conv const* e) { this->invoke(e); }
   void visit(Block_conv const* e) { this->invoke(e); }
@@ -618,7 +659,9 @@ struct Generic_expr_mutator : Expr::Mutator, lingo::Generic_mutator<F, T>
   void visit(Or_expr* e) { this->invoke(e); }
   void visit(Not_expr* e) { this->invoke(e); }
   void visit(Call_expr* e) { this->invoke(e); }
-  void visit(Member_expr* e) { this->invoke(e); }
+  void visit(Dot_expr* e) { this->invoke(e); }
+  void visit(Field_expr* e) { this->invoke(e); }
+  void visit(Method_expr* e) { this->invoke(e); }
   void visit(Index_expr* e) { this->invoke(e); }
   void visit(Value_conv* e) { this->invoke(e); }
   void visit(Block_conv* e) { this->invoke(e); }

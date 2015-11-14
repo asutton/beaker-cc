@@ -203,7 +203,9 @@ is_less(Expr const* a, Expr const* b)
     bool operator()(Or_expr const* a) { lingo_unreachable(); }
     bool operator()(Not_expr const* a) { lingo_unreachable(); }
     bool operator()(Call_expr const* a) { lingo_unreachable(); }
-    bool operator()(Member_expr const* a) { lingo_unreachable(); }
+    bool operator()(Dot_expr const* a) { lingo_unreachable(); }
+    bool operator()(Field_expr const* a) { lingo_unreachable(); }
+    bool operator()(Method_expr const* a) { lingo_unreachable(); }
     bool operator()(Index_expr const* a) { lingo_unreachable(); }
     bool operator()(Value_conv const* a) { lingo_unreachable(); }
     bool operator()(Block_conv const* a) { lingo_unreachable(); }

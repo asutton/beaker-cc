@@ -138,7 +138,9 @@ operator<<(std::ostream& os, Expr const& e)
     void operator()(Or_expr const* e) { os << *e; }
     void operator()(Not_expr const* e) { os << *e; }
     void operator()(Call_expr const* e) { os << *e; }
-    void operator()(Member_expr const* e) { os << *e; }
+    void operator()(Dot_expr const* e) { os << *e; }
+    void operator()(Field_expr const* e) { os << *e; }
+    void operator()(Method_expr const* e) { os << *e; }
     void operator()(Index_expr const* e) { os << *e; }
     void operator()(Value_conv const* e) { os << *e; }
     void operator()(Block_conv const* e) { os << *e; }
@@ -293,9 +295,23 @@ operator<<(std::ostream& os, Call_expr const&)
 
 
 std::ostream&
-operator<<(std::ostream& os, Member_expr const& e)
+operator<<(std::ostream& os, Dot_expr const& e)
 {
-  return os << *e.scope() << '.' << *e.member();
+  return os << *e.container() << '.' << *e.member();
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Field_expr const& e)
+{
+  return os << *e.record()->name() << '.' << e.field();
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Method_expr const& e)
+{
+  return os << *e.record()->name() << '.' << *e.method()->name();
 }
 
 

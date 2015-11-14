@@ -245,7 +245,9 @@ Elaborator::elaborate(Expr* e)
     Expr* operator()(Or_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Not_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Call_expr* e) const { return elab.elaborate(e); }
-    Expr* operator()(Member_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Dot_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Field_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Method_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Index_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Value_conv* e) const { return elab.elaborate(e); }
     Expr* operator()(Block_conv* e) const { return elab.elaborate(e); }
@@ -623,9 +625,8 @@ Elaborator::elaborate(Call_expr* e)
   // If the target is a member expression, then
   // adjust the arguments to supply a first object.
   Expr_seq& args = e->arguments();
-  if (Member_expr* m = as<Member_expr>(f))
-    args.insert(args.begin(), m->scope());
-
+  if (Method_expr* m = as<Method_expr>(f))
+    args.insert(args.begin(), m->container());
 
   // Check for basic function arity.
   Type_seq const& parms = t->parameter_types();
@@ -667,10 +668,12 @@ Elaborator::elaborate(Call_expr* e)
 // a member offset, kind of like an array index.
 // We don't need to annotate this expression with
 // the position.
+//
+// FIXME: Rewrite this.
 Expr*
-Elaborator::elaborate(Member_expr* e)
+Elaborator::elaborate(Dot_expr* e)
 {
-  Expr* e1 = elaborate(e->scope());
+  Expr* e1 = elaborate(e->container());
   if (!is<Reference_type>(e1->type())) {
     std::stringstream ss;
     ss << "cannot access a member of a non-object";
@@ -705,6 +708,7 @@ Elaborator::elaborate(Member_expr* e)
     throw Type_error({}, ss.str());
   }
 
+#if 0
   // Find the offset in the class of the member.
   // And stash it in the member expression.
   //
@@ -713,6 +717,7 @@ Elaborator::elaborate(Member_expr* e)
   // general processing in a Dot_expr, and then
   // create different kinds of expressions based
   // on elaboration.
+  int pos = -1;
   for (std::size_t i = 0; i < d->fields().size(); ++i) {
     if (e2->declaration() == d->fields()[i]) {
       e->pos_ = i;
@@ -720,6 +725,7 @@ Elaborator::elaborate(Member_expr* e)
     }
   }
   // assert(e->pos_ != -1);
+#endif
 
   // Finally set the type of the expression.
   e->type_ = e2->type();
@@ -727,6 +733,21 @@ Elaborator::elaborate(Member_expr* e)
   e->second = e2;
   return e;
 }
+
+
+Expr*
+Elaborator::elaborate(Field_expr* e)
+{
+  return e;
+}
+
+
+Expr*
+Elaborator::elaborate(Method_expr* e)
+{
+  return e;
+}
+
 
 
 // In the expression e1[e2], e1 shall be an object of

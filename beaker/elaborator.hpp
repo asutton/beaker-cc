@@ -101,7 +101,9 @@ public:
   Expr* elaborate(Or_expr* e);
   Expr* elaborate(Not_expr* e);
   Expr* elaborate(Call_expr* e);
-  Expr* elaborate(Member_expr* e);
+  Expr* elaborate(Dot_expr* e);
+  Expr* elaborate(Field_expr* e);
+  Expr* elaborate(Method_expr* e);
   Expr* elaborate(Index_expr* e);
   Expr* elaborate(Value_conv* e);
   Expr* elaborate(Block_conv* e);

@@ -1191,7 +1191,7 @@ Parser::on_index(Expr* e1, Expr* e2)
 Expr*
 Parser::on_dot(Expr* e1, Expr* e2)
 {
-  return new Member_expr(e1, e2);
+  return new Dot_expr(e1, e2);
 }
 
 

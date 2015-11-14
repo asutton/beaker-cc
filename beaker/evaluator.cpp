@@ -38,7 +38,9 @@ Evaluator::eval(Expr const* e)
     Value operator()(Or_expr const* e) { return ev.eval(e); }
     Value operator()(Not_expr const* e) { return ev.eval(e); }
     Value operator()(Call_expr const* e) { return ev.eval(e); }
-    Value operator()(Member_expr const* e) { return ev.eval(e); }
+    Value operator()(Dot_expr const* e) { return ev.eval(e); }
+    Value operator()(Field_expr const* e) { return ev.eval(e); }
+    Value operator()(Method_expr const* e) { return ev.eval(e); }
     Value operator()(Index_expr const* e) { return ev.eval(e); }
     Value operator()(Value_conv const* e) { return ev.eval(e); }
     Value operator()(Block_conv const* e) { return ev.eval(e); }
@@ -299,14 +301,26 @@ Evaluator::eval(Call_expr const* e)
 }
 
 
-// Return a reference to the object at the
-// requested field.
 Value
-Evaluator::eval(Member_expr const* e)
+Evaluator::eval(Dot_expr const* e)
 {
-  Value obj = eval(e->scope());
+  lingo_unreachable();
+}
+
+
+Value
+Evaluator::eval(Field_expr const* e)
+{
+  Value obj = eval(e->container());
   Value* ref = obj.get_reference();
-  return &ref->get_tuple().data[e->position()];
+  return &ref->get_tuple().data[e->field()];
+}
+
+
+Value
+Evaluator::eval(Method_expr const* e)
+{
+  lingo_unimplemented();
 }
 
 
