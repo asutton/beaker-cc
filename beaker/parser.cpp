@@ -368,7 +368,7 @@ Parser::postfix_type()
     // reference-type
     if (match_if(amp_tok))
       t = on_reference_type(t);
-    
+
     // array-types
     else if (match_if(lbrack_tok)) {
       if (match_if(rbrack_tok))
@@ -518,20 +518,21 @@ Parser::record_decl(Specifier spec)
 
   // record-body and field-seq
   require(lbrace_tok);
-  Decl_seq fs;
+  Decl_seq fs, ms;
   while (lookahead() != rbrace_tok) {
     Specifier spec = specifier_seq();
-    Decl* f;
-    if (lookahead() == def_kw)
-      f = method_decl(spec);
-    else if(lookahead() == identifier_tok)
-      f = field_decl(spec);
-    else
-      Syntax_error(ts_.location(), "invalid member declaration");
-    fs.push_back(f);
+    if (lookahead() == def_kw) {
+      Decl* m = method_decl(spec);
+      ms.push_back(m);
+    } else if(lookahead() == identifier_tok) {
+      Decl* f = field_decl(spec);
+      fs.push_back(f);
+    } else {
+      throw Syntax_error(ts_.location(), "invalid member declaration");
+    }
   }
   match(rbrace_tok);
-  return on_record(spec, n, fs);
+  return on_record(spec, n, fs, ms);
 }
 
 
@@ -562,7 +563,7 @@ Parser::field_decl(Specifier spec)
 //
 // TODO: Support out-of-class definitions?
 //
-// TODO: Support specifiers to modify the "this" 
+// TODO: Support specifiers to modify the "this"
 // parameter. Maybe before the return type? Maybe
 // as part of the specifiers?
 //
@@ -1251,9 +1252,9 @@ Parser::on_function(Specifier spec, Token tok, Decl_seq const& p, Type const* t,
 
 
 Decl*
-Parser::on_record(Specifier spec, Token n, Decl_seq const& fs)
+Parser::on_record(Specifier spec, Token n, Decl_seq const& fs, Decl_seq const& ms)
 {
-  return new Record_decl(n.symbol(), fs);
+  return new Record_decl(n.symbol(), fs, ms);
 }
 
 

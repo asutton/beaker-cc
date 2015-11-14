@@ -132,18 +132,27 @@ struct Parameter_decl : Decl
 
 
 // Declares a user-defined record type.
+//
+// The record class maintains two sets of declarations:
+// fields, which constitute its actual type, and
+// another set of member declarations (e.g., methods,
+// nested types, templates, constants, etc). These
+// aren't really part of the object, just part of
+// the scope.
 struct Record_decl : Decl
 {
-  Record_decl(Symbol const* n, Decl_seq const& f)
-    : Decl(n, nullptr), fields_(f)
+  Record_decl(Symbol const* n, Decl_seq const& f, Decl_seq const& m)
+    : Decl(n, nullptr), fields_(f), members_(m)
   { }
 
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
 
   Decl_seq const& fields() const { return fields_; }
+  Decl_seq const& members() const { return members_; }
 
   Decl_seq fields_;
+  Decl_seq members_;
 };
 
 
@@ -158,7 +167,7 @@ struct Field_decl : Decl
 
 
 // A member function of a record. A member function of
-// a record T has an implicit parameter named 'this' whose 
+// a record T has an implicit parameter named 'this' whose
 // type is T&.
 struct Method_decl : Function_decl
 {

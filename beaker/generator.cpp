@@ -28,13 +28,23 @@
 //
 // NOTE: Currently, these are the same. However, these
 // differ be as Beaker evolves.
+//
+// TODO: Factor name mangling into a separate module.
+// This is going to get big.
 String
 Generator::get_name(Decl const* d)
 {
   if (d->is_foreign())
     return d->name()->spelling();
-  else
-    return d->name()->spelling();
+
+  // Generate the beaker encoding of the symbol.
+  if (is<Method_decl>(d)) {
+    // TODO: Itanium ABI?
+    std::stringstream ss;
+    ss << *d->context()->name() << '_' << *d->name();
+    return ss.str();
+  }
+  return d->name()->spelling();
 }
 
 
@@ -157,7 +167,7 @@ Generator::get_type(Record_type const* t)
   if (!bind) {
     // Note that we have to do a 2nd lookup because
     // we don't return anything from generating
-    // declarations. 
+    // declarations.
     gen(t->declaration());
     bind = types.lookup(t->declaration());
   }
@@ -387,10 +397,20 @@ Generator::gen(Not_expr const* e)
 llvm::Value*
 Generator::gen(Call_expr const* e)
 {
-  llvm::Value* fn = gen(e->target());
+  // Generate arguments first.
   std::vector<llvm::Value*> args;
   for (Expr const* a : e->arguments())
     args.push_back(gen(a));
+
+  // If this is actually a method call, then we
+  // need to adjust the arguments.
+  llvm::Value* fn;
+  if (Member_expr* mem = as<Member_expr>(e->target())) {
+    fn = gen(mem->member());
+  } else {
+    fn = gen(e->target());
+  }
+
   return build.CreateCall(fn, args);
 }
 
@@ -403,6 +423,16 @@ llvm::Value*
 Generator::gen(Member_expr const* e)
 {
   llvm::Value* obj = gen(e->scope());
+
+  // If the member is a method, then just generate
+  // the code to produce the object. We'll use
+  // this as the argument in a function call.
+  //
+  // FIXME: I would prefer not to do this...
+  Id_expr* mem = cast<Id_expr>(e->member());
+  if (is<Method_decl>(mem->declaration()))
+    return obj;
+
   std::vector<llvm::Value*> args {
     build.getInt32(0),            // 0th element from base
     build.getInt32(e->position()) // nth element in struct
@@ -657,7 +687,7 @@ Generator::gen_local(Variable_decl const* d)
 
   // Generate the initializer.
   llvm::Value* init = gen(d->init());
-  
+
   // Store the result in the object.
   build.CreateStore(init, ptr);
 }
@@ -682,7 +712,7 @@ Generator::gen_global(Variable_decl const* d)
     // llvm::Value* val = gen(d->init());
     // if (llvm::Constant* c = llvm::dyn_cast<llvm::Constant>(val)) {
     //   init = c;
-    // } 
+    // }
   }
 
 
@@ -825,14 +855,17 @@ Generator::gen(Record_decl const* d)
   } else {
     // Construct the type over only the fields.
     for (Decl const* f : d->fields())
-      if (Field_decl const* f1 = as<Field_decl>(f))
-        ts.push_back(get_type(f1->type()));
+      ts.push_back(get_type(f->type()));
   }
 
   // This will automatically be added to the module,
   // but if it's not used, then it won't be generated.
   llvm::Type* t = llvm::StructType::create(cxt, ts, d->name()->spelling());
   types.bind(d, t);
+
+  // Now, generate code for all other members.
+  for (Decl const* d : d->members())
+    gen(d);
 }
 
 
@@ -844,13 +877,12 @@ Generator::gen(Field_decl const* d)
 
 
 
-// This is just like generating a function except that
-// the name must be mangled to include the name of the
-// class. Or something like that...
+// Just call out to the function generator. Name
+// mangling is handled in get_name().
 void
 Generator::gen(Method_decl const* d)
 {
-  lingo_unimplemented();
+  gen(cast<Function_decl>(d));
 }
 
 

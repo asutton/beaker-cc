@@ -117,6 +117,15 @@ public:
   Decl* elaborate(Method_decl*);
   Decl* elaborate(Module_decl*);
 
+  // Support for two-phase elaboration.
+  Decl* elaborate_decl(Decl*);
+  Decl* elaborate_decl(Field_decl*);
+  Decl* elaborate_decl(Method_decl*);
+
+  Decl* elaborate_def(Decl*);
+  Decl* elaborate_def(Field_decl*);
+  Decl* elaborate_def(Method_decl*);
+
   Stmt* elaborate(Stmt*);
   Stmt* elaborate(Empty_stmt*);
   Stmt* elaborate(Block_stmt*);

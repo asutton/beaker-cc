@@ -277,7 +277,7 @@ Elaborator::elaborate(Literal_expr* e)
 // layer, unless we to precisely establish contexts where
 // such identifiers are allowed.
 //
-// TODO: If the lookup is resolved, should we actually 
+// TODO: If the lookup is resolved, should we actually
 // return a different kind of expression?
 Expr*
 Elaborator::elaborate(Id_expr* e)
@@ -294,7 +294,7 @@ Elaborator::elaborate(Id_expr* e)
   e->declaration(d);
 
   // If the referenced declaration is a variable of
-  // type T, then the type is T&. Otherwise, it is 
+  // type T, then the type is T&. Otherwise, it is
   // just T.
   //
   // TODO: Why isn't a function identifier also a
@@ -324,7 +324,7 @@ require_value(Elaborator& elab, Expr* e)
 
 
 // Used to require the conversion of an expression
-// to a given type. This returns nullptr if the convesion 
+// to a given type. This returns nullptr if the convesion
 // fails.
 Expr*
 require_converted(Elaborator& elab, Expr* e, Type const* t)
@@ -500,7 +500,7 @@ check_ordering_expr(Elaborator& elab, Binary_expr* e)
     throw Type_error({}, "left operand cannot be converted to 'int'");
   if (!c2)
     throw Type_error({}, "right operand cannot be converted to 'int'");
-  
+
   // Rebuild the expression with the converted
   // operands.
   e->type_ = b;
@@ -557,7 +557,7 @@ check_binary_logical_expr(Elaborator& elab, Binary_expr* e)
     throw Type_error({}, "left operand cannot be converted to 'bool'");
   if (!c2)
     throw Type_error({}, "right operand cannot be converted to 'bool'");
-  
+
   // Rebuild the expression with the converted
   // operands.
   e->type_ = b;
@@ -575,7 +575,7 @@ check_unary_logical_expr(Elaborator& elab, Unary_expr* e)
   Expr* c = require_converted(elab, e->first, b);
   if (!c)
     throw Type_error({}, "operand cannot be converted to 'bool'");
-  
+
   // Rebuild the expression with the converted
   // operand.
   e->type_ = b;
@@ -614,15 +614,21 @@ Elaborator::elaborate(Call_expr* e)
 {
   // Apply lvalue to rvalue conversion and ensure that
   // the target has function type.
-  Expr* f = require_value(*this, e->first);
+  Expr* f = require_value(*this, e->target());
   Type const* t1 = f->type();
   if (!is<Function_type>(t1))
     throw Type_error({}, "cannot call to non-function");
   Function_type const* t = cast<Function_type>(t1);
 
+  // If the target is a member expression, then
+  // adjust the arguments to supply a first object.
+  Expr_seq& args = e->arguments();
+  if (Member_expr* m = as<Member_expr>(f))
+    args.insert(args.begin(), m->scope());
+
+
   // Check for basic function arity.
   Type_seq const& parms = t->parameter_types();
-  Expr_seq& args = e->arguments();
   if (args.size() < parms.size())
     throw Type_error({}, "too few arguments");
   if (parms.size() < args.size())
@@ -684,7 +690,7 @@ Elaborator::elaborate(Member_expr* e)
   // in the usual way.
   Record_decl* d = t->declaration();
   Scope_sentinel scope(*this, d);
-  for (Decl* d1 : d->fields())
+  for (Decl* d1 : d->members())
     stack.top().bind(d1->name(), d1);
 
   // Elaborate the member expression.
@@ -698,14 +704,18 @@ Elaborator::elaborate(Member_expr* e)
   // Find the offset in the class of the member.
   // And stash it in the member expression.
   //
-  // FIXME: This should be a function.
+  // FIXME: If e2 refers to a method declaration,
+  // then there won't be an offset. Maybe do the
+  // general processing in a Dot_expr, and then
+  // create different kinds of expressions based
+  // on elaboration.
   for (std::size_t i = 0; i < d->fields().size(); ++i) {
     if (e2->declaration() == d->fields()[i]) {
       e->pos_ = i;
       break;
     }
   }
-  assert(e->pos_ != -1);
+  // assert(e->pos_ != -1);
 
   // Finally set the type of the expression.
   e->type_ = e2->type();
@@ -715,7 +725,7 @@ Elaborator::elaborate(Member_expr* e)
 }
 
 
-// In the expression e1[e2], e1 shall be an object of 
+// In the expression e1[e2], e1 shall be an object of
 // array type T[N] (for some N) or block type T[]. The
 // expression e2 shall be an integer value. The result
 // type of the expressions is ref T.
@@ -755,7 +765,7 @@ Elaborator::elaborate(Index_expr* e)
   // The result type shall be ref T.
   e->type_ = get_reference_type(t->type());
   e->first = e1;
-  e->second = e2; 
+  e->second = e2;
 
   return e;
 }
@@ -800,7 +810,7 @@ Elaborator::elaborate(Copy_init* e)
   if (is<Reference_type>(e->type())) {
     Reference_init* init = new Reference_init(e->type(), e->value());
     return elaborate(init);
-  } 
+  }
 
   // Otherwise, this actually a copy.
   //
@@ -860,7 +870,7 @@ Elaborator::elaborate(Reference_init* e)
 
   // Update the expression.
   e->first = obj;
-  
+
   return e;
 }
 
@@ -920,6 +930,9 @@ Elaborator::elaborate(Variable_decl* d)
 
 // The types of return expressions shall match the declared
 // return type of the function.
+//
+// FIXME: Theres a lot of overlap with the elaboration
+// for methods. Merge that code.
 Decl*
 Elaborator::elaborate(Function_decl* d)
 {
@@ -972,12 +985,33 @@ Elaborator::elaborate(Record_decl* d)
 {
   stack.declare(d);
 
-  // FIXME: This isn't quite right. We need a legitimate
-  // two-level elaboration here. First, declare evertything,
-  // then handle the definitions.
   Scope_sentinel scope(*this, d);
+
+  // Elaborate fields and then method declarations.
+  //
+  // TODO: What are the lookup rules for default
+  // member initializers. If we do this:
+  //
+  //    struct S {
+  //      x : int = 1;
+  //      y : int = x + 2; // Probably ok
+  //      a : int = b - 1; // OK?
+  //      b : int = 0;
+  //      c : int = f();   // OK?
+  //      def f() -> int { ... }
+  //    }
+  //
+  // If we allow the 2nd, then we need to do two
+  // phase elaboration.
   for (Decl*& f : d->fields_)
-    f = elaborate(f);
+    f = elaborate_decl(f);
+  for (Decl*& m : d->members_)
+    m = elaborate_decl(m);
+
+  // Elaborate member definitions. See comments
+  // above about handling member defintions.
+  for (Decl*& m : d->members_)
+    m = elaborate_def(m);
 
   return d;
 }
@@ -986,15 +1020,71 @@ Elaborator::elaborate(Record_decl* d)
 Decl*
 Elaborator::elaborate(Field_decl* d)
 {
+  lingo_unreachable();
+}
+
+
+Decl*
+Elaborator::elaborate(Method_decl* d)
+{
+  lingo_unreachable();
+}
+
+
+// Elaborate the module.  Returns true if successful and
+// false otherwise.
+Decl*
+Elaborator::elaborate(Module_decl* m)
+{
+  Scope_sentinel scope(*this, m);
+  for (Decl*& d : m->decls_)
+    d = elaborate(d);
+  return m;
+}
+
+
+// -------------------------------------------------------------------------- //
+// Elaboration of declarations (but not definitions)
+
+namespace
+{
+
+// Defined here because of the member template.
+struct Elab_decl_fn
+{
+  Elaborator& elab;
+
+  template<typename T>
+  Decl* operator()(T*) const { lingo_unreachable(); }
+
+  // NOTE: Add overloads in order to support nested
+  // declarations. Note that supporting nested types
+  // would require its full elaboration.
+  Decl* operator()(Field_decl* d) const { return elab.elaborate_decl(d); }
+  Decl* operator()(Method_decl* d) const { return elab.elaborate_decl(d); }
+};
+
+
+} // namespace
+
+Decl*
+Elaborator::elaborate_decl(Decl* d)
+{
+  return apply(d, Elab_decl_fn{*this});
+}
+
+
+Decl*
+Elaborator::elaborate_decl(Field_decl* d)
+{
   d->type_ = elaborate(d->type_);
   stack.declare(d);
   return d;
 }
 
 
-// Elaborate the type of a method declaration.
 Decl*
-Elaborator::elaborate(Method_decl* d)
+Elaborator::elaborate_decl(Method_decl* d)
 {
   // Generate the type of the implicit this parameter.
   //
@@ -1010,20 +1100,66 @@ Elaborator::elaborate(Method_decl* d)
   Type const* mt = get_function_type(pt, rt);
   d->type_ = mt;
 
-  // Npw declare the method.
-  stack.declare(d);
-
   // Actually build the implicit this parameter and add it
   // to the front of the list of parameters.
   Symbol const* name = syms.get("this");
   Parameter_decl* self = new Parameter_decl(name, type);
   d->parms_.insert(d->parms_.begin(), self);
 
-  // Now, elaborate and declare parameters.
+  // Note that we don't need to elaborate or declare
+  // the funciton parameters because they're only visible
+  // within the function body.
+
+  // Now declare the method.
+  stack.declare(d);
+  return d;
+}
+
+
+// -------------------------------------------------------------------------- //
+// Elaboration of definitions
+
+namespace
+{
+
+// Defined here because of the member template.
+struct Elab_def_fn
+{
+  Elaborator& elab;
+
+  template<typename T>
+  Decl* operator()(T*) const { lingo_unreachable(); }
+
+  Decl* operator()(Field_decl* d) const { return elab.elaborate_def(d); }
+  Decl* operator()(Method_decl* d) const { return elab.elaborate_def(d); }
+};
+
+
+} // namespace
+
+
+Decl*
+Elaborator::elaborate_def(Decl* d)
+{
+  return apply(d, Elab_def_fn{*this});
+}
+
+
+// Nothing to do here now...
+Decl*
+Elaborator::elaborate_def(Field_decl* d)
+{
+  return d;
+}
+
+
+Decl*
+Elaborator::elaborate_def(Method_decl* d)
+{
+  // Elaborate and declare parameters.
   Scope_sentinel scope(*this, d);
   for (Decl*& p : d->parms_)
     p = elaborate(p);
-
 
   // Check the body of the method. It must be defined.
   d->body_ = elaborate(d->body());
@@ -1035,19 +1171,6 @@ Elaborator::elaborate(Method_decl* d)
   // every branch returns a value.
   return d;
 }
-
-
-// Elaborate the module.  Returns true if successful and
-// false otherwise.
-Decl*
-Elaborator::elaborate(Module_decl* m)
-{
-  Scope_sentinel scope(*this, m);
-  for (Decl*& d : m->decls_)
-    d = elaborate(d);
-  return m;
-}
-
 
 // -------------------------------------------------------------------------- //
 // Elaboration of statements
@@ -1141,7 +1264,7 @@ Elaborator::elaborate(Return_stmt* s)
   Expr* c = convert(e, t);
   if (!c) {
     std::stringstream ss;
-    ss << "return type mismatch (expected " 
+    ss << "return type mismatch (expected "
        << *t << " but got " << *s->value()->type() << ")";
     throw std::runtime_error(ss.str());
   }
