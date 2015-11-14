@@ -171,7 +171,7 @@ operator<<(std::ostream& os, Id_expr const& e)
 std::ostream&
 operator<<(std::ostream& os, Decl_expr const& e)
 {
-  return os << *e.name();
+  return os << *e.symbol();
 }
 
 
@@ -304,7 +304,7 @@ operator<<(std::ostream& os, Dot_expr const& e)
 std::ostream&
 operator<<(std::ostream& os, Field_expr const& e)
 {
-  return os << *e.record()->name() << '.' << e.field();
+  return os << *e.record()->name() << '.' << *e.field()->name();
 }
 
 

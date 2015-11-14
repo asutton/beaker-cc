@@ -6,6 +6,11 @@
 #include "decl.hpp"
 
 
+Decl_expr::Decl_expr(Type const* t, Decl* d)
+  : Id_expr(t, d->name()), decl(d)
+{ }
+
+
 Symbol const*
 Decl_expr::name() const
 {

@@ -137,6 +137,10 @@ struct Id_expr : Expr
     : sym(s)
   { }
 
+  Id_expr(Type const* t, Symbol const* s)
+    : Expr(t), sym(s)
+  { }
+
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
 
@@ -149,11 +153,9 @@ struct Id_expr : Expr
 
 // A reference to a declaration. These are produced
 // by the elaboration of id expressions.
-struct Decl_expr : Expr
+struct Decl_expr : Id_expr
 {
-  Decl_expr(Type const* t, Decl* d)
-    : Expr(t), decl(d)
-  { }
+  Decl_expr(Type const*, Decl*);
 
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }

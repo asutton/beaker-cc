@@ -736,7 +736,6 @@ Elaborator::elaborate(Method_expr* e)
 }
 
 
-
 // In the expression e1[e2], e1 shall be an object of
 // array type T[N] (for some N) or block type T[]. The
 // expression e2 shall be an integer value. The result
