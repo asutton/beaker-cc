@@ -656,8 +656,10 @@ Generator::gen(If_else_stmt const* s)
 
   //merge
   //getUniquePred??
-  theFunc->getBasicBlockList().push_back(mergeBB);
-  build.SetInsertPoint(mergeBB);
+  if(build.GetInsertBlock()->getSinglePredecessor()) {
+    theFunc->getBasicBlockList().push_back(mergeBB);
+    build.SetInsertPoint(mergeBB);
+  }
 
 }
 
@@ -712,7 +714,7 @@ void
 Generator::gen(Continue_stmt const* s)
 {
   makeBranch(loop_entry.top(), build.GetInsertBlock());
-  loop_entry.pop();
+  // loop_entry.pop();
 }
 
 
