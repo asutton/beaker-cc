@@ -611,6 +611,16 @@ Elaborator::elaborate(Not_expr* e)
 
 // The target function operand is converted to
 // a value and shall have funtion type.
+//
+// If the target is a method-expr of the form
+//
+//    r.m(args)
+//
+// then rewrite the call as m(r, args).
+//
+// TODO: Allow calls of the form f(x) to resolve
+// to calls of the form x.f(). See the current
+// C++ proposals for semantics.
 Expr*
 Elaborator::elaborate(Call_expr* e)
 {
@@ -623,12 +633,30 @@ Elaborator::elaborate(Call_expr* e)
   Function_type const* t = cast<Function_type>(t1);
 
   // If the target is a member expression, then
-  // adjust the arguments to supply a first object.
+  // adjust the arguments to supply a first object
+  // and update the function pointer to the actual
+  // target.
   Expr_seq& args = e->arguments();
-  if (Method_expr* m = as<Method_expr>(f))
-    args.insert(args.begin(), m->container());
+  if (Method_expr* m = as<Method_expr>(f)) {
+    Expr* self = m->container();
+    args.insert(args.begin(), self);
+
+    Method_decl* fn = m->method();
+    f = new Decl_expr(fn->type(), fn);
+  }
+
+  // TODO: If the function is an overload set, then
+  // we need to do overload resolution.
+
+  // Guarantee that f is an expression that refers
+  // to a declaration.
+  lingo_assert(is<Decl_expr>(f) &&
+               is<Function_decl>(cast<Decl_expr>(f)->declaration()));
 
   // Check for basic function arity.
+  //
+  // TODO: Handle default arguments and variadic
+  // functions.
   Type_seq const& parms = t->parameter_types();
   if (args.size() < parms.size())
     throw Type_error({}, "too few arguments");
@@ -653,8 +681,7 @@ Elaborator::elaborate(Call_expr* e)
     args[i] = a;
   }
 
-  // The type of the expression is that of the
-  // function return type.
+  // Update the call expression before returning.
   e->type_ = t->return_type();
   e->first = f;
   return e;

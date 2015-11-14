@@ -355,7 +355,12 @@ struct Not_expr : Unary_expr
 };
 
 
-// The expression e(e1, e2, ..., en)
+// The expression e(e1, e2, ..., en).
+//
+// TODO: When we resolve this, the target is generally
+// resolved to a declaration. Should we subclass this
+// to provide resolution hints? Note that we guarantee
+// that the target is a decl-expr referring to a function.
 struct Call_expr : Expr
 {
   Call_expr(Expr* f, Expr_seq const& a)
