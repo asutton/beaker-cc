@@ -147,11 +147,21 @@ Generator::get_type(Reference_type const* t)
 
 
 // Return the structure type corresponding to the
-// declaration of t.
+// declaration of t. If, for some reason, we encounter
+// the type before its declaration, just emit the
+// definition now.
 llvm::Type*
 Generator::get_type(Record_type const* t)
 {
-  return types.lookup(t->declaration())->second;
+  auto const* bind = types.lookup(t->declaration());
+  if (!bind) {
+    // Note that we have to do a 2nd lookup because
+    // we don't return anything from generating
+    // declarations. 
+    gen(t->declaration());
+    bind = types.lookup(t->declaration());
+  }
+  return bind->second;
 }
 
 
@@ -192,6 +202,7 @@ Generator::gen(Expr const* e)
     llvm::Value* operator()(Block_conv const* e) const { return g.gen(e); }
     llvm::Value* operator()(Default_init const* e) const { return g.gen(e); }
     llvm::Value* operator()(Copy_init const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Reference_init const* e) const { return g.gen(e); }
   };
 
   return apply(e, Fn{*this});
@@ -223,20 +234,16 @@ Generator::gen(Literal_expr const* e)
   if (is_string(t)) {
     Array_value a = v.get_array();
     String s = a.get_string();
-    llvm::Constant* c = llvm::ConstantDataArray::getString(cxt, s);
 
-    llvm::GlobalVariable* v = new llvm::GlobalVariable(
-      *mod,                              // owning module
-      c->getType(),                      // type
-      true,                              // constant
-      llvm::GlobalValue::PrivateLinkage, // private
-      c                                  // initializer
-    );
-
-    // Allow globals with the same value to
-    // be unified into the same object.
-    v->setUnnamedAddr(true);
-    return v;
+    // FIXME: This does not unify equivalent strings.
+    // Maybe we needt maintain a mapping in order to
+    // avoid redunancies.
+    auto iter = strings.find(s);
+    if (iter == strings.end()) {
+      llvm::Value* v = build.CreateGlobalString(s);
+      iter = strings.emplace(s, v).first;
+    }
+    return iter->second;
   }
 
   else
@@ -251,7 +258,15 @@ Generator::gen(Literal_expr const* e)
 llvm::Value*
 Generator::gen(Id_expr const* e)
 {
-  return stack.lookup(e->declaration())->second;
+  auto const* bind = stack.lookup(e->declaration());
+  llvm::Value* result = bind->second;
+
+  // Fetch the value from a reference declaration.
+  Decl const* decl = bind->first;
+  if (is_reference(decl))
+    return build.CreateLoad(result);
+
+  return result;
 }
 
 
@@ -494,7 +509,11 @@ Generator::gen(Copy_init const* e)
 }
 
 
-
+llvm::Value*
+Generator::gen(Reference_init const* e)
+{
+  return gen(e->object());
+}
 
 
 // -------------------------------------------------------------------------- //
@@ -746,6 +765,7 @@ Generator::gen(Decl const* d)
     void operator()(Parameter_decl const* d) { return g.gen(d); }
     void operator()(Record_decl const* d) { return g.gen(d); }
     void operator()(Field_decl const* d) { return g.gen(d); }
+    void operator()(Method_decl const* d) { return g.gen(d); }
     void operator()(Module_decl const* d) { return g.gen(d); }
   };
   return apply(d, Fn{*this});
@@ -759,13 +779,17 @@ Generator::gen_local(Variable_decl const* d)
   // the function. Not at the point where we get it.
   llvm::BasicBlock& b = fn->getEntryBlock();
   llvm::IRBuilder<> tmp(&b, b.begin());
-  llvm::Value* ptr = tmp.CreateAlloca(get_type(d->type()));
+  llvm::Type* type = get_type(d->type());
+  String name = d->name()->spelling();
+  llvm::Value* ptr = tmp.CreateAlloca(type, nullptr, name);
 
   // Save the decl binding.
   stack.top().bind(d, ptr);
 
-  // Initialize the object.
+  // Generate the initializer.
   llvm::Value* init = gen(d->init());
+  
+  // Store the result in the object.
   build.CreateStore(init, ptr);
 }
 
@@ -924,15 +948,26 @@ Generator::gen(Parameter_decl const* d)
 void
 Generator::gen(Record_decl const* d)
 {
+  // If we've already created a type, don't do
+  // anything else.
+  if (types.lookup(d))
+    return;
+
   // If the record is empty, generate a struct
   // with exactly one byte so that we never have
   // a type with 0 size.
+  //
+  // FIXME: This isn't right because we are currently
+  // mixing methods and fields in the same thing.
+  // They need to be separate.
   std::vector<llvm::Type*> ts;
   if (d->fields().empty()) {
     ts.push_back(build.getInt8Ty());
   } else {
+    // Construct the type over only the fields.
     for (Decl const* f : d->fields())
-      ts.push_back(get_type(f->type()));
+      if (Field_decl const* f1 = as<Field_decl>(f))
+        ts.push_back(get_type(f1->type()));
   }
 
   // This will automatically be added to the module,
@@ -946,6 +981,17 @@ void
 Generator::gen(Field_decl const* d)
 {
   // NOTE: We should never actually get here.
+}
+
+
+
+// This is just like generating a function except that
+// the name must be mangled to include the name of the
+// class. Or something like that...
+void
+Generator::gen(Method_decl const* d)
+{
+  lingo_unimplemented();
 }
 
 

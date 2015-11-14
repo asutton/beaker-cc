@@ -68,6 +68,7 @@ public:
   Value eval(Block_conv const*);
   Value eval(Default_init const*);
   Value eval(Copy_init const*);
+  Value eval(Reference_init const*);
 
   void eval(Decl const*);
   void eval(Variable_decl const*);
@@ -75,6 +76,7 @@ public:
   void eval(Parameter_decl const*);
   void eval(Record_decl const*);
   void eval(Field_decl const*);
+  void eval(Method_decl const*);
   void eval(Module_decl const*);
 
   Control eval(Stmt const*, Value&);

@@ -10,5 +10,6 @@
 void
 diagnose(Translation_error& err)
 {
-  std::cerr << "error:" << err.location() << ": " << err.what() << '\n';
+  std::cerr << bright_red("error") << ':' 
+            << bright_white(err.location()) << ": " << err.what() << '\n';
 }

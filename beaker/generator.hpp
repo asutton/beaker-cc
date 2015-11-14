@@ -34,6 +34,12 @@ using Symbol_stack = Stack<Symbol_env>;
 // type annotations are global.
 using Type_env = Environment<Decl const*, llvm::Type*>;
 
+// A global string table, used to unify string
+// declarations. This maps strings to global string
+// variables.
+using String_env = Environment<String, llvm::Value*>;
+
+
 struct Generator
 {
   Generator();
@@ -79,6 +85,7 @@ struct Generator
   llvm::Value* gen(Block_conv const*);
   llvm::Value* gen(Default_init const*);
   llvm::Value* gen(Copy_init const*);
+  llvm::Value* gen(Reference_init const*);
 
   void gen(Stmt const*);
   void gen(Empty_stmt const*);
@@ -99,6 +106,7 @@ struct Generator
   void gen(Parameter_decl const*);
   void gen(Record_decl const*);
   void gen(Field_decl const*);
+  void gen(Method_decl const*);
   void gen(Module_decl const*);
 
   void gen_local(Variable_decl const*);
@@ -116,6 +124,7 @@ struct Generator
 
   Symbol_stack      stack;
   Type_env          types;
+  String_env        strings;
 
   struct Symbol_sentinel;
 

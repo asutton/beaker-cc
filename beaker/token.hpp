@@ -49,6 +49,7 @@ enum Token_kind
   and_tok,
   or_tok,
   not_tok,
+  amp_tok,
   arrow_tok,
 
   // Keywords
@@ -63,6 +64,7 @@ enum Token_kind
   int_kw,
   return_kw,
   struct_kw,
+  this_kw,
   var_kw,
   while_kw,
 

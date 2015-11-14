@@ -43,6 +43,7 @@ Evaluator::eval(Expr const* e)
     Value operator()(Block_conv const* e) { return ev.eval(e); }
     Value operator()(Default_init const* e) { return ev.eval(e); }
     Value operator()(Copy_init const* e) { return ev.eval(e); }
+    Value operator()(Reference_init const* e) { return ev.eval(e); }
   };
 
   return apply(e, Fn {*this});
@@ -338,7 +339,7 @@ Evaluator::eval(Block_conv const* e)
 Value
 Evaluator::eval(Default_init const* e)
 {
-  throw std::runtime_error("not reachable");
+  lingo_unimplemented();
 }
 
 
@@ -347,7 +348,14 @@ Evaluator::eval(Default_init const* e)
 Value
 Evaluator::eval(Copy_init const* e)
 {
-  lingo_unreachable();
+  lingo_unimplemented();
+}
+
+
+Value
+Evaluator::eval(Reference_init const* e)
+{
+  lingo_unimplemented();
 }
 
 
@@ -366,6 +374,7 @@ Evaluator::eval(Decl const* d)
     void operator()(Parameter_decl const* d) { ev.eval(d); }
     void operator()(Record_decl const* d) { ev.eval(d); }
     void operator()(Field_decl const* d) { ev.eval(d); }
+    void operator()(Method_decl const* d) { ev.eval(d); }
     void operator()(Module_decl const* d) { ev.eval(d); }
   };
 
@@ -494,6 +503,14 @@ Evaluator::eval(Record_decl const*)
 // There is no evaluation for a field.
 void
 Evaluator::eval(Field_decl const*)
+{
+  return;
+}
+
+
+// There is no evaluation for a method.
+void
+Evaluator::eval(Method_decl const*)
 {
   return;
 }

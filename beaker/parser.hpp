@@ -5,7 +5,6 @@
 #define BEAKER_PARSER_HPP
 
 #include "prelude.hpp"
-#include "string.hpp"
 #include "token.hpp"
 #include "specifier.hpp"
 
@@ -45,7 +44,8 @@ public:
   Decl* function_decl(Specifier);
   Decl* parameter_decl();
   Decl* record_decl(Specifier);
-  Decl* field_decl();
+  Decl* field_decl(Specifier);
+  Decl* method_decl(Specifier);
   Specifier specifier_seq();
 
   // Statement parsers
@@ -71,6 +71,7 @@ public:
 private:
   // Actions
   Type const* on_id_type(Token);
+  Type const* on_reference_type(Type const*);
   Type const* on_array_type(Type const*, Expr*);
   Type const* on_block_type(Type const*);
   Type const* on_function_type(Type_seq const&, Type const*);
@@ -108,6 +109,7 @@ private:
   Decl* on_function(Specifier, Token, Decl_seq const&, Type const*, Stmt*);
   Decl* on_record(Specifier, Token, Decl_seq const&);
   Decl* on_field(Specifier, Token, Type const*);
+  Decl* on_method(Specifier, Token, Decl_seq const&, Type const*, Stmt*);
   Decl* on_module(Decl_seq const&);
 
   // FIXME: Remove _stmt from handlers.

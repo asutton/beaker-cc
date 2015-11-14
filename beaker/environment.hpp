@@ -12,7 +12,7 @@
 // The environment maintains all active bindings at
 // a certain point in the program.
 template<typename S, typename T>
-class Environment : std::unordered_map<S, T>
+struct Environment : std::unordered_map<S, T>
 {
 private:
   using Map = std::unordered_map<S, T>;

@@ -55,6 +55,7 @@ struct Decl::Visitor
   virtual void visit(Parameter_decl const*) = 0;
   virtual void visit(Record_decl const*) = 0;
   virtual void visit(Field_decl const*) = 0;
+  virtual void visit(Method_decl const*) = 0;
   virtual void visit(Module_decl const*) = 0;
 };
 
@@ -67,6 +68,7 @@ struct Decl::Mutator
   virtual void visit(Parameter_decl*) = 0;
   virtual void visit(Record_decl*) = 0;
   virtual void visit(Field_decl*) = 0;
+  virtual void visit(Method_decl*) = 0;
   virtual void visit(Module_decl*) = 0;
 };
 
@@ -145,10 +147,22 @@ struct Record_decl : Decl
 };
 
 
-// A member of a record.
+// A member variable of a record.
 struct Field_decl : Decl
 {
   using Decl::Decl;
+
+  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Mutator& v)       { v.visit(this); }
+};
+
+
+// A member function of a record. A member function of
+// a record T has an implicit parameter named 'this' whose 
+// type is T&.
+struct Method_decl : Function_decl
+{
+  using Function_decl::Function_decl;
 
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
@@ -207,6 +221,10 @@ defines_object(Decl const* d)
 }
 
 
+// Returns true if the declaration is a reference.
+bool is_reference(Decl const*);
+
+
 // -------------------------------------------------------------------------- //
 //                              Generic visitors
 
@@ -222,6 +240,7 @@ struct Generic_decl_visitor : Decl::Visitor, lingo::Generic_visitor<F, T>
   void visit(Parameter_decl const* d) { this->invoke(d); }
   void visit(Record_decl const* d) { this->invoke(d); }
   void visit(Field_decl const* d) { this->invoke(d); }
+  void visit(Method_decl const* d) { this->invoke(d); }
   void visit(Module_decl const* d) { this->invoke(d); }
 };
 
@@ -248,6 +267,7 @@ struct Generic_decl_mutator : Decl::Mutator, lingo::Generic_mutator<F, T>
   void visit(Parameter_decl* d) { this->invoke(d); }
   void visit(Record_decl* d) { this->invoke(d); }
   void visit(Field_decl* d) { this->invoke(d); }
+  void visit(Method_decl* d) { this->invoke(d); }
   void visit(Module_decl* d) { this->invoke(d); }
 };
 
