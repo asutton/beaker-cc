@@ -2,10 +2,10 @@
 def f(n : int) -> int 
 { 
   if (n == 0){
-    return n;
+    return 1;
   }
   else {
-    return n;
+    return 2;
   }
 }
 

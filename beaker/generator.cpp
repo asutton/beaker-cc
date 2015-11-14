@@ -619,10 +619,8 @@ Generator::gen(If_then_stmt const* s)
 
   //merge
   //getUniquePred???
-  if(mergeBB->getSinglePredecessor()) {
-    theFunc->getBasicBlockList().push_back(mergeBB);
-    build.SetInsertPoint(mergeBB);
-  }
+  theFunc->getBasicBlockList().push_back(mergeBB);
+  build.SetInsertPoint(mergeBB);
 
 }
 
@@ -658,10 +656,8 @@ Generator::gen(If_else_stmt const* s)
 
   //merge
   //getUniquePred??
-  if(mergeBB->getSinglePredecessor()) {
-    theFunc->getBasicBlockList().push_back(mergeBB);
-    build.SetInsertPoint(mergeBB);
-  }
+  theFunc->getBasicBlockList().push_back(mergeBB);
+  build.SetInsertPoint(mergeBB);
 
 }
 
@@ -699,11 +695,8 @@ Generator::gen(While_stmt const* s)
 
 
   //after exit loop
-  //do I need to check this??
-  // if(endBB->getUniquePredecessor()) {
-    theFunc->getBasicBlockList().push_back(endBB);
-    build.SetInsertPoint(endBB);
-  // }  
+  theFunc->getBasicBlockList().push_back(endBB);
+  build.SetInsertPoint(endBB);
 }
 
 
@@ -915,6 +908,12 @@ Generator::gen(Function_decl const* d)
 
   // Generate the body of the function.
   gen(d->body());
+
+  for(auto block = fn->getBasicBlockList().begin(); block != fn->getBasicBlockList().end(); block++) {
+    if(!block->getTerminator())
+      build.CreateUnreachable();
+  }
+
 
 
   // TODO: Create an exit block and allow code to
