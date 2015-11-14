@@ -871,8 +871,8 @@ Generator::gen(Record_decl const* d)
   types.bind(d, t);
 
   // Now, generate code for all other members.
-  for (Decl const* d : d->members())
-    gen(d);
+  for (Decl const* decl : d->members())
+    gen(decl);
 }
 
 
