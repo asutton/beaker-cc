@@ -45,6 +45,7 @@ struct Expr::Visitor
 {
   virtual void visit(Literal_expr const*) = 0;
   virtual void visit(Id_expr const*) = 0;
+  virtual void visit(Decl_expr const*) = 0;
   virtual void visit(Add_expr const*) = 0;
   virtual void visit(Sub_expr const*) = 0;
   virtual void visit(Mul_expr const*) = 0;
@@ -78,6 +79,7 @@ struct Expr::Mutator
 {
   virtual void visit(Literal_expr*) = 0;
   virtual void visit(Id_expr*) = 0;
+  virtual void visit(Decl_expr*) = 0;
   virtual void visit(Add_expr*) = 0;
   virtual void visit(Sub_expr*) = 0;
   virtual void visit(Mul_expr*) = 0;
@@ -105,12 +107,9 @@ struct Expr::Mutator
 };
 
 
-// A boolean or integer literal value. The kind
-// of literal is determined by the underlying symbol.
-//
-// TODO: Can we ever have a function literal? That
-// would basically be an unnamed function object
-// since functions can only ever be named.
+// A literal or compile time value. Note that the
+// type of the literal must be known at the time
+// of object creation. It cannot be deduced.
 struct Literal_expr : Expr
 {
   Literal_expr(Type const* t, Value const& v)
@@ -127,9 +126,6 @@ struct Literal_expr : Expr
 
 
 // An identifier that refers to a declaration.
-//
-// The declaration, like the expression's type, is
-// dsetermine during elaboration.
 struct Id_expr : Expr
 {
   Id_expr(Symbol const* s)
@@ -142,11 +138,25 @@ struct Id_expr : Expr
   Symbol const* symbol() const   { return sym; }
   String const& spelling() const { return sym->spelling(); }
 
-  Decl const*   declaration() const        { return decl; }
-  void          declaration(Decl const* d) { decl = d; }
-
   Symbol const* sym;
-  Decl const*   decl;
+};
+
+
+// A reference to a declaration. These are produced
+// by the elaboration of id expressions.
+struct Decl_expr : Expr
+{
+  Decl_expr(Type const* t, Decl* d)
+    : Expr(t), decl(d)
+  { }
+
+  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Mutator& v)       { v.visit(this); }
+
+  Symbol const* name() const;
+  Decl*         declaration() const { return decl; }
+
+  Decl* decl;
 };
 
 
@@ -452,10 +462,10 @@ struct Block_conv : Conv
 // elaboration.
 //
 // FIXME: An initializer is a syntactic placeholder for
-// a constructor that is evaluated on uninitialized memory. 
+// a constructor that is evaluated on uninitialized memory.
 // This means that during elaboration. For example,
 // default initalization for an POD aggregate should
-// select a memset intrinsic. 
+// select a memset intrinsic.
 //
 // TODO: Initializers should probably be bound to
 // a reference to the object created, not the
@@ -540,6 +550,7 @@ struct Generic_expr_visitor : Expr::Visitor, lingo::Generic_visitor<F, T>
 
   void visit(Literal_expr const* e) { this->invoke(e); }
   void visit(Id_expr const* e) { this->invoke(e); }
+  void visit(Decl_expr const* e) { this->invoke(e); }
   void visit(Add_expr const* e) { this->invoke(e); }
   void visit(Sub_expr const* e) { this->invoke(e); }
   void visit(Mul_expr const* e) { this->invoke(e); }
@@ -589,6 +600,7 @@ struct Generic_expr_mutator : Expr::Mutator, lingo::Generic_mutator<F, T>
 
   void visit(Literal_expr* e) { this->invoke(e); }
   void visit(Id_expr* e) { this->invoke(e); }
+  void visit(Decl_expr* e) { this->invoke(e); }
   void visit(Add_expr* e) { this->invoke(e); }
   void visit(Sub_expr* e) { this->invoke(e); }
   void visit(Mul_expr* e) { this->invoke(e); }

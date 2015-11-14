@@ -120,6 +120,7 @@ operator<<(std::ostream& os, Expr const& e)
 
     void operator()(Literal_expr const* e) { os << *e; }
     void operator()(Id_expr const* e) { os << *e; }
+    void operator()(Decl_expr const* e) { os << *e; }
     void operator()(Add_expr const* e) { os << *e; }
     void operator()(Sub_expr const* e) { os << *e; }
     void operator()(Mul_expr const* e) { os << *e; }
@@ -160,7 +161,15 @@ operator<<(std::ostream& os, Literal_expr const& e)
 std::ostream&
 operator<<(std::ostream& os, Id_expr const& e)
 {
-  return os << e.spelling();
+  return os << *e.symbol();
+}
+
+
+// TODO: Write out a qualified name?
+std::ostream&
+operator<<(std::ostream& os, Decl_expr const& e)
+{
+  return os << *e.name();
 }
 
 

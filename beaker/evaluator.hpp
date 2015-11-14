@@ -45,6 +45,7 @@ public:
   Value eval(Expr const*);
   Value eval(Literal_expr const*);
   Value eval(Id_expr const*);
+  Value eval(Decl_expr const*);
   Value eval(Add_expr const*);
   Value eval(Sub_expr const*);
   Value eval(Mul_expr const*);

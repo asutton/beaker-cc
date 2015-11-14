@@ -189,6 +189,7 @@ Generator::gen(Expr const* e)
     Generator& g;
     llvm::Value* operator()(Literal_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Id_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Decl_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Add_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Sub_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Mul_expr const* e) const { return g.gen(e); }
@@ -261,12 +262,16 @@ Generator::gen(Literal_expr const* e)
 }
 
 
-// Returns the value associated with the declaration.
-//
-// TODO: Do we need to do anything different for function
-// identifiers or not?
 llvm::Value*
 Generator::gen(Id_expr const* e)
+{
+  lingo_unreachable();
+}
+
+
+// Returns the value associated with the declaration.
+llvm::Value*
+Generator::gen(Decl_expr const* e)
 {
   auto const* bind = stack.lookup(e->declaration());
   llvm::Value* result = bind->second;
@@ -429,7 +434,7 @@ Generator::gen(Member_expr const* e)
   // this as the argument in a function call.
   //
   // FIXME: I would prefer not to do this...
-  Id_expr* mem = cast<Id_expr>(e->member());
+  Decl_expr* mem = cast<Decl_expr>(e->member());
   if (is<Method_decl>(mem->declaration()))
     return obj;
 

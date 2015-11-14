@@ -28,9 +28,11 @@
 using Symbol_env = Environment<Decl const*, llvm::Value*>;
 using Symbol_stack = Stack<Symbol_env>;
 
+
 // Like the symbol environment, except that all
 // type annotations are global.
 using Type_env = Environment<Decl const*, llvm::Type*>;
+
 
 // A global string table, used to unify string
 // declarations. This maps strings to global string
@@ -60,6 +62,7 @@ struct Generator
   llvm::Value* gen(Expr const*);
   llvm::Value* gen(Literal_expr const*);
   llvm::Value* gen(Id_expr const*);
+  llvm::Value* gen(Decl_expr const*);
   llvm::Value* gen(Add_expr const*);
   llvm::Value* gen(Sub_expr const*);
   llvm::Value* gen(Mul_expr const*);

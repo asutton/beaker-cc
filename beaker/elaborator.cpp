@@ -227,6 +227,7 @@ Elaborator::elaborate(Expr* e)
 
     Expr* operator()(Literal_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Id_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Decl_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Add_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Sub_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Mul_expr* e) const { return elab.elaborate(e); }
@@ -266,44 +267,43 @@ Elaborator::elaborate(Literal_expr* e)
 }
 
 
-// Elaborate an id expression. When the identifier refers
-// to an object of type T (a variable or parameter), the
-// type of the expression is T&. Otherwise, the type of the
-// expression is the type of the declaration.
+// Elaborate an id-expression that refers to a declaration
+// D. If D is an object of type T, then the type of the
+// expression is T&. If D is a function, then the type is
+// T.
 //
 // TODO: There may be some contexts in which an unresolved
 // identifier can be useful. Unfortunately, this means that
 // we have to push the handling of lookup errors up one
 // layer, unless we to precisely establish contexts where
 // such identifiers are allowed.
-//
-// TODO: If the lookup is resolved, should we actually
-// return a different kind of expression?
 Expr*
 Elaborator::elaborate(Id_expr* e)
 {
+  // Lookup the declaration for the identifier.
   Scope::Binding const* b = stack.lookup(e->symbol());
   if (!b) {
     std::stringstream ss;
     ss << "no matching declaration for '" << *e->symbol() << '\'';
     throw Lookup_error(locs.get(e), ss.str());
   }
-
-  // Annotate the expression with its declaration.
   Decl* d = b->second;
-  e->declaration(d);
 
-  // If the referenced declaration is a variable of
-  // type T, then the type is T&. Otherwise, it is
-  // just T.
-  //
-  // TODO: Why isn't a function identifier also a
-  // reference.
+  // An identifier always refers to an object, so
+  // these expressions have reference type.
   Type const* t = d->type();
-  if (defines_object(d) && !is<Reference_type>(t))
+  if (is_object(d))
     t = t->ref();
-  e->type_ = t;
 
+  // Return a new expression.
+  return new Decl_expr(t, d);
+}
+
+
+// This deoes not require elaboration.
+Expr*
+Elaborator::elaborate(Decl_expr* e)
+{
   return e;
 }
 
@@ -693,8 +693,12 @@ Elaborator::elaborate(Member_expr* e)
   for (Decl* d1 : d->members())
     stack.top().bind(d1->name(), d1);
 
-  // Elaborate the member expression.
-  Id_expr* e2 = as<Id_expr>(elaborate(e->member()));
+  // Elaborate the member expression. This
+  // must resolve to a declaration.
+  //
+  // TODO: I think that this could resolve to an
+  // overload set.
+  Decl_expr* e2 = as<Decl_expr>(elaborate(e->member()));
   if (!e2) {
     std::stringstream ss;
     ss << "invalid member reference";

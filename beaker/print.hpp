@@ -22,6 +22,7 @@ std::ostream& operator<<(std::ostream&, Record_type const&);
 std::ostream& operator<<(std::ostream&, Expr const&);
 std::ostream& operator<<(std::ostream&, Literal_expr const&);
 std::ostream& operator<<(std::ostream&, Id_expr const&);
+std::ostream& operator<<(std::ostream&, Decl_expr const&);
 std::ostream& operator<<(std::ostream&, Add_expr const&);
 std::ostream& operator<<(std::ostream&, Sub_expr const&);
 std::ostream& operator<<(std::ostream&, Mul_expr const&);
