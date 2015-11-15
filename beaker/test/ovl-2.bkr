@@ -12,5 +12,5 @@ struct S
 def main() -> int
 {
   var s : S;
-  s.x;
+  s.f();
 }

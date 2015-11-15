@@ -64,9 +64,19 @@ Method_expr::method() const
 bool
 is_callable(Expr const* e)
 {
+  // An overload is callable iff its members
+  // are functions.
   if (Overload_expr const* ovl = as<Overload_expr>(e)) {
     Decl const* d = ovl->declarations().front();
     return is<Function_type>(d->type());
   }
+
+  // An unresolved dot expression is callable if
+  // its member is callable.
+  else if (Dot_expr const* dot = as<Dot_expr>(e)) {
+    return is_callable(dot->member());
+  }
+
+  // Objects with function type are callable.
   return is<Function_type>(e->type());
 }

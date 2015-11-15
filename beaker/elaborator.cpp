@@ -732,14 +732,26 @@ Elaborator::elaborate(Call_expr* e)
   if (!is_callable(f))
     throw Type_error({}, "object is not callable");
 
+  // NOTE: There are four cases to handle:
+  //
+  //    1. The target resolved to a single declaration
+  //      a. f names a function decl (fn)
+  //      b. f names a method decl (x.fn)
+  //    2. The target resolved to an overload set
+  //      a. f names an overload set ({f1, f2, f3})
+  //      b. f is a dot whose member is a set (x.{f1, f2, f3})
+
+  // FIXME: For cases 1b and 2b, adjust the arguments
+  // so that x is the first argument. And then find
+  // either the function declaration (1ab) or the set of
+  // declarations as per 2ab and perform resolution.
+
   // Handle the case where f is an overload set.
   //
   // TODO: The parameter checking code needs to be
   // shared by overload resolution and by single
   // function calls.
   if (Overload_expr* ovl = as<Overload_expr>(f)) {
-    for (Decl* d : ovl->declarations())
-      std::cout << "HERE: " << *d->name() << '\n';
     lingo_unreachable();
   } else {
     // If the target is a member expression of
@@ -820,25 +832,33 @@ Elaborator::elaborate(Dot_expr* e)
   for (Decl* m : rec->members())
     redeclare(m);
 
-  // Elaborate the member expression. This must
-  // resolve to a decl-expr.
-  //
-  // TODO: I think that this could resolve to an
-  // overload set, not a declaration.
-  Decl_expr* e2 = as<Decl_expr>(elaborate(e->member()));
-  if (!e2) {
-    std::stringstream ss;
-    ss << "invalid member reference";
-    throw Type_error({}, ss.str());
-  }
-  Decl* d = e2->declaration();
+  // Elaborate the member expression.
+  Expr* e2 = elaborate(e->member());
 
-  // Create a specific kind of dot expression.
-  if (Field_decl* f = as<Field_decl>(d))
-    return new Field_expr(e1, e2, f);
-  if (Method_decl* m = as<Method_decl>(d))
-    return new Method_expr(e1, e2, m);
-  lingo_unreachable();
+  // If we could resolve the member, then create a
+  // specialized dot expression based on the resolution.
+  if (Decl_expr* decl = as<Decl_expr>(e2)) {
+    Decl*d = decl->declaration();
+    if (Field_decl* f = as<Field_decl>(d))
+      return new Field_expr(e1, e2, f);
+    if (Method_decl* m = as<Method_decl>(d))
+      return new Method_expr(e1, e2, m);
+  }
+
+  // Otherwise, if the name resolves to a set of
+  // declarations, then the declaration is still
+  // unresolved. Update the expression with the
+  // overload set and defer until we find a function
+  // call.
+  else if (Overload_expr* ovl = as<Overload_expr>(e2)) {
+    e->second = ovl;
+    return e;
+  }
+
+  // Otherwise, this is an error.
+  std::stringstream ss;
+  ss << "invalid member reference";
+  throw Type_error({}, ss.str());
 }
 
 
