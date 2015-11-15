@@ -452,10 +452,10 @@ struct Block_conv : Conv
 // elaboration.
 //
 // FIXME: An initializer is a syntactic placeholder for
-// a constructor that is evaluated on uninitialized memory. 
+// a constructor that is evaluated on uninitialized memory.
 // This means that during elaboration. For example,
 // default initalization for an POD aggregate should
-// select a memset intrinsic. 
+// select a memset intrinsic.
 //
 // TODO: Initializers should probably be bound to
 // a reference to the object created, not the

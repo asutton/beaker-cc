@@ -14,6 +14,7 @@
 #include "llvm/IR/Module.h"
 
 #include <iostream>
+#include <stack>
 
 
 // -------------------------------------------------------------------------- //
@@ -319,14 +320,14 @@ llvm::Value*
 Generator::gen(Neg_expr const* e)
 {
   llvm::Value* op = gen(e->operand());
-  return build.CreateNSWNeg(op)
+  return build.CreateNSWNeg(op);
 }
 
 
 llvm::Value*
 Generator::gen(Pos_expr const* e)
 {
-  return get(e->operand());
+  return gen(e->operand());
 }
 
 
@@ -405,8 +406,8 @@ Generator::gen(Or_expr const* e)
 llvm::Value*
 Generator::gen(Not_expr const* e)
 {
-  llvm:Value* op = gen(e->operand());
-  return build.CreateNot(op)
+  llvm::Value* op = gen(e->operand());
+  return build.CreateNot(op);
 }
 
 
@@ -543,7 +544,7 @@ Generator::gen(Stmt const* s)
 void
 Generator::gen(Empty_stmt const* s)
 {
-    return
+    return;
 }
 
 
@@ -586,35 +587,162 @@ Generator::gen(Return_stmt const* s)
 void
 Generator::gen(If_then_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  // Generate the condition value
+  llvm::Value* condition = gen(s->condition());
+  // Create an Integer comparison between condition value (0 or 1) and true (1)
+  condition = build.CreateICmpEQ(condition, build.getTrue());
+
+  // Create the blocks
+  llvm::BasicBlock* then_block = llvm::BasicBlock::Create(cxt, "then", fn);
+  llvm::BasicBlock* merge_block = llvm::BasicBlock::Create(cxt, "merge");
+
+  // Create branch on condition to then or merge
+  // br i1 %condition, label %then, label %merge
+  build.CreateCondBr(condition, then_block, merge_block);
+
+  // Set insert point of builder to the then block
+  build.SetInsertPoint(then_block);
+  // Generate the expressions in the the then block
+  gen(s->body());
+  // Branch to to label merge
+  // br label %merge
+  build.CreateBr(merge_block);
+
+  // Push the merge block onto the function's BlockList
+  fn->getBasicBlockList().push_back(merge_block);
+  // Set the insertion point for more stmts at the merge_block
+  build.SetInsertPoint(merge_block);
 }
 
 
 void
 Generator::gen(If_else_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  // Create the condition Value
+  llvm::Value* condition = gen(s->condition());
+  // Create the comparison to true
+  condition = build.CreateICmpEQ(condition, build.getTrue());
+
+  // Create all the blocks
+  llvm::BasicBlock* then_block = llvm::BasicBlock::Create(cxt, "then", fn);
+  llvm::BasicBlock* else_block = llvm::BasicBlock::Create(cxt, "else");
+  llvm::BasicBlock* merge_block = llvm::BasicBlock::Create(cxt, "merge");
+
+  // br i1 %condition, label %then, label %else
+  build.CreateCondBr(condition, then_block, else_block);
+
+  // then:
+  build.SetInsertPoint(then_block);
+  gen(s->true_branch());
+  build.CreateBr(merge_block);
+
+  // I don't really know why I need to do this, but the tutorial claimed it was important
+  then_block = build.GetInsertBlock();
+
+  // else:
+  fn->getBasicBlockList().push_back(else_block);
+  build.SetInsertPoint(else_block);
+  gen(s->false_branch());
+  build.CreateBr(merge_block);
+
+  else_block = build.GetInsertBlock();
+
+  // let insert be at the merge block
+  fn->getBasicBlockList().push_back(merge_block);
+  build.SetInsertPoint(merge_block);
+
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// Loop stacks for break and continue /////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// for break //////////////////////////////////////////////////////////////////
+std::stack<llvm::BasicBlock*> break_stack;
+
+// for continue ///////////////////////////////////////////////////////////////
+std::stack<llvm::BasicBlock*> continue_stack;
+
+
+// The while llop will look something like This
+// enter loop:
+//   br label %start
+
+// start:
+//   %condition = <condition is true>
+//   br i1 %condition, label %body, label %merge
+
+// body:
+//
 
 void
 Generator::gen(While_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+
+  // Generate the condition boolean value
+  llvm::Value* condition = gen(s->condition());
+  // Generate a comparison between
+  condition = build.CreateICmpEQ(condition, build.getTrue());
+
+  // Generate the blocks; in this case we need a start block for condition checking
+  llvm::BasicBlock* start_block = llvm::BasicBlock::Create(cxt, "start", fn);
+  llvm::BasicBlock* body_block = llvm::BasicBlock::Create(cxt, "body");
+  llvm::BasicBlock* merge_block = llvm::BasicBlock::Create(cxt, "merge");
+
+  // In order to implement break and continue statements we need two stacks
+  // one for break and one for continue
+  continue_stack.push(start_block);
+  break_stack.push(merge_block);
+
+  // branch to the start of the loop
+  build.CreateBr(start_block);
+  // start inserting at start block
+  build.SetInsertPoint(start_block);
+  build.CreateCondBr(condition, body_block, merge_block);
+  start_block = build.GetInsertBlock();
+
+
+  fn->getBasicBlockList().push_back(body_block);
+  build.SetInsertPoint(body_block);
+  gen(s->body());
+  build.CreateBr(start_block);
+  body_block = build.GetInsertBlock();
+
+  //Here we need to pop the start and merge blocks off the stack
+  // If they haven't been already
+  if(continue_stack.top() == start_block)
+    continue_stack.pop();
+  if(break_stack.top() == merge_block)
+    break_stack.pop();
+    
+  fn->getBasicBlockList().push_back(merge_block);
+  build.SetInsertPoint(merge_block);
 }
+
+
+// The reason we use a stack is to handle nested loops correctly.
+// We want a continue statement inside a nested loop to continue the
+// inner loop, not the outer, likewise it would be good for break statements
+// within a nested loops to break only the inner loop and not the outer loop.
+// Using stacks to push and pop the blocks within the loop we can be sure
+// that the statements will branch to the correct block in our llvm assembly
+// How this works is more clear after seeing how break and continue are written
 
 
 void
 Generator::gen(Break_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  llvm::BasicBlock* merge_block = break_stack.top();
+  break_stack.pop();
+  build.CreateBr(merge_block);
 }
 
 
 void
 Generator::gen(Continue_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  llvm::BasicBlock* start_block = continue_stack.top();
+  build.CreateBr(start_block);
 }
 
 
