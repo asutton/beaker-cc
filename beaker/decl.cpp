@@ -19,13 +19,6 @@ Function_decl::return_type() const
 }
 
 
-Record_decl const*
-Field_decl::context() const
-{
-  return cast<Record_decl>(context());
-}
-
-
 int
 Field_decl::index() const
 {

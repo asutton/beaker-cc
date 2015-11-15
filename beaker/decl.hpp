@@ -166,8 +166,9 @@ struct Field_decl : Decl
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
 
-  Record_decl const* context() const;
-  int                index() const;
+  Record_decl const* context() const { return cast<Record_decl>(cxt_); }
+
+  int index() const;
 };
 
 
@@ -180,6 +181,8 @@ struct Method_decl : Function_decl
 
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
+
+  Record_decl const* context() const { return cast<Record_decl>(cxt_); }
 };
 
 
