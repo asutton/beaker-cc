@@ -10,6 +10,7 @@
 #include "evaluator.hpp"
 #include "error.hpp"
 
+#include <algorithm>
 #include <iostream>
 
 
@@ -681,6 +682,35 @@ Elaborator::elaborate(Not_expr* e)
 }
 
 
+// Diagnose failures of argument conversion for
+// function calls.
+void
+Elaborator::on_call_error(Expr_seq const& conv,
+                          Expr_seq const& args,
+                          Type_seq const& parms)
+{
+  if (args.size() < parms.size())
+    throw Type_error({}, "too few arguments");
+  if (parms.size() < args.size())
+    throw Type_error({}, "too many arguments");
+
+  for (std::size_t i = 0; i < parms.size(); ++i) {
+    Expr const* c = conv[i];
+    if (!c) {
+      Expr const* a = args[i];
+      Type const* p = parms[i];
+      String s = format(
+        "type mismatch in argument {} (expected {} but got {})",
+        i + 1,
+        *a->type(),
+        *p);
+
+      // FIXME: Don't fail on the first error.
+      throw Type_error({}, s);
+    }
+  }
+}
+
 // The target function operand is converted to
 // a value and shall have funtion type.
 //
@@ -708,70 +738,45 @@ Elaborator::elaborate(Call_expr* e)
   // shared by overload resolution and by single
   // function calls.
   if (Overload_expr* ovl = as<Overload_expr>(f)) {
-    lingo_unimplemented();
+    for (Decl* d : ovl->declarations())
+      std::cout << "HERE: " << *d->name() << '\n';
+    lingo_unreachable();
+  } else {
+    // If the target is a member expression of
+    // the form x.f, then adjust the call so
+    // that it is of the form f(x, args)).
+    Function_type const* t;
+    Expr_seq& args = e->arguments();
+    if (Method_expr* m = as<Method_expr>(f)) {
+      // Build this.
+      Expr* self = m->container();
+      args.insert(args.begin(), self);
 
-    // if (!f) {
-    //   std::stringstream ss;
-    //   ss << "cannot resolve call to '" << *f->name() << '\'';
-    //   throw Type_error({}, ss.str());
-    // }
+      // Adjust the call.
+      Method_decl* fn = m->method();
+      t = fn->type();
+      f = new Decl_expr(t, fn);
+    } else {
+      t = cast<Function_type>(f->type());
+    }
+
+    Type_seq const& parms = t->parameter_types();
+    Expr_seq conv = convert(args, parms);
+    if (std::any_of(conv.begin(), conv.end(), [](Expr const* p) { return !p; }))
+      on_call_error(conv, args, parms);
+
+    // Update the expression with the return type
+    // of the named function.
+    e->type_ = t->return_type();
+    e->first = f;
   }
-
-  // Grab the function type.
-  Function_type const* t = cast<Function_type>(f->type());
-
-  // If the target is a member expression, then
-  // adjust the arguments to supply a first object
-  // and update the function pointer to the actual
-  // target.
-  Expr_seq& args = e->arguments();
-  if (Method_expr* m = as<Method_expr>(f)) {
-    Expr* self = m->container();
-    args.insert(args.begin(), self);
-
-    Method_decl* fn = m->method();
-    f = new Decl_expr(fn->type(), fn);
-  }
-
-  // TODO: If the function is an overload set, then
-  // we need to do overload resolution.
 
   // Guarantee that f is an expression that refers
   // to a declaration.
   lingo_assert(is<Decl_expr>(f) &&
                is<Function_decl>(cast<Decl_expr>(f)->declaration()));
 
-  // Check for basic function arity.
-  //
-  // TODO: Handle default arguments and variadic
-  // functions.
-  Type_seq const& parms = t->parameter_types();
-  if (args.size() < parms.size())
-    throw Type_error({}, "too few arguments");
-  if (parms.size() < args.size())
-    throw Type_error({}, "too many arguments");
-
-  // Check that each argument can be converted to each
-  // parameter. Rebuild the argument list with the
-  // converted arguments.
-  //
-  // TODO: Note that we actually perform initialization
-  // for each argument. How does that interoperate with
-  // conversions?
-  for (std::size_t i = 0; i < parms.size(); ++i) {
-    Type const* p = parms[i];
-    Expr* a = require_converted(*this, args[i], p);
-    if (!a) {
-      std::stringstream ss;
-      ss << "type mismatch in argument " << i + 1 << '\n';
-      throw Type_error({}, ss.str());
-    }
-    args[i] = a;
-  }
-
   // Update the call expression before returning.
-  e->type_ = t->return_type();
-  e->first = f;
   return e;
 }
 

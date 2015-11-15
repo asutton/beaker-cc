@@ -184,7 +184,7 @@ struct Overload_expr : Id_expr
   void accept(Mutator& v)       { v.visit(this); }
 
   Symbol const* name() const         { return ovl->name(); }
-  Overload*     declarations() const { return ovl; }
+  Overload&     declarations() const { return *ovl; }
 
   Overload* ovl;
 };

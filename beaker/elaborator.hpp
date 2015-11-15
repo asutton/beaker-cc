@@ -144,6 +144,9 @@ public:
   Overload* lookup(Symbol const*);
   Decl*     lookup_single(Symbol const*);
 
+  // Diagnostics
+  void on_call_error(Expr_seq const&, Expr_seq const&, Type_seq const&);
+
   // Found symbols.
   Function_decl* main = nullptr;
 

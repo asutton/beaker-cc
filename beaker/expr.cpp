@@ -65,7 +65,7 @@ bool
 is_callable(Expr const* e)
 {
   if (Overload_expr const* ovl = as<Overload_expr>(e)) {
-    Decl const* d = ovl->declarations()->front();
+    Decl const* d = ovl->declarations().front();
     return is<Function_type>(d->type());
   }
   return is<Function_type>(e->type());

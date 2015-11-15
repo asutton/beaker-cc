@@ -1,0 +1,16 @@
+
+struct S
+{
+  def f() -> int { return 0; }
+  def f(x : int) -> int { return 1; }
+  def f(x : int, y : int) -> int { return 2; }
+
+  x : int;
+}
+
+
+def main() -> int
+{
+  var s : S;
+  s.x;
+}
