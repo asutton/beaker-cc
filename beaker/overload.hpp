@@ -19,7 +19,5 @@ struct Overload : std::vector<Decl*>
 
 
 bool can_overload(Decl const*, Decl const*);
-Expr* resolve(Overload const*, Expr_seq const&);
-
 
 #endif

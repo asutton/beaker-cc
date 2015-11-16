@@ -23,7 +23,7 @@ int
 Field_decl::index() const
 {
   Decl_seq const& f = context()->fields();
-  for (int i = 0; i < f.size(); ++i)
+  for (std::size_t i = 0; i < f.size(); ++i)
     if (f[i] == this)
       return i;
   return -1;

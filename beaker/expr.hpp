@@ -390,6 +390,11 @@ struct Call_expr : Expr
     : first(f), second(a)
   { }
 
+    Call_expr(Type const* t, Expr* f, Expr_seq const& a)
+    : Expr(t), first(f), second(a)
+  { }
+
+
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
 

@@ -16,5 +16,7 @@ def f(x : bool) -> int
 
 def main() -> int
 {
-  return f();
+  f();
+  f(0);
+  f(true);
 }

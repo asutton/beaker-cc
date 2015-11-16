@@ -711,40 +711,168 @@ Elaborator::on_call_error(Expr_seq const& conv,
   }
 }
 
-// The target function operand is converted to
-// a value and shall have funtion type.
+
+
+// Returns a dot-expr if e is of the form x.ovl.
+// Otherwise, returns nullptr. 
+inline Dot_expr*
+as_method_overload(Dot_expr* e)
+{
+  if (is<Overload_expr>(e->member()))
+    return e;
+  return nullptr;
+}
+
+
+inline Dot_expr*
+as_method_overload(Expr* e)
+{
+  if (Dot_expr* dot = as<Dot_expr>(e))
+    return as_method_overload(dot);
+  return nullptr;
+}
+
+
+// Returns a dot-expr if e is of the form x.m or
+// x.ovl. Otherwise, returns nullptr.
+inline Dot_expr*
+as_method(Expr* e)
+{
+  if (Dot_expr* dot = as<Dot_expr>(e)) {
+    // x.y refers to a method.
+    if (Method_expr* m = as<Method_expr>(dot))
+      return m;
+
+    // x.y refers to a field.
+    if (is<Field_expr>(dot))
+      return nullptr;
+
+    // By elimination of cases, it must be a
+    // method overload.
+    lingo_assert(as_method_overload(dot));
+    return dot;
+  }
+  return nullptr;
+}
+
+
+Expr*
+Elaborator::call(Function_decl* d, Expr_seq const& args)
+{
+  Function_type const* t = d->type();
+
+  // Perform argument conversion.
+  Type_seq const& parms = t->parameter_types();
+  Expr_seq conv = convert(args, parms);
+  if (std::any_of(conv.begin(), conv.end(), [](Expr const* p) { return !p; }))
+    return nullptr;
+
+  // Update the expression with the return type
+  // of the named function.
+  Expr* ref = new Decl_expr(t, d);
+  return new Call_expr(t->return_type(), ref, args);
+}
+
+
+Expr*
+Elaborator::resolve(Overload& ovl, Expr_seq const& args)
+{
+  // Build a set of call expressions to the
+  // declarations in the overload set.
+  Expr_seq cands;
+  cands.reserve(ovl.size());
+  for (Decl* d : ovl) {
+    if (Expr* e = call(cast<Function_decl>(d), args)) 
+      cands.push_back(e);
+  }
+
+  // FIXME: If the call is to a method, then write 
+  // out the method format for the call. Same as below.
+  if (cands.empty()) {
+    String msg = format("no matching function for {}", *ovl.name());
+    throw Type_error({}, msg);
+  }
+
+  // TODO: Select the best candidate.
+  if (cands.size() > 1) {
+    String msg = format("call to function '{}' is ambiguous", *ovl.name());
+  }
+
+  return cands.front();
+}
+
+
+
+// Resolve a function call. The target of a function 
+// may be one of the following:
 //
-// If the target is a method-expr of the form
+//    - a function f(args...)
+//    - a function overload set ovl(args...)
+//    - a method x.m(args...)
+//    - a method overload set x.ovl(args...)
 //
-//    r.m(args)
+// In the case where the target is a method or
+// member overload set of the form x.y(args...)
+// the containing object x is added to the front
+// of the argument list, and the funtion target
+// is simply the method or overlaod set. That is,
+// the following transformation is made:
 //
-// then rewrite the call as m(r, args).
+//    x.y(args...) ~> y(x.args...)
 //
-// TODO: Allow calls of the form f(x) to resolve
-// to calls of the form x.f(). See the current
-// C++ proposals for semantics.
+// Let y be the new function target. 
+//
+// If the function target is an overload set, select
+// a function by overload resolution.
+//
+// TODO: If we support function objects by way of
+// overloading the call operator, then the target
+// could be an object or field of class type with
+// one or more member call operators.
+//
+// TODO: Would it be better to differentiate 
+// function and method call and have those dealt 
+// with separately on the back end(s)?
+//
+// TODO: Support the lookup of member funtions using
+// free-function notation:
+//
+//    f(x, args...) ~> x.f(args...)
+//
+// Applying this transformation might just entail
+// the creation of a fake expression and its elaboration
+// to resolve a method or overload set.
 Expr*
 Elaborator::elaborate(Call_expr* e)
 {
   // Apply lvalue to rvalue conversion and ensure that
-  // the target has function type.
+  // the target (ultimately) has function type.
   Expr* f = require_value(*this, e->target());
   if (!is_callable(f))
     throw Type_error({}, "object is not callable");
 
-  // NOTE: There are four cases to handle:
-  //
-  //    1. The target resolved to a single declaration
-  //      a. f names a function decl (fn)
-  //      b. f names a method decl (x.fn)
-  //    2. The target resolved to an overload set
-  //      a. f names an overload set ({f1, f2, f3})
-  //      b. f is a dot whose member is a set (x.{f1, f2, f3})
+  // Elaborate the arguments (in place) prior to 
+  // conversion. Do it now so we don't re-elaborate
+  // arguments during overload resolution.
+  Expr_seq& args = e->arguments();
+  for (Expr*& a : args)
+    a = elaborate(a);
 
-  // FIXME: For cases 1b and 2b, adjust the arguments
-  // so that x is the first argument. And then find
-  // either the function declaration (1ab) or the set of
-  // declarations as per 2ab and perform resolution.
+  // If the target is of the form x.m or x.ovl,
+  // insert x into the argument list and update
+  // the funtion target.
+  if (Dot_expr* dot = as_method(f)) {
+      // Build the "this" argument.
+      Expr* self = dot->container();
+      args.insert(args.begin(), self);
+
+      // Adjust the function target.
+      f = dot->member();
+  }
+
+  // Now, f is either a funtion/method or
+  // an function/method overload set.
+
 
   // Handle the case where f is an overload set.
   //
@@ -752,26 +880,12 @@ Elaborator::elaborate(Call_expr* e)
   // shared by overload resolution and by single
   // function calls.
   if (Overload_expr* ovl = as<Overload_expr>(f)) {
-    lingo_unreachable();
+    return resolve(ovl->declarations(), args);
   } else {
-    // If the target is a member expression of
-    // the form x.f, then adjust the call so
-    // that it is of the form f(x, args)).
-    Function_type const* t;
-    Expr_seq& args = e->arguments();
-    if (Method_expr* m = as<Method_expr>(f)) {
-      // Build this.
-      Expr* self = m->container();
-      args.insert(args.begin(), self);
+    // If it's not an overload set, it has function type.
+    Function_type const* t = cast<Function_type>(f->type());
 
-      // Adjust the call.
-      Method_decl* fn = m->method();
-      t = fn->type();
-      f = new Decl_expr(t, fn);
-    } else {
-      t = cast<Function_type>(f->type());
-    }
-
+    // Perform argument conversion.
     Type_seq const& parms = t->parameter_types();
     Expr_seq conv = convert(args, parms);
     if (std::any_of(conv.begin(), conv.end(), [](Expr const* p) { return !p; }))
@@ -1206,7 +1320,7 @@ struct Elab_decl_fn
   Elaborator& elab;
 
   template<typename T>
-  Decl* operator()(T*) const { lingo_unreachable(); }
+  [[noreturn]] Decl* operator()(T*) const { lingo_unreachable(); }
 
   // NOTE: Add overloads in order to support nested
   // declarations. Note that supporting nested types
@@ -1279,7 +1393,7 @@ struct Elab_def_fn
   Elaborator& elab;
 
   template<typename T>
-  Decl* operator()(T*) const { lingo_unreachable(); }
+  [[noreturn]] Decl* operator()(T*) const { lingo_unreachable(); }
 
   Decl* operator()(Field_decl* d) const { return elab.elaborate_def(d); }
   Decl* operator()(Method_decl* d) const { return elab.elaborate_def(d); }

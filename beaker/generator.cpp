@@ -871,8 +871,8 @@ Generator::gen(Record_decl const* d)
   types.bind(d, t);
 
   // Now, generate code for all other members.
-  for (Decl const* d : d->members())
-    gen(d);
+  for (Decl const* m : d->members())
+    gen(m);
 }
 
 
@@ -880,6 +880,7 @@ void
 Generator::gen(Field_decl const* d)
 {
   // NOTE: We should never actually get here.
+  lingo_unreachable();
 }
 
 

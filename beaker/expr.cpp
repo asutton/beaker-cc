@@ -73,9 +73,8 @@ is_callable(Expr const* e)
 
   // An unresolved dot expression is callable if
   // its member is callable.
-  else if (Dot_expr const* dot = as<Dot_expr>(e)) {
+  else if (Dot_expr const* dot = as<Dot_expr>(e))
     return is_callable(dot->member());
-  }
 
   // Objects with function type are callable.
   return is<Function_type>(e->type());

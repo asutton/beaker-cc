@@ -141,6 +141,9 @@ public:
   void redeclare(Decl*);
   void overload(Overload&, Decl*);
 
+  Expr* call(Function_decl*, Expr_seq const&);
+  Expr* resolve(Overload&, Expr_seq const&);
+
   Overload* lookup(Symbol const*);
   Decl*     lookup_single(Symbol const*);
 
