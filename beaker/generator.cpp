@@ -593,8 +593,8 @@ Generator::gen(If_then_stmt const* s)
   condition = build.CreateICmpEQ(condition, build.getTrue());
 
   // Create the blocks
-  llvm::BasicBlock* then_block = llvm::BasicBlock::Create(cxt, "then", fn);
-  llvm::BasicBlock* merge_block = llvm::BasicBlock::Create(cxt, "merge");
+  llvm::BasicBlock* then_block = llvm::BasicBlock::Create(cxt, "if.then", fn);
+  llvm::BasicBlock* merge_block = llvm::BasicBlock::Create(cxt, "if.merge");
 
   // Create branch on condition to then or merge
   // br i1 %condition, label %then, label %merge
@@ -624,9 +624,9 @@ Generator::gen(If_else_stmt const* s)
   condition = build.CreateICmpEQ(condition, build.getTrue());
 
   // Create all the blocks
-  llvm::BasicBlock* then_block = llvm::BasicBlock::Create(cxt, "then", fn);
-  llvm::BasicBlock* else_block = llvm::BasicBlock::Create(cxt, "else");
-  llvm::BasicBlock* merge_block = llvm::BasicBlock::Create(cxt, "merge");
+  llvm::BasicBlock* then_block = llvm::BasicBlock::Create(cxt, "if.then", fn);
+  llvm::BasicBlock* else_block = llvm::BasicBlock::Create(cxt, "if.else");
+  llvm::BasicBlock* merge_block = llvm::BasicBlock::Create(cxt, "if.merge");
 
   // br i1 %condition, label %then, label %else
   build.CreateCondBr(condition, then_block, else_block);
@@ -678,16 +678,10 @@ std::stack<llvm::BasicBlock*> continue_stack;
 void
 Generator::gen(While_stmt const* s)
 {
-
-  // Generate the condition boolean value
-  llvm::Value* condition = gen(s->condition());
-  // Generate a comparison between
-  condition = build.CreateICmpEQ(condition, build.getTrue());
-
   // Generate the blocks; in this case we need a start block for condition checking
-  llvm::BasicBlock* start_block = llvm::BasicBlock::Create(cxt, "start", fn);
-  llvm::BasicBlock* body_block = llvm::BasicBlock::Create(cxt, "body");
-  llvm::BasicBlock* merge_block = llvm::BasicBlock::Create(cxt, "merge");
+  llvm::BasicBlock* start_block = llvm::BasicBlock::Create(cxt, "while.start", fn);
+  llvm::BasicBlock* body_block = llvm::BasicBlock::Create(cxt, "while.body");
+  llvm::BasicBlock* merge_block = llvm::BasicBlock::Create(cxt, "while.merge");
 
   // In order to implement break and continue statements we need two stacks
   // one for break and one for continue
@@ -698,6 +692,10 @@ Generator::gen(While_stmt const* s)
   build.CreateBr(start_block);
   // start inserting at start block
   build.SetInsertPoint(start_block);
+  // Generate the condition boolean value
+  llvm::Value* condition = gen(s->condition());
+  // Generate a comparison between
+  //condition = build.CreateICmpEQ(condition, build.getTrue());
   build.CreateCondBr(condition, body_block, merge_block);
   start_block = build.GetInsertBlock();
 
@@ -710,11 +708,11 @@ Generator::gen(While_stmt const* s)
 
   //Here we need to pop the start and merge blocks off the stack
   // If they haven't been already
-  if(continue_stack.top() == start_block)
-    continue_stack.pop();
-  if(break_stack.top() == merge_block)
-    break_stack.pop();
-    
+  // if(continue_stack.top() == start_block)
+  //   continue_stack.pop();
+  // if(break_stack.top() == merge_block)
+  //   break_stack.pop();
+
   fn->getBasicBlockList().push_back(merge_block);
   build.SetInsertPoint(merge_block);
 }
@@ -735,14 +733,20 @@ Generator::gen(Break_stmt const* s)
   llvm::BasicBlock* merge_block = break_stack.top();
   break_stack.pop();
   build.CreateBr(merge_block);
-}
+  llvm::BasicBlock* no_reach = llvm::BasicBlock::Create(cxt, "break.unreachable");
+  fn->getBasicBlockList().push_back(no_reach);
+  build.SetInsertPoint(no_reach);
 
+}
 
 void
 Generator::gen(Continue_stmt const* s)
 {
   llvm::BasicBlock* start_block = continue_stack.top();
   build.CreateBr(start_block);
+  llvm::BasicBlock* no_reach = llvm::BasicBlock::Create(cxt, "continue.unreachable");
+  fn->getBasicBlockList().push_back(no_reach);
+  build.SetInsertPoint(no_reach);
 }
 
 
