@@ -6,6 +6,7 @@
 #include "expr.hpp"
 #include "stmt.hpp"
 #include "decl.hpp"
+#include "mangle.hpp"
 #include "evaluator.hpp"
 
 #include "llvm/IR/Type.h"
@@ -30,23 +31,13 @@
 //
 // NOTE: Currently, these are the same. However, these
 // differ be as Beaker evolves.
-//
-// TODO: Factor name mangling into a separate module.
-// This is going to get big.
 String
 Generator::get_name(Decl const* d)
 {
   if (d->is_foreign())
     return d->name()->spelling();
-
-  // Generate the beaker encoding of the symbol.
-  if (is<Method_decl>(d)) {
-    // TODO: Itanium ABI?
-    std::stringstream ss;
-    ss << *d->context()->name() << '.' << *d->name();
-    return ss.str();
-  }
-  return d->name()->spelling();
+  else
+    return mangle(d);
 }
 
 

@@ -746,10 +746,6 @@ Elaborator::call(Function_decl* d, Expr_seq const& args)
 Expr*
 Elaborator::resolve(Overload_expr* ovl, Expr_seq const& args)
 {
-  for (Expr const* a : args)
-    std::cout << "ARG: " << type_str(*a) << '\n';
-    // std::cout << "ARG: " << type_str(*a) << ' ' << *a->type() << '\n';
-
   // Build a set of call expressions to the
   // declarations in the overload set.
   Expr_seq cands;
@@ -896,7 +892,6 @@ Elaborator::elaborate(Dot_expr* e)
     ss << "cannot access a member of a non-object";
     throw Type_error({}, ss.str());
   }
-  std::cout << "TEST: " << type_str(*e1) << ' ' << *e1 << '\n';
 
   // Get the non-reference type of the outer
   // object so we can perform lookups.
@@ -1185,10 +1180,17 @@ Elaborator::elaborate(Function_decl* d)
 
   // Remember if we've seen a function named main().
   //
-  // FIXME: This is dumb. We should do this elsewhere
-  // in the interpreter.
-  if (d->name()->spelling() == "main")
+  // FIXME: This seems dumb. Is there a better way
+  // of handling the discovery and elaboration of
+  // main?
+  if (d->name() == syms.get("main")) {
     main = d;
+
+    // Ensure that main has foreign linkage.
+    d->spec_ |= foreign_spec;
+
+    // TODO: Check argument tpypes 
+  }
 
   // Enter the function scope and declare all
   // of the parameters (by way of elaboration).

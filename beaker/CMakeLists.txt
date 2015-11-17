@@ -29,6 +29,7 @@ add_library(beaker STATIC
   overload.cpp
   elaborator.cpp
   evaluator.cpp
+  mangle.cpp
   generator.cpp
 )
 

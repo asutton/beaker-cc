@@ -14,4 +14,5 @@ def main() -> int
   var s : S;
   s.f();
   s.f(0);
+  return 0;
 }
