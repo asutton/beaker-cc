@@ -106,13 +106,13 @@ public:
   Expr* call(Function_decl*, Expr_seq const&);
   Expr* resolve(Overload_expr*, Expr_seq const&);
 
-  Overload* lookup(Symbol const*);
-  Decl*     lookup_single(Symbol const*);
+  Overload* unqualified_lookup(Symbol const*);
+  Overload* qualified_lookup(Scope*, Symbol const*);
 
   // Diagnostics
   void on_call_error(Expr_seq const&, Expr_seq const&, Type_seq const&);
-  void locate(void*, Location);
-  Location locate(void*);
+  void locate(void const*, Location);
+  Location locate(void const*);
 
   // Found symbols.
   Function_decl* main = nullptr;
@@ -131,14 +131,14 @@ Elaborator::Elaborator(Location_map& loc, Symbol_table& s)
 
 
 inline void 
-Elaborator::locate(void* p, Location l)
+Elaborator::locate(void const* p, Location l)
 {
   locs.emplace(p, l);
 }
 
 
 inline Location 
-Elaborator::locate(void* p)
+Elaborator::locate(void const* p)
 {
   auto iter = locs.find(p);
   if (iter != locs.end())

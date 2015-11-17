@@ -84,26 +84,29 @@ Elaborator::redeclare(Decl* d)
 }
 
 
+// Perform lookup of an unqualified identifier. This
+// will search enclosing scopes for the innermost
+// binding of the identifier.
 Overload*
-Elaborator::lookup(Symbol const* sym)
+Elaborator::unqualified_lookup(Symbol const* sym)
 {
-  Scope::Binding* bind = stack.lookup(sym);
-  if (bind)
+  if (Scope::Binding* bind = stack.lookup(sym))
     return &bind->second;
   else
     return nullptr;
 }
 
 
-Decl*
-Elaborator::lookup_single(Symbol const* sym)
+// Perform a qualified lookup of a name in the given
+// scope. This searches only that scope for a binding 
+// for the identifier.
+Overload*
+Elaborator::qualified_lookup(Scope* s, Symbol const* sym)
 {
-  Overload* ovl = lookup(sym);
-  if (ovl) {
-    lingo_assert(ovl->size() == 1);
-    return ovl->front();
-  }
-  return nullptr;
+  if (Scope::Binding* bind = s->lookup(sym))
+    return &bind->second;
+  else
+    return nullptr;
 }
 
 
@@ -141,21 +144,27 @@ Elaborator::elaborate(Type const* t)
 Type const*
 Elaborator::elaborate(Id_type const* t)
 {
-  Decl* d = lookup_single(t->symbol());
-  if (!d) {
-    std::stringstream ss;
-    ss << "no matching declaration for '" << *t->symbol() << '\'';
-    throw Lookup_error(locs.get(t), ss.str());
+  // Perform unqualified lookup.
+  Overload* ovl = unqualified_lookup(t->symbol());
+  if (!ovl) {
+    String msg = format("no matching declaration for '{}'", *t);
+    throw Lookup_error(locate(t), msg);
+  }
+
+  // We can't currently overload types, so this could 
+  // only mean that we found a funtion overload set.
+  if (ovl->size() > 1) {
+    String msg = format("'{}' does not name a type", *t);
+    throw Lookup_error(locate(t), msg);
   }
 
   // Determine if the name is a type declaration.
-  if (Record_decl* r = as<Record_decl>(d)) {
+  Decl* d = ovl->front();
+  if (Record_decl* r = as<Record_decl>(d))
     return get_record_type(r);
-  } else {
-    std::stringstream ss;
-    ss << '\'' << *t->symbol() << "' does not name a type";
-    throw Lookup_error(locs.get(t), ss.str());
-  }
+
+  String msg = format("'{}' does not name a type", *t);
+  throw Lookup_error(locate(t), msg);
 }
 
 
@@ -308,7 +317,7 @@ Elaborator::elaborate(Id_expr* e)
   Location loc = locate(e);
 
   // Lookup the declaration for the identifier.
-  Overload* ovl = lookup(e->symbol());
+  Overload* ovl = unqualified_lookup(e->symbol());
   if (!ovl) {
     std::stringstream ss;
     ss << "no matching declaration for '" << *e->symbol() << '\'';
@@ -875,14 +884,6 @@ Elaborator::elaborate(Call_expr* e)
 
 
 // TODO: Document the semantics of member access.
-//
-// TODO: When resolved, this could actually be a
-// different kind of expression with a scope and
-// a member offset, kind of like an array index.
-// We don't need to annotate this expression with
-// the position.
-//
-// FIXME: Rewrite this.
 Expr*
 Elaborator::elaborate(Dot_expr* e)
 {
@@ -902,42 +903,46 @@ Elaborator::elaborate(Dot_expr* e)
     throw Type_error({}, ss.str());
   }
 
-  // Re-open the class scope so we can perform lookups
-  // in the usual way.
+  // We expect the member to be an unresolved id expression.
+  // If it isn't, there's not much we can do with it.
   //
-  // TODO: Factor this into a separate function.
-  Record_decl* rec = t->declaration();
-  stack.push(rec->scope());
-
-  // Elaborate the member expression.
+  // TODO: Maybe allow a literal value in this position
+  // to support tuple access?
   //
-  // FIXME: Do not elaborate the member declaration
-  // since that does unqualified lookup. We want
-  // to do member lookup.
-  Expr* e2 = elaborate(e->member());
+  //    t.0 -- get the first tuple element?
+  Expr* e2 = e->member();
+  if (!is<Id_expr>(e2)) {
+    String msg = format("invalid member '{}'", *e2);
+    throw Type_error(locate(e2), msg);
+  }
+  Id_expr* id = cast<Id_expr>(e2);
 
-  // And remove the scope.
-  stack.take();
+  // Perform qualified lookup on the member.
+  Overload* ovl = qualified_lookup(t->scope(), id->symbol());
+  if (!ovl) {
+    String msg = format("no member matching '{}'", *id);
+    throw Lookup_error(locate(id), msg);
+  }
 
-  // If we could resolve the member, then create a
-  // specialized dot expression based on the resolution.
-  if (Decl_expr* decl = as<Decl_expr>(e2)) {
-    Decl*d = decl->declaration();
+  // If we get a single declaration, return a corresponding
+  // expression.
+  if (ovl->size() == 1) {
+    Decl*d = ovl->front();
+    e2 = new Decl_expr(d->type(), d);
     if (Field_decl* f = as<Field_decl>(d))
       return new Field_expr(e1, e2, f);
     if (Method_decl* m = as<Method_decl>(d)) {
       return new Method_expr(e1, e2, m);
     }
-  }
+  } 
 
-  // Otherwise, if the name resolves to a set of
-  // declarations, then the declaration is still
-  // unresolved. Update the expression with the
-  // overload set and defer until we find a function
-  // call.
-  else if (Overload_expr* ovl = as<Overload_expr>(e2)) {
+  // Otherwise, if the name resolves to a set of declarations, 
+  // then the declaration is still unresolved. Update the 
+  // expression with the overload set and defer until we find 
+  // a function call.
+  else {
     e->first = e1;
-    e->second = ovl;
+    e->second = new Overload_expr(ovl);
     return e;
   }
 

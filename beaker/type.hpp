@@ -5,6 +5,7 @@
 #define BEAKER_TYPE_HPP
 
 #include "prelude.hpp"
+#include "scope.hpp"
 
 
 // The Type class represents the set of all types in the
@@ -17,7 +18,7 @@
 //          t[n]                -- array types
 //          t[]                 -- block types
 //          ref t               -- reference types
-//          struct { f* }       -- field types
+//          struct n { f* }     -- field types
 //
 // Note that types are not mutable. Once created, a type
 // cannot be changed. The reason for this is that we
@@ -180,6 +181,7 @@ struct Record_type : Type
   void accept(Visitor& v) const { v.visit(this); };
 
   Record_decl* declaration() const;
+  Scope*       scope() const;
 
   Decl* decl_;
 };
