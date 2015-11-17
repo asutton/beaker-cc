@@ -25,6 +25,7 @@ add_library(beaker STATIC
   lexer.cpp
   parser.cpp
   environment.cpp
+  scope.cpp
   overload.cpp
   elaborator.cpp
   evaluator.cpp

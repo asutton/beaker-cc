@@ -1,3 +1,5 @@
+// Copyright (c) 2015 Andrew Sutton
+// All rights reserved
 
 #include "generator.hpp"
 #include "type.hpp"
@@ -41,7 +43,7 @@ Generator::get_name(Decl const* d)
   if (is<Method_decl>(d)) {
     // TODO: Itanium ABI?
     std::stringstream ss;
-    ss << *d->context()->name() << '_' << *d->name();
+    ss << *d->context()->name() << '.' << *d->name();
     return ss.str();
   }
   return d->name()->spelling();
