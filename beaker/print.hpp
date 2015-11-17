@@ -50,5 +50,14 @@ std::ostream& operator<<(std::ostream&, Default_init const&);
 std::ostream& operator<<(std::ostream&, Copy_init const&);
 std::ostream& operator<<(std::ostream&, Reference_init const&);
 
+std::ostream& operator<<(std::ostream&, Decl const&);
+std::ostream& operator<<(std::ostream&, Variable_decl const&);
+std::ostream& operator<<(std::ostream&, Function_decl const&);
+std::ostream& operator<<(std::ostream&, Parameter_decl const&);
+std::ostream& operator<<(std::ostream&, Record_decl const&);
+std::ostream& operator<<(std::ostream&, Field_decl const&);
+std::ostream& operator<<(std::ostream&, Method_decl const&);
+std::ostream& operator<<(std::ostream&, Module_decl const&);
+
 
 #endif

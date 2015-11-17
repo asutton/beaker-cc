@@ -4,10 +4,6 @@
 #ifndef BEAKER_ELABORATOR_HPP
 #define BEAKER_ELABORATOR_HPP
 
-#include "prelude.hpp"
-#include "location.hpp"
-#include "environment.hpp"
-
 // The elaborator is responsible for a number of static
 // analyses. In particular, it resolves identifiers and
 // types expressions.
@@ -17,48 +13,9 @@
 // errors and continuing elaboration. There may be some
 // cases where elaboration must stop.
 
-#include <stack>
-#include <unordered_map>
-#include <vector>
-
-
-// A scope defines a maximal lexical region of a program
-// where no bindings are destroyed. A scope optionally
-// assocaites a declaration with its bindings. This is
-// used to maintain the current declaration context.
-struct Scope : Environment<Symbol const*, Decl*>
-{
-  Scope()
-    : decl(nullptr)
-  { }
-
-  Scope(Decl* d)
-    : decl(d)
-  { }
-
-  Decl* decl;
-};
-
-
-// The scope stack maintains the current scope during
-// elaboration. It adapts the more general stack to
-// provide more language-specific names for those
-// operations.
-struct Scope_stack : Stack<Scope>
-{
-  Scope&       current()       { return top(); }
-  Scope const& current() const { return top(); }
-
-  Scope&       global()       { return bottom(); }
-  Scope const& global() const { return bottom(); }
-
-  Decl*          context() const;
-  Module_decl*   module() const;
-  Function_decl* function() const;
-  Record_decl*   record() const;
-
-  void declare(Decl*);
-};
+#include "prelude.hpp"
+#include "location.hpp"
+#include "scope.hpp"
 
 
 // The elaborator is responsible for the annotation of
@@ -142,6 +99,21 @@ public:
   Stmt* elaborate(Expression_stmt*);
   Stmt* elaborate(Declaration_stmt*);
 
+  void declare(Decl*);
+  void redeclare(Decl*);
+  void overload(Overload&, Decl*);
+
+  Expr* call(Function_decl*, Expr_seq const&);
+  Expr* resolve(Overload_expr*, Expr_seq const&);
+
+  Overload* lookup(Symbol const*);
+  Decl*     lookup_single(Symbol const*);
+
+  // Diagnostics
+  void on_call_error(Expr_seq const&, Expr_seq const&, Type_seq const&);
+  void locate(void*, Location);
+  Location locate(void*);
+
   // Found symbols.
   Function_decl* main = nullptr;
 
@@ -156,6 +128,25 @@ inline
 Elaborator::Elaborator(Location_map& loc, Symbol_table& s)
   : locs(loc), syms(s)
 { }
+
+
+inline void 
+Elaborator::locate(void* p, Location l)
+{
+  locs.emplace(p, l);
+}
+
+
+inline Location 
+Elaborator::locate(void* p)
+{
+  auto iter = locs.find(p);
+  if (iter != locs.end())
+    return iter->second;
+  else
+    return {};
+}
+
 
 
 struct Elaborator::Scope_sentinel

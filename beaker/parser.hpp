@@ -140,6 +140,9 @@ private:
   [[noreturn]] void error(char const*);
   [[noreturn]] void error(String const&);
 
+  // Location management
+  void locate(void*, Location);
+
   template<typename T, typename... Args>
   T* init(Location, Args&&...);
 
@@ -182,6 +185,14 @@ inline Token_kind
 Parser::lookahead(int n) const
 {
   return Token_kind(ts_.peek(n).kind());
+}
+
+
+// Save the location of the declaratio.
+inline void 
+Parser::locate(void* p, Location l)
+{ 
+  locs_->emplace(p, l);
 }
 
 

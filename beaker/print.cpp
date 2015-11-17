@@ -359,3 +359,88 @@ operator<<(std::ostream& os, Reference_init const& e)
 {
   return os << "__ref_init(" << *e.type() << ',' << *e.object() << ")";
 }
+
+
+// -------------------------------------------------------------------------- //
+// Pretty printing of declarations
+//
+// Note that we only print the declared part, not the
+// definitions.
+
+// FIXME: Actually implement this.
+std::ostream& 
+operator<<(std::ostream& os, Decl const& d)
+{
+  /*
+  struct Fn
+  {
+    std::ostream& os;
+
+    void operator()(Variable_decl const& d) { os << d; }
+    void operator()(Function_decl const& d) { os << d; }
+    void operator()(Parameter_decl const& d) { os << d; }
+    void operator()(Record_decl const& d) { os << d; }
+    void operator()(Field_decl const& d) { os << d; }
+    void operator()(Method_decl const& d) { os << d; }
+    void operator()(Module_decl const& d) { os << d; }
+  };
+  apply(d, Fn{os});
+  */
+
+  // Write everything in declared object format.
+  os << *d.name() << " : " << *d.type();
+
+  return os;
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Variable_decl const& d)
+{
+  return os;
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Function_decl const& d)
+{
+  return os;
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Parameter_decl const& d)
+{
+  return os;
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Record_decl const& d)
+{
+  return os;
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Field_decl const& d)
+{
+  return os;
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Method_decl const& d)
+{
+  return os;
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Module_decl const& d)
+{
+  return os;
+}
+
+
+

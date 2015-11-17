@@ -5,6 +5,7 @@
 #define BEAKER_DECL_HPP
 
 #include "prelude.hpp"
+#include "scope.hpp"
 #include "specifier.hpp"
 
 
@@ -139,10 +140,14 @@ struct Parameter_decl : Decl
 // nested types, templates, constants, etc). These
 // aren't really part of the object, just part of
 // the scope.
+//
+// A record declaration defines a scope. Declarations
+// within the record are cached here for use during
+// member lookup.
 struct Record_decl : Decl
 {
   Record_decl(Symbol const* n, Decl_seq const& f, Decl_seq const& m)
-    : Decl(n, nullptr), fields_(f), members_(m)
+    : Decl(n, nullptr), fields_(f), members_(m), scope_(this)
   { }
 
   void accept(Visitor& v) const { v.visit(this); }
@@ -150,9 +155,13 @@ struct Record_decl : Decl
 
   Decl_seq const& fields() const { return fields_; }
   Decl_seq const& members() const { return members_; }
+  
+  Scope*          scope()       { return &scope_; }
+  Scope const*    scope() const { return &scope_; }
 
   Decl_seq fields_;
   Decl_seq members_;
+  Scope    scope_;
 };
 
 
@@ -166,8 +175,9 @@ struct Field_decl : Decl
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
 
-  Record_decl const* context() const;
-  int                index() const;
+  Record_decl const* context() const { return cast<Record_decl>(cxt_); }
+
+  int index() const;
 };
 
 
@@ -180,6 +190,8 @@ struct Method_decl : Function_decl
 
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
+
+  Record_decl const* context() const { return cast<Record_decl>(cxt_); }
 };
 
 

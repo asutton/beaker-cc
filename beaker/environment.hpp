@@ -109,43 +109,73 @@ Environment<S, T>::lookup(S const& sym) -> Binding*
 // certain point in the program. Symbol lookup is processed
 // in the innermost environment, and works outward.
 template<typename E>
-struct Stack : std::vector<E>
+struct Stack : std::vector<E*>
 {
   using Environment = E;
   using Name = typename E::Name;
   using Value = typename E::Value;
   using Binding = typename E::Binding;
   
+  void push(E*);
+
   template<typename... Args>
   void push(Args&&...);
   
   void pop();
+  E*   take();
 
-  E&       top()       { return this->back(); }
-  E const& top() const { return this->back(); }
+  E&       top()       { return *this->back(); }
+  E const& top() const { return *this->back(); }
 
-  E&       bottom()       { return this->front(); }
-  E const& bottom() const { return this->front(); }
+  E&       bottom()       { return *this->front(); }
+  E const& bottom() const { return *this->front(); }
 
   Binding const* lookup(Name const&) const;
   Binding*       lookup(Name const&);
 };
 
 
+// Push the given environment onto the stack.
+template<typename E>
+void 
+Stack<E>::push(E* env)
+{
+  this->push_back(env);
+}
+
+
+// Push a new environment, constructed over the
+// given arguments.
 template<typename E>
 template<typename... Args>
 inline void 
 Stack<E>::push(Args&&... args)
-{ 
-  this->push_back(E(std::forward<Args>(args)...)); 
+{
+  E* env = new E(std::forward<Args>(args)...);
+  this->push_back(env); 
 }
 
 
+// Pop the environment at the top of the stack.
 template<typename E>
 inline void 
 Stack<E>::pop()
 { 
-  this->pop_back(); 
+  E* env = this->back();
+  this->pop_back();
+  delete env;
+}
+
+
+// Remove the current environment from the stack,
+// and retun it. This does not destroy the environment.
+template<typename E>
+inline E*
+Stack<E>::take()
+{
+  E* env = this->back();
+  this->pop_back();
+  return env;
 }
 
 
@@ -154,7 +184,7 @@ auto
 Stack<E>::lookup(Name const& n) const -> Binding const*
 {
   for (auto iter = this->rbegin(); iter != this->rend(); ++iter) {
-    if (Binding const* bind = iter->lookup(n))
+    if (Binding const* bind = (*iter)->lookup(n))
       return bind;
   }
   return nullptr;
@@ -166,7 +196,7 @@ auto
 Stack<E>::lookup(Name const& n) -> Binding*
 {
   for (auto iter = this->rbegin(); iter != this->rend(); ++iter) {
-    if (Binding* bind = iter->lookup(n))
+    if (Binding* bind = (*iter)->lookup(n))
       return bind;
   }
   return nullptr;

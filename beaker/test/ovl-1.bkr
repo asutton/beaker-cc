@@ -1,0 +1,22 @@
+
+def f() -> int
+{
+  return 0;
+}
+
+def f(x : int) -> int
+{
+  return 1;
+}
+
+def f(x : bool) -> int
+{
+  return 2;
+}
+
+def main() -> int
+{
+  f();
+  f(0);
+  f(true);
+}

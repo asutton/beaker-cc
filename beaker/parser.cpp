@@ -1204,7 +1204,9 @@ Decl*
 Parser::on_variable(Specifier spec, Token tok, Type const* t)
 {
   Expr* init = new Default_init(t);
-  return new Variable_decl(spec, tok.symbol(), t, init);
+  Decl* decl = new Variable_decl(spec, tok.symbol(), t, init);
+  locate(decl, tok.location());
+  return decl;
 }
 
 
@@ -1212,7 +1214,9 @@ Decl*
 Parser::on_variable(Specifier spec, Token tok, Type const* t, Expr* e)
 {
   Expr* init = new Copy_init(t, e);
-  return new Variable_decl(spec, tok.symbol(), t, init);
+  Decl* decl = new Variable_decl(spec, tok.symbol(), t, init);
+  locate(decl, tok.location());
+  return decl;
 }
 
 
@@ -1247,14 +1251,18 @@ Decl*
 Parser::on_function(Specifier spec, Token tok, Decl_seq const& p, Type const* t, Stmt* b)
 {
   Type const* f = get_function_type(p, t);
-  return new Function_decl(tok.symbol(), f, p, b);
+  Decl* decl = new Function_decl(tok.symbol(), f, p, b);
+  locate(decl, tok.location());
+  return decl;
 }
 
 
 Decl*
 Parser::on_record(Specifier spec, Token n, Decl_seq const& fs, Decl_seq const& ms)
 {
-  return new Record_decl(n.symbol(), fs, ms);
+  Decl* decl = new Record_decl(n.symbol(), fs, ms);
+  locate(decl, n.location());
+  return decl;
 }
 
 
@@ -1262,14 +1270,18 @@ Decl*
 Parser::on_method(Specifier spec, Token tok, Decl_seq const& p, Type const* t, Stmt* b)
 {
   Type const* f = get_function_type(p, t);
-  return new Method_decl(tok.symbol(), f, p, b);
+  Decl* decl = new Method_decl(tok.symbol(), f, p, b);
+  locate(decl, tok.location());
+  return decl;
 }
 
 
 Decl*
 Parser::on_field(Specifier spec, Token n, Type const* t)
 {
-  return new Field_decl(n.symbol(), t);
+  Decl* decl = new Field_decl(n.symbol(), t);
+  locate(decl, n.location());
+  return decl;
 }
 
 
