@@ -617,7 +617,6 @@ Generator::gen(If_then_stmt const* s)
 {
     // generate the condition
     llvm::Value* condition = gen(s->condition());
-    condition = build.CreateICmpEQ(condition, build.getTrue());
     
     // create a block for then and next
     llvm::BasicBlock* _then = llvm::BasicBlock::Create(cxt, "then", fn);
@@ -641,7 +640,6 @@ Generator::gen(If_else_stmt const* s)
 {
     // generate the condition
     llvm::Value* condition = gen(s->condition());
-    condition = build.CreateICmpEQ(condition, build.getTrue());
     
     // create a block for the then, else and next
     llvm::BasicBlock* _then = llvm::BasicBlock::Create(cxt, "then", fn);
@@ -684,7 +682,6 @@ Generator::gen(While_stmt const* s)
     // generate the condition block
     build.SetInsertPoint(_condition);
     llvm::Value* condition = gen(s->condition());
-    condition = build.CreateICmpEQ(condition, build.getTrue());
     build.CreateCondBr(condition, _body, _next);
     
     // generate the loop's body block
