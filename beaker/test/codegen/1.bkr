@@ -1,5 +1,10 @@
-
-
 def f(x : int) -> int {
-  return x + 2;
+    return x / 5;
+}
+
+def main() -> int {
+
+    var z : int = f(15);
+
+    return 0;
 }

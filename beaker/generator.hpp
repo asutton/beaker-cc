@@ -12,6 +12,8 @@
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/IRBuilder.h>
 
+#include <stack>
+
 
 // Used to maintain a mapping of Beaker declarations
 // to their corresponding LLVM declarations. This is
@@ -48,6 +50,12 @@ struct Generator
 
   String get_name(Decl const*);
 
+  // these will be used to keep track of the current
+  // loop's condition and next blocks to be used
+  // for break and continue
+  std::stack<llvm::BasicBlock*> loop_conditions;
+  std::stack<llvm::BasicBlock*> loop_nexts;
+    
   llvm::Type* get_type(Type const*);
   llvm::Type* get_type(Id_type const*);
   llvm::Type* get_type(Boolean_type const*);
@@ -89,6 +97,11 @@ struct Generator
   llvm::Value* gen(Default_init const*);
   llvm::Value* gen(Copy_init const*);
   llvm::Value* gen(Reference_init const*);
+
+  // these are used to return the current loop's
+  // respective block and pop it off the stack
+  llvm::BasicBlock* get_condition();
+  llvm::BasicBlock* get_next();
 
   void gen(Stmt const*);
   void gen(Empty_stmt const*);
@@ -152,6 +165,8 @@ struct Generator::Symbol_sentinel
 
   Generator& gen;
 };
+
+
 
 
 #endif

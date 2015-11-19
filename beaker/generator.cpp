@@ -292,105 +292,131 @@ Generator::gen(Add_expr const* e)
 llvm::Value*
 Generator::gen(Sub_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+    llvm::Value* l = gen(e->left());
+    llvm::Value* r = gen(e->right());
+    return build.CreateSub(l, r);
 }
 
 
 llvm::Value*
 Generator::gen(Mul_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+    llvm::Value* l = gen(e->left());
+    llvm::Value* r = gen(e->right());
+    return build.CreateMul(l, r);
 }
 
 
 llvm::Value*
 Generator::gen(Div_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+    llvm::Value* l = gen(e->left());
+    llvm::Value* r = gen(e->right());
+    return build.CreateSDiv(l, r);
 }
 
 
 llvm::Value*
 Generator::gen(Rem_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+    llvm::Value* l = gen(e->left());
+    llvm::Value* r = gen(e->right());
+    return build.CreateSRem(l, r);
 }
 
 
 llvm::Value*
 Generator::gen(Neg_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+    llvm::Value* o = gen(e->operand());
+    return build.CreateNeg(o);
 }
 
 
 llvm::Value*
 Generator::gen(Pos_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+    return gen(e->operand());
 }
 
 
 llvm::Value*
 Generator::gen(Eq_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+    llvm::Value* l = gen(e->left());
+    llvm::Value* r = gen(e->right());
+    return build.CreateICmpEQ(l, r);
 }
 
 
 llvm::Value*
 Generator::gen(Ne_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+    llvm::Value* l = gen(e->left());
+    llvm::Value* r = gen(e->right());
+    return build.CreateICmpNE(l, r);
 }
 
 
 llvm::Value*
 Generator::gen(Lt_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+    llvm::Value* l = gen(e->left());
+    llvm::Value* r = gen(e->right());
+    return build.CreateICmpSLT(l, r);
 }
 
 
 llvm::Value*
 Generator::gen(Gt_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+    llvm::Value* l = gen(e->left());
+    llvm::Value* r = gen(e->right());
+    return build.CreateICmpSGT(l, r);
 }
 
 
 llvm::Value*
 Generator::gen(Le_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+    llvm::Value* l = gen(e->left());
+    llvm::Value* r = gen(e->right());
+    return build.CreateICmpSLE(l, r);
 }
 
 
 llvm::Value*
 Generator::gen(Ge_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+    llvm::Value* l = gen(e->left());
+    llvm::Value* r = gen(e->right());
+    return build.CreateICmpSGE(l, r);
 }
 
 
 llvm::Value*
 Generator::gen(And_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+    llvm::Value* l = gen(e->left());
+    llvm::Value* r = gen(e->right());
+    return build.CreateAnd(l, r);
 }
 
 
 llvm::Value*
 Generator::gen(Or_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+    llvm::Value* l = gen(e->left());
+    llvm::Value* r = gen(e->right());
+    return build.CreateOr(l, r);
 }
 
 
 llvm::Value*
 Generator::gen(Not_expr const* e)
 {
-  throw std::runtime_error("not implemented");
+    llvm::Value* o = gen(e->operand());
+    return build.CreateNot(o);
 }
 
 
@@ -547,7 +573,6 @@ Generator::gen(Stmt const* s)
 void
 Generator::gen(Empty_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
 }
 
 
@@ -590,35 +615,100 @@ Generator::gen(Return_stmt const* s)
 void
 Generator::gen(If_then_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+    llvm::Value* condition = gen(s->condition());
+    condition = build.CreateICmpEQ(condition, build.getTrue());
+    
+    llvm::BasicBlock* _then = llvm::BasicBlock::Create(cxt, "then", fn);
+    llvm::BasicBlock* _next = llvm::BasicBlock::Create(cxt, "next", fn);
+    
+    build.CreateCondBr(condition, _then, _next);
+    
+    build.SetInsertPoint(_then);
+    gen(s->body());
+    build.CreateBr(_next);
+    
+    build.SetInsertPoint(_next);
 }
 
 
 void
 Generator::gen(If_else_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+    llvm::Value* condition = gen(s->condition());
+    condition = build.CreateICmpEQ(condition, build.getTrue());
+    
+    llvm::BasicBlock* _then = llvm::BasicBlock::Create(cxt, "then", fn);
+    llvm::BasicBlock* _else = llvm::BasicBlock::Create(cxt, "else", fn);
+    llvm::BasicBlock* _next = llvm::BasicBlock::Create(cxt, "next", fn);
+    
+    build.CreateCondBr(condition, _then, _else);
+    
+    build.SetInsertPoint(_then);
+    gen(s->true_branch());
+    build.CreateBr(_next);
+    
+    build.SetInsertPoint(_else);
+    gen(s->false_branch());
+    build.CreateBr(_next);
+    
+    build.SetInsertPoint(_next);
 }
 
 
 void
 Generator::gen(While_stmt const* s)
-{
-  throw std::runtime_error("not implemented");
+{    
+    llvm::BasicBlock* _condition = llvm::BasicBlock::Create(cxt, "condition", fn);
+    llvm::BasicBlock* _body = llvm::BasicBlock::Create(cxt, "body", fn);
+    llvm::BasicBlock* _next = llvm::BasicBlock::Create(cxt, "next", fn);
+    
+    loop_conditions.push(_condition);
+    loop_nexts.push(_next);
+    
+    build.CreateBr(_condition);
+    
+    build.SetInsertPoint(_condition);
+    llvm::Value* condition = gen(s->condition());
+    condition = build.CreateICmpEQ(condition, build.getTrue());
+    build.CreateCondBr(condition, _body, _next);
+    
+    build.SetInsertPoint(_body);
+    gen(s->body());
+    build.CreateBr(_condition);
+    
+    build.SetInsertPoint(_next);
+}
+
+// this is used to return the current loop's
+// condition block and pop it off the stack
+llvm::BasicBlock*
+Generator::get_condition(){
+    llvm::BasicBlock* condition = loop_conditions.top();
+    loop_conditions.pop();
+    return condition;
+}
+
+// this is used to return the current loop's
+// next block and pop it off the stack
+llvm::BasicBlock*
+Generator::get_next(){
+    llvm::BasicBlock* next = loop_nexts.top();
+    loop_nexts.pop();
+    return next;
 }
 
 
 void
 Generator::gen(Break_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  build.CreateBr(get_next());
 }
 
 
 void
 Generator::gen(Continue_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  build.CreateBr(get_condition());
 }
 
 
