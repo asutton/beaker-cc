@@ -709,7 +709,7 @@ Generator::gen(Break_stmt const* s)
 void
 Generator::gen(Continue_stmt const* s)
 {
-  // create a branch to the loop's continue block
+  // create a branch to the loop's condition block
   build.CreateBr(loop_conditions.top());
 }
 
