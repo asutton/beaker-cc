@@ -98,11 +98,6 @@ struct Generator
   llvm::Value* gen(Copy_init const*);
   llvm::Value* gen(Reference_init const*);
 
-  // these are used to return the current loop's
-  // respective block and pop it off the stack
-  llvm::BasicBlock* get_condition();
-  llvm::BasicBlock* get_next();
-
   void gen(Stmt const*);
   void gen(Empty_stmt const*);
   void gen(Block_stmt const*);

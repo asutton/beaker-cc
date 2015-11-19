@@ -615,18 +615,23 @@ Generator::gen(Return_stmt const* s)
 void
 Generator::gen(If_then_stmt const* s)
 {
+    // generate the condition
     llvm::Value* condition = gen(s->condition());
     condition = build.CreateICmpEQ(condition, build.getTrue());
     
+    // create a block for then and next
     llvm::BasicBlock* _then = llvm::BasicBlock::Create(cxt, "then", fn);
     llvm::BasicBlock* _next = llvm::BasicBlock::Create(cxt, "next", fn);
     
+    // create a conditional branch
     build.CreateCondBr(condition, _then, _next);
     
+    // generate the then block
     build.SetInsertPoint(_then);
     gen(s->body());
     build.CreateBr(_next);
     
+    // set the insert point to the next label
     build.SetInsertPoint(_next);
 }
 
@@ -634,81 +639,81 @@ Generator::gen(If_then_stmt const* s)
 void
 Generator::gen(If_else_stmt const* s)
 {
+    // generate the condition
     llvm::Value* condition = gen(s->condition());
     condition = build.CreateICmpEQ(condition, build.getTrue());
     
+    // create a block for the then, else and next
     llvm::BasicBlock* _then = llvm::BasicBlock::Create(cxt, "then", fn);
     llvm::BasicBlock* _else = llvm::BasicBlock::Create(cxt, "else", fn);
     llvm::BasicBlock* _next = llvm::BasicBlock::Create(cxt, "next", fn);
     
+    // create a conditional branch
     build.CreateCondBr(condition, _then, _else);
     
+    // generate the true branch
     build.SetInsertPoint(_then);
     gen(s->true_branch());
     build.CreateBr(_next);
     
+    // generate the false branch
     build.SetInsertPoint(_else);
     gen(s->false_branch());
     build.CreateBr(_next);
     
+    // set the insert point to the next label
     build.SetInsertPoint(_next);
 }
 
 
 void
 Generator::gen(While_stmt const* s)
-{    
+{   
+    // create a block for the condition, body and next
     llvm::BasicBlock* _condition = llvm::BasicBlock::Create(cxt, "condition", fn);
     llvm::BasicBlock* _body = llvm::BasicBlock::Create(cxt, "body", fn);
     llvm::BasicBlock* _next = llvm::BasicBlock::Create(cxt, "next", fn);
     
+    // add the condition and next to a stack to be used for break and continue
     loop_conditions.push(_condition);
     loop_nexts.push(_next);
     
+    // create a branch to the condition to start the loop
     build.CreateBr(_condition);
     
+    // generate the condition block
     build.SetInsertPoint(_condition);
     llvm::Value* condition = gen(s->condition());
     condition = build.CreateICmpEQ(condition, build.getTrue());
     build.CreateCondBr(condition, _body, _next);
     
+    // generate the loop's body block
     build.SetInsertPoint(_body);
     gen(s->body());
     build.CreateBr(_condition);
     
+    // set the insert point to the next label
     build.SetInsertPoint(_next);
-}
-
-// this is used to return the current loop's
-// condition block and pop it off the stack
-llvm::BasicBlock*
-Generator::get_condition(){
-    llvm::BasicBlock* condition = loop_conditions.top();
+    
+    // pop the condition and next off of the stack
     loop_conditions.pop();
-    return condition;
-}
-
-// this is used to return the current loop's
-// next block and pop it off the stack
-llvm::BasicBlock*
-Generator::get_next(){
-    llvm::BasicBlock* next = loop_nexts.top();
     loop_nexts.pop();
-    return next;
 }
 
 
 void
 Generator::gen(Break_stmt const* s)
 {
-  build.CreateBr(get_next());
+  // create a branch to the loop's next block
+  build.CreateBr(loop_nexts.top());
 }
 
 
 void
 Generator::gen(Continue_stmt const* s)
 {
-  build.CreateBr(get_condition());
+  // create a branch to the loop's continue block
+  build.CreateBr(loop_conditions.top());
 }
 
 
