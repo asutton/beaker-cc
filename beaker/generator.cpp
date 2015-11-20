@@ -24,8 +24,8 @@
 // Attempt to insert a branch into a block
 // Will not insert anything if the block already
 // has a terminating instruction
-void 
-Generator::make_branch(llvm::BasicBlock* srcBB, llvm::BasicBlock* dstBB) 
+void
+Generator::make_branch(llvm::BasicBlock* srcBB, llvm::BasicBlock* dstBB)
 {
   if (!srcBB->getTerminator())
     build.CreateBr(dstBB);
@@ -256,7 +256,7 @@ Generator::gen(Div_expr const* e)
 
 // FIXME: decide on unsigned or signed remainder
 // based on types of expressions
-llvm::Value* 
+llvm::Value*
 Generator::gen(Rem_expr const* e)
 {
   llvm::Value* l = gen(e->left());
@@ -356,7 +356,7 @@ Generator::gen(Or_expr const* e)
 // Logical not is a simple XOR with the value true
 // 1 xor 1 = 0
 // 0 xor 1 = 1
-llvm::Value* 
+llvm::Value*
 Generator::gen(Not_expr const* e)
 {
   llvm::Value* one = build.getTrue();
@@ -500,7 +500,7 @@ Generator::gen(Return_stmt const* s)
 
 
 // To generate the if-then
-// You need to introduce the 
+// You need to introduce the
 void
 Generator::gen(If_then_stmt const* s)
 {
@@ -523,8 +523,6 @@ Generator::gen(If_then_stmt const* s)
   make_branch(build.GetInsertBlock(), merge);
   // reset the block back to where it should be
   then = build.GetInsertBlock();
-
-  // fn->getBasicBlockList().push_back(merge);
 
   // set the insertion point to the merge block
   build.SetInsertPoint(merge);
@@ -558,10 +556,6 @@ Generator::gen(If_else_stmt const* s)
   then = build.GetInsertBlock();
 
   // emit the else block
-  // FIXME: apparently theese push back lines (even though they are in the tutorial)
-  // cause double frees with the environment. Not sure why but removing these solves the problem.
-  // fn->getBasicBlockList().push_back(el);
-
   build.SetInsertPoint(el);
   gen(s->false_branch());
   make_branch(build.GetInsertBlock(), merge);
@@ -569,9 +563,6 @@ Generator::gen(If_else_stmt const* s)
   el = build.GetInsertBlock();
 
   // emit the merge block
-  // FIXME: apparently theese push back lines (even though they are in the tutorial)
-  // cause double frees with the environment. Not sure why but removing these solves the problem.
-  // fn->getBasicBlockList().push_back(merge);
   build.SetInsertPoint(merge);
   merge = build.GetInsertBlock();
 }
@@ -690,7 +681,7 @@ Generator::gen(Decl const* d)
 
 // We actually cannot generate local variables
 // by injecting them at the beginning block
-// because assignment to memory from prior memory would produce 
+// because assignment to memory from prior memory would produce
 // illformed code
 void
 Generator::gen_local(Variable_decl const* d)
@@ -832,7 +823,6 @@ Generator::gen(Function_decl const* d)
   // as long as it is the last thing called
   // llvm::BasicBlock* ret = llvm::BasicBlock::Create(cxt, "return", fn);
 
-  // Generate a local variable for each of the variables.
   for (Decl const* p : d->parameters())
     gen(p);
 
@@ -843,7 +833,6 @@ Generator::gen(Function_decl const* d)
   ret_block = llvm::BasicBlock::Create(cxt, "return");
 
   // generate an insertion point for all other local variables
-  // this will get deleted later
   locals_insert_pt = ret_var;
 
   // Generate the body of the function.
