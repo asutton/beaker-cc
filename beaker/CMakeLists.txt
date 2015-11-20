@@ -1,13 +1,8 @@
 # Copyright (c) 2015 Andrew Sutton
 # All rights reserved
 
-
-# Add LLVM preprocessor definitions.
-add_definitions(${LLVM_DEFINITIONS})
-
-
-# The Core Beaker library
-add_library(beaker STATIC
+# Add the core Beaker library.
+add_library(beaker
   file.cpp
   line.cpp
   location.cpp
@@ -32,24 +27,26 @@ add_library(beaker STATIC
   mangle.cpp
   generator.cpp
 )
-
-
-
-# Libraries requried for executable targets.
-set(libs
+target_compile_definitions(beaker PUBLIC ${LLVM_DEFINITIONS})
+target_include_directories(
   beaker
-  lingo
-  ${CMAKE_DL_LIBS}
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${Boost_SYSTEM_LIBRARIES}
-  ${Boost_FILESYSTEM_LIBRARIES}
-  ${LLVM_LIBRARIES})
-
+    PUBLIC
+      ${Boost_INCLUDE_DIRS}
+      ${LLVM_INCLUDE_DIRS}
+      $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
+)
+target_link_libraries(
+  beaker
+    PUBLIC
+      lingo
+      ${Boost_LIBRARIES}
+      ${LLVM_LIBRARIES}
+)
 
 # Create the beaker compiler.
 add_executable(beaker-compile compiler.cpp)
-target_link_libraries(beaker-compile ${libs})
+target_link_libraries(beaker-compile beaker)
 
 # Create the beaker runtime interpreter.
 add_executable(beaker-interpret interpreter.cpp)
-target_link_libraries(beaker-interpret ${libs})
+target_link_libraries(beaker-interpret beaker)
