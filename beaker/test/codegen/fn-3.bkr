@@ -1,0 +1,20 @@
+def sum(x : int, y : int) -> int {
+	return x + y;
+}
+
+def min(x : int, y : int) -> int {
+	if (x < y)
+		return x;
+	return y;
+}
+
+def main() -> int
+{
+	var a : int = 1;
+	var b : int = 2;
+	var c : int = sum(a, b);
+	var d : int = min(b, c);
+	var e : int = sum(sum(a, b), min(b, c));
+
+	return 0;
+}
