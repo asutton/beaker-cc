@@ -12,6 +12,7 @@ add_library(beaker STATIC
   line.cpp
   location.cpp
   symbol.cpp
+  directive.cpp
   expr.cpp
   type.cpp
   decl.cpp

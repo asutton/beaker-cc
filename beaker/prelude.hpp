@@ -94,6 +94,10 @@ struct Continue_stmt;
 struct Expression_stmt;
 struct Declaration_stmt;
 
+struct Directive;
+struct Module_dir;
+struct Import_dir;
+struct Declaration_dir;
 
 using Expr_seq = std::vector<Expr*>;
 using Type_seq = std::vector<Type const*>;
