@@ -941,6 +941,10 @@ Parser::directive()
 //
 //    directive-seq -> directive-seq directive
 //                   | directive
+//
+// FIXME: Parse the module like this:
+//
+//    module -> [directive-seq] [declaration-seq]
 Decl*
 Parser::module()
 {

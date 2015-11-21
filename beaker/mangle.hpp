@@ -11,6 +11,7 @@
 
 
 String mangle(Type const*);
+String mangle(Expr const*);
 String mangle(Decl const*);
 
 void mangle(std::ostream&, Type const*);

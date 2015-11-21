@@ -3,6 +3,7 @@
 
 #include "mangle.hpp"
 #include "type.hpp"
+#include "expr.hpp"
 #include "decl.hpp"
 
 #include <iostream>
@@ -12,7 +13,7 @@
 void
 mangle(std::ostream& os, Symbol const* sym)
 {
-  os << sym->spelling();  
+  os << sym->spelling();
 }
 
 
@@ -126,11 +127,64 @@ mangle(std::ostream& os, Type const* t)
 }
 
 
-String 
+String
 mangle(Type const* t)
 {
   std::stringstream ss;
   mangle(ss, t);
+  return ss.str();
+}
+
+
+// -------------------------------------------------------------------------- //
+// Mangling of expressions
+
+void mangle(std::ostream&, Expr const*);
+
+
+void
+mangle(std::ostream& os, Id_expr const* e)
+{
+  // FIXME: Do I need more mangling information here?
+  // Maybe string lenght?
+  mangle(os, e->symbol());
+}
+
+
+void
+mangle(std::ostream& os, Dot_expr const* e)
+{
+  mangle(os, e->container());
+  os << '_';
+  mangle(os, e->member());
+}
+
+
+struct Mangle_expr_fn
+{
+  std::ostream& os;
+
+  template<typename T>
+  void operator()(T const* e) const { lingo_unreachable(); }
+
+  void operator()(Id_expr const* e) const { mangle(os, e); }
+  void operator()(Dot_expr const* e) const { mangle(os, e); }
+
+};
+
+
+void
+mangle(std::ostream& os, Expr const* e)
+{
+  return apply(e, Mangle_expr_fn{os});
+}
+
+
+String
+mangle(Expr const* e)
+{
+  std::stringstream ss;
+  mangle(ss, e);
   return ss.str();
 }
 
@@ -145,9 +199,21 @@ mangle(Type const* t)
 // have modules or namespaces, or if we allow nested types.
 
 
+
+void
+mangle_scope(std::ostream& os, Decl const* d)
+{
+  if (Module_decl const* m = d->module()) {
+    mangle(os, m->module());
+    os << '_';
+  }
+}
+
+
 void
 mangle(std::ostream& os, Variable_decl const* d)
 {
+  mangle_scope(os, d);
   mangle(os, d->name());
   os << '_';
   mangle(os, d->type());
@@ -157,6 +223,7 @@ mangle(std::ostream& os, Variable_decl const* d)
 void
 mangle(std::ostream& os, Function_decl const* d)
 {
+  mangle_scope(os, d);
   mangle(os, d->name());
   os << '_';
   mangle(os, d->type());
@@ -188,6 +255,7 @@ mangle(std::ostream& os, Field_decl const* d)
 void
 mangle(std::ostream& os, Method_decl const* d)
 {
+  mangle_scope(os, d);
   mangle(os, d->context());
   os << '_';
   mangle(os, d->name());

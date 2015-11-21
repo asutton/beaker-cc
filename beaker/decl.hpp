@@ -39,7 +39,8 @@ struct Decl
   Symbol const* name() const { return name_; }
   Type const*   type() const { return type_; }
 
-  Decl const*   context() const { return cxt_; }
+  Decl const*        context() const { return cxt_; }
+  Module_decl const* module() const;
 
   Specifier     spec_;
   Symbol const* name_;
@@ -199,7 +200,7 @@ struct Method_decl : Function_decl
 struct Module_decl : Decl
 {
   Module_decl(Symbol const* n, Dir_seq const& d)
-    : Decl(n, nullptr), dirs_(d)
+    : Decl(n, nullptr), dirs_(d), mod_()
   { }
 
   void accept(Visitor& v) const { v.visit(this); }
@@ -207,7 +208,10 @@ struct Module_decl : Decl
 
   Dir_seq const& directives() const { return dirs_; }
 
-  Dir_seq dirs_;
+  Expr* module() const { return mod_; }
+
+  Dir_seq dirs_; // List of directives
+  Expr*   mod_;  // An optional qualified module name
 };
 
 

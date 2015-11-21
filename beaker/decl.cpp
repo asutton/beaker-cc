@@ -5,6 +5,16 @@
 #include "type.hpp"
 
 
+Module_decl const*
+Decl::module() const
+{
+  Decl const* p = cxt_;
+  while (!is<Module_decl>(p))
+    p = p->cxt_;
+  return cast<Module_decl>(p);
+}
+
+
 Function_type const*
 Function_decl::type() const
 {

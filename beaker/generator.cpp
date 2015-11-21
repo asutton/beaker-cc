@@ -1073,7 +1073,7 @@ Generator::gen(Directive const* d)
 void
 Generator::gen(Module_dir const* d)
 {
-  lingo_unimplemented();
+  // TODO: Do anything here?
 }
 
 

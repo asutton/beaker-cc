@@ -1629,17 +1629,26 @@ Elaborator::elaborate(Directive* d)
 }
 
 
+// Save the module name.
 Directive*
 Elaborator::elaborate(Module_dir* d)
 {
-  lingo_unimplemented();
+  Module_decl* mod = stack.module();
+  if (mod->mod_)
+    throw Type_error(locate(d), "multiple module declarations");
+  mod->mod_ = d->name();
+  return d;
 }
 
 
+// TODO: This needs to produce an import declaration
+// whose members are those exported from the named
+// declaration.
 Directive*
 Elaborator::elaborate(Import_dir* d)
 {
-  lingo_unimplemented();
+  // lingo_unimplemented();
+  return d;
 }
 
 
