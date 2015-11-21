@@ -5,6 +5,7 @@
 #include "parser.hpp"
 #include "elaborator.hpp"
 #include "generator.hpp"
+#include "decl.hpp"
 #include "error.hpp"
 
 #include <iostream>
@@ -56,6 +57,11 @@ main(int argc, char* argv[])
     // TODO: Implement a parse-only phase.
     Elaborator elab(locs, syms);
     elab.elaborate(m);
+
+    // If this is a module, generate a manifest
+    // containing exported symbols.
+    if (cast<Module_decl>(m)->module())
+      std::ofstream mfs("a.bkm");
 
     // Translate to LLVM.
     //
