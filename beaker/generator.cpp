@@ -49,8 +49,8 @@ Generator::get_name(Decl const* d)
 // Attempt to insert a branch into a block
 // Will not insert anything if the block already
 // has a terminating instruction
-void 
-Generator::make_branch(llvm::BasicBlock* srcBB, llvm::BasicBlock* dstBB) 
+void
+Generator::make_branch(llvm::BasicBlock* srcBB, llvm::BasicBlock* dstBB)
 {
   if (!srcBB->getTerminator())
     build.CreateBr(dstBB);
@@ -365,7 +365,7 @@ Generator::gen(Div_expr const* e)
 
 // FIXME: decide on unsigned or signed remainder
 // based on types of expressions
-llvm::Value* 
+llvm::Value*
 Generator::gen(Rem_expr const* e)
 {
   llvm::Value* l = gen(e->left());
@@ -465,7 +465,7 @@ Generator::gen(Or_expr const* e)
 // Logical not is a simple XOR with the value true
 // 1 xor 1 = 0
 // 0 xor 1 = 1
-llvm::Value* 
+llvm::Value*
 Generator::gen(Not_expr const* e)
 {
   llvm::Value* one = build.getTrue();
@@ -703,7 +703,7 @@ Generator::gen(If_else_stmt const* s)
   then = build.GetInsertBlock();
   if (!then->getTerminator())
     build.CreateBr(done);
-  
+
   // Emit the else block.
   build.SetInsertPoint(other);
   gen(s->false_branch());
@@ -722,7 +722,7 @@ Generator::gen(While_stmt const* s)
   // Save the current loop information, to be restored
   // on scope exit.
   Loop_sentinel loop(*this);
-  
+
   // Create the new loop blocks.
   top = llvm::BasicBlock::Create(cxt, "while.top", fn);
   bottom = llvm::BasicBlock::Create(cxt, "while.bot", fn);
@@ -941,6 +941,9 @@ Generator::gen(Function_decl const* d)
   for (Decl const* p : d->parameters())
     gen(p);
   gen(d->body());
+  entry = build.GetInsertBlock();
+  if (!entry->getTerminator())
+    build.CreateBr(exit);
 
   // Insert the exit block and generate the actual
   // return statement,
