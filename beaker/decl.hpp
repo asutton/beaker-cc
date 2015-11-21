@@ -155,7 +155,7 @@ struct Record_decl : Decl
 
   Decl_seq const& fields() const { return fields_; }
   Decl_seq const& members() const { return members_; }
-  
+
   Scope*          scope()       { return &scope_; }
   Scope const*    scope() const { return &scope_; }
 
@@ -195,19 +195,19 @@ struct Method_decl : Function_decl
 };
 
 
-// A module is a sequence of top-level declarations.
+// A module is a sequence of top-level directives.
 struct Module_decl : Decl
 {
-  Module_decl(Symbol const* n, Decl_seq const& d)
-    : Decl(n, nullptr), decls_(d)
+  Module_decl(Symbol const* n, Dir_seq const& d)
+    : Decl(n, nullptr), dirs_(d)
   { }
 
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
 
-  Decl_seq const& declarations() const { return decls_; }
+  Dir_seq const& directives() const { return dirs_; }
 
-  Decl_seq decls_;
+  Dir_seq dirs_;
 };
 
 

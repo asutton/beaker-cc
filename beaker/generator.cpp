@@ -6,6 +6,7 @@
 #include "expr.hpp"
 #include "stmt.hpp"
 #include "decl.hpp"
+#include "directive.hpp"
 #include "mangle.hpp"
 #include "evaluator.hpp"
 
@@ -49,8 +50,8 @@ Generator::get_name(Decl const* d)
 // Attempt to insert a branch into a block
 // Will not insert anything if the block already
 // has a terminating instruction
-void 
-Generator::make_branch(llvm::BasicBlock* srcBB, llvm::BasicBlock* dstBB) 
+void
+Generator::make_branch(llvm::BasicBlock* srcBB, llvm::BasicBlock* dstBB)
 {
   if (!srcBB->getTerminator())
     build.CreateBr(dstBB);
@@ -365,7 +366,7 @@ Generator::gen(Div_expr const* e)
 
 // FIXME: decide on unsigned or signed remainder
 // based on types of expressions
-llvm::Value* 
+llvm::Value*
 Generator::gen(Rem_expr const* e)
 {
   llvm::Value* l = gen(e->left());
@@ -465,7 +466,7 @@ Generator::gen(Or_expr const* e)
 // Logical not is a simple XOR with the value true
 // 1 xor 1 = 0
 // 0 xor 1 = 1
-llvm::Value* 
+llvm::Value*
 Generator::gen(Not_expr const* e)
 {
   llvm::Value* one = build.getTrue();
@@ -703,7 +704,7 @@ Generator::gen(If_else_stmt const* s)
   then = build.GetInsertBlock();
   if (!then->getTerminator())
     build.CreateBr(done);
-  
+
   // Emit the else block.
   build.SetInsertPoint(other);
   gen(s->false_branch());
@@ -722,7 +723,7 @@ Generator::gen(While_stmt const* s)
   // Save the current loop information, to be restored
   // on scope exit.
   Loop_sentinel loop(*this);
-  
+
   // Create the new loop blocks.
   top = llvm::BasicBlock::Create(cxt, "while.top", fn);
   bottom = llvm::BasicBlock::Create(cxt, "while.bot", fn);
@@ -1034,7 +1035,7 @@ Generator::gen(Module_decl const* d)
   mod = new llvm::Module("a.ll", cxt);
 
   // Generate all top-level declarations.
-  for (Decl const* d1 : d->declarations())
+  for (Directive const* d1 : d->directives())
     gen(d1);
 
   // TODO: Make a second pass to generate global
@@ -1048,4 +1049,43 @@ Generator::operator()(Decl const* d)
   assert(is<Module_decl>(d));
   gen(d);
   return mod;
+}
+
+// -------------------------------------------------------------------------- //
+// Code generation of directives
+
+void
+Generator::gen(Directive const* d)
+{
+  struct Fn
+  {
+    Generator& g;
+
+    void operator()(Module_dir const* d) const { g.gen(d); }
+    void operator()(Import_dir const* d) const { g.gen(d); }
+    void operator()(Declaration_dir const* d) const { g.gen(d); }
+  };
+
+  apply(d, Fn{*this});
+}
+
+
+void
+Generator::gen(Module_dir const* d)
+{
+  lingo_unimplemented();
+}
+
+
+void
+Generator::gen(Import_dir const* d)
+{
+  lingo_unimplemented();
+}
+
+
+void
+Generator::gen(Declaration_dir const* d)
+{
+  gen(d->declaration());
 }

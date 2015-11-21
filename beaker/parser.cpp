@@ -7,6 +7,7 @@
 #include "expr.hpp"
 #include "decl.hpp"
 #include "stmt.hpp"
+#include "directive.hpp"
 #include "error.hpp"
 
 #include <iostream>
@@ -636,36 +637,6 @@ Parser::method_decl(Specifier spec)
 }
 
 
-// Parse a module declaraiton.
-//
-//    module-decl -> 'module' unqualified-name ';'
-Decl*
-Parser::module_decl(Specifier spec)
-{
-  if (spec)
-    error("invalid specifier on module-declaration");
-  Token tok = require(module_kw);
-  Expr* n = qualified_name();
-  match(semicolon_tok);
-  return on_module(tok, n);
-}
-
-
-// Parse an import declaration.
-//
-//    import-decl -> 'import' unqualified-name ';'
-Decl*
-Parser::import_decl(Specifier spec)
-{
-  if (spec)
-    error("invalid specifier on import-declaration");
-  Token tok = require(import_kw);
-  Expr* n = qualified_name();
-  match(semicolon_tok);
-  return on_import(tok, n);
-}
-
-
 // Parse a sequence of declaration specifiers.
 //
 //    specifier-seq -> specifier | specifier-seq specifier
@@ -705,10 +676,6 @@ Parser::decl()
       return function_decl(spec);
     case struct_kw:
       return record_decl(spec);
-    case module_kw:
-      return module_decl(spec);
-    case import_kw:
-      return import_decl(spec);
     default:
       // TODO: Is this a recoverable error?
       error("invalid declaration");
@@ -911,30 +878,83 @@ Parser::stmt()
 
 
 // -------------------------------------------------------------------------- //
+// Directive parsing
+
+// Parse a module directive.
+//
+//    module-directive -> 'module' unqualified-name ';'
+Directive*
+Parser::module_directive()
+{
+  Token tok = require(module_kw);
+  Expr* n = qualified_name();
+  match(semicolon_tok);
+  return on_module_directive(tok, n);
+}
+
+
+// Parse an import directive.
+//
+//    import-directve -> 'import' unqualified-name ';'
+Directive*
+Parser::import_directive()
+{
+  Token tok = require(import_kw);
+  Expr* n = qualified_name();
+  match(semicolon_tok);
+  return on_import_directive(tok, n);
+}
+
+
+// Parse a declaration as a directive.
+Directive*
+Parser::declaration_directive()
+{
+  Decl* d = decl();
+  return on_declaration_directive(d);
+}
+
+
+// Parse a directive.
+//
+//    directive -> module-directive
+//               | import-directive
+//               | declaration
+Directive*
+Parser::directive()
+{
+  switch (lookahead()) {
+    case module_kw: return module_directive();
+    case import_kw: return import_directive();
+    default: return declaration_directive();
+  }
+}
+
+
+// -------------------------------------------------------------------------- //
 // Top level parsing
 
 
 // Parse a module.
 //
-//    module -> decl-seq | <empty>
+//    module -> [directive-seq]
 //
-//    decl-seq -> decl | decl-seq
-//
-// TODO: Return an empty module.
+//    directive-seq -> directive-seq directive
+//                   | directive
 Decl*
 Parser::module()
 {
-  Decl_seq decls;
+  Dir_seq dirs;
   while (!ts_.eof()) {
     try {
-      Decl* d = decl();
-      decls.push_back(d);
+      Directive* d = directive();
+      dirs.push_back(d);
     } catch (Translation_error& err) {
       diagnose(err);
       consume_thru(term_);
     }
   }
-  return on_module(decls);
+  return on_module(dirs);
 }
 
 
@@ -1356,23 +1376,36 @@ Parser::on_field(Specifier spec, Token n, Type const* t)
 }
 
 
-Decl*
-Parser::on_module(Token tok, Expr* n)
+Directive*
+Parser::on_module_directive(Token tok, Expr* n)
 {
-  return nullptr;
+  Directive* dir = new Module_dir(n);
+  locate(dir, tok.location());
+  return dir;
 }
 
-Decl*
-Parser::on_import(Token tok, Expr* n)
+
+Directive*
+Parser::on_import_directive(Token tok, Expr* n)
 {
-  return nullptr;
+  Directive* dir = new Import_dir(n);
+  locate(dir, tok.location());
+  return dir;
+}
+
+
+// TODO: Generate a source code location.
+Directive*
+Parser::on_declaration_directive(Decl* d)
+{
+  return new Declaration_dir(d);
 }
 
 
 // FIXME: The name of the module should be the name of the
 // file, or maybe even the absolute path of the file.
 Decl*
-Parser::on_module(Decl_seq const& d)
+Parser::on_module(Dir_seq const& d)
 {
   Symbol const* sym = syms_.get("<input>");
   return new Module_decl(sym, d);

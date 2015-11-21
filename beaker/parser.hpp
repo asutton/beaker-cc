@@ -52,8 +52,6 @@ public:
   Decl* record_decl(Specifier);
   Decl* field_decl(Specifier);
   Decl* method_decl(Specifier);
-  Decl* module_decl(Specifier);
-  Decl* import_decl(Specifier);
 
   // Statement parsers
   Stmt* stmt();
@@ -66,6 +64,12 @@ public:
   Stmt* continue_stmt();
   Stmt* declaration_stmt();
   Stmt* expression_stmt();
+
+  // Directive parsers
+  Directive* directive();
+  Directive* module_directive();
+  Directive* import_directive();
+  Directive* declaration_directive();
 
   // Top-level.
   Decl* module();
@@ -117,11 +121,8 @@ private:
   Decl* on_record(Specifier, Token, Decl_seq const&, Decl_seq const&);
   Decl* on_field(Specifier, Token, Type const*);
   Decl* on_method(Specifier, Token, Decl_seq const&, Type const*, Stmt*);
-  Decl* on_module(Token, Expr*);
-  Decl* on_import(Token, Expr*);
-  Decl* on_module(Decl_seq const&);
+  Decl* on_module(Dir_seq const&);
 
-  // FIXME: Remove _stmt from handlers.
   Stmt* on_empty();
   Stmt* on_block(Stmt_seq const&);
   Stmt* on_assign(Expr*, Expr*);
@@ -133,6 +134,10 @@ private:
   Stmt* on_continue();
   Stmt* on_expression(Expr*);
   Stmt* on_declaration(Decl*);
+
+  Directive* on_module_directive(Token, Expr*);
+  Directive* on_import_directive(Token, Expr*);
+  Directive* on_declaration_directive(Decl*);
 
   // Parsing support
   Token_kind lookahead() const;

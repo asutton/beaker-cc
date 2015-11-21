@@ -6,6 +6,7 @@
 #include "expr.hpp"
 #include "decl.hpp"
 #include "stmt.hpp"
+#include "directive.hpp"
 #include "error.hpp"
 
 #include <iostream>
@@ -543,7 +544,7 @@ void
 Evaluator::eval(Module_decl const* d)
 {
   Store_sentinel store(*this);
-  for (Decl const* d1 : d->declarations())
+  for (Directive const* d1 : d->directives())
     eval(d1);
 }
 
@@ -708,6 +709,46 @@ Evaluator::eval(Declaration_stmt const* s, Value& r)
 
 
 // -------------------------------------------------------------------------- //
+// Evaluation of directives
+
+void
+Evaluator::eval(Directive const* d)
+{
+  struct Fn
+  {
+    Evaluator& ev;
+
+    void operator()(Module_dir const* d) const { ev.eval(d); }
+    void operator()(Import_dir const* d) const { ev.eval(d); }
+    void operator()(Declaration_dir const* d) const { ev.eval(d); }
+  };
+
+  apply(d, Fn{*this});
+}
+
+
+void
+Evaluator::eval(Module_dir const* d)
+{
+  lingo_unimplemented();
+}
+
+
+void
+Evaluator::eval(Import_dir const* d)
+{
+  lingo_unimplemented();
+}
+
+
+void
+Evaluator::eval(Declaration_dir const* d)
+{
+  eval(d->declaration());
+}
+
+
+// -------------------------------------------------------------------------- //
 // Expression reduction
 
 // Return a literal corresponding to the evaluation
@@ -744,7 +785,7 @@ Evaluator::exec(Function_decl const* fn)
   // order to re-establish the evaluation context.
   Store_sentinel store(*this);
   Module_decl const* m = cast<Module_decl>(fn->context());
-  for (Decl const* d : m->declarations())
+  for (Directive const* d : m->directives())
     eval(d);
 
   // TODO: Check the result code.

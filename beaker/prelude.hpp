@@ -99,10 +99,11 @@ struct Module_dir;
 struct Import_dir;
 struct Declaration_dir;
 
-using Expr_seq = std::vector<Expr*>;
 using Type_seq = std::vector<Type const*>;
+using Expr_seq = std::vector<Expr*>;
 using Decl_seq = std::vector<Decl*>;
 using Stmt_seq = std::vector<Stmt*>;
+using Dir_seq = std::vector<Directive*>;
 
 
 #include "symbol.hpp" // TODO: Do I need this?

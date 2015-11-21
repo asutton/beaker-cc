@@ -95,6 +95,11 @@ public:
   Control eval(Expression_stmt const*, Value&);
   Control eval(Declaration_stmt const*, Value&);
 
+  void eval(Directive const*);
+  void eval(Module_dir const*);
+  void eval(Import_dir const*);
+  void eval(Declaration_dir const*);
+
   Value exec(Function_decl const*);
 
 private:

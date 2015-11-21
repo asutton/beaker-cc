@@ -99,6 +99,11 @@ public:
   Stmt* elaborate(Expression_stmt*);
   Stmt* elaborate(Declaration_stmt*);
 
+  Directive* elaborate(Directive*);
+  Directive* elaborate(Module_dir*);
+  Directive* elaborate(Import_dir*);
+  Directive* elaborate(Declaration_dir*);
+
   void declare(Decl*);
   void redeclare(Decl*);
   void overload(Overload&, Decl*);
@@ -130,14 +135,14 @@ Elaborator::Elaborator(Location_map& loc, Symbol_table& s)
 { }
 
 
-inline void 
+inline void
 Elaborator::locate(void const* p, Location l)
 {
   locs.emplace(p, l);
 }
 
 
-inline Location 
+inline Location
 Elaborator::locate(void const* p)
 {
   auto iter = locs.find(p);
