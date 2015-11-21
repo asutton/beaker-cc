@@ -46,9 +46,12 @@ spelling(Token_kind k)
     case continue_kw: return "continue";
     case def_kw: return "def";
     case else_kw: return "else";
+    case export_kw: return "export";
     case foreign_kw: return "else";
     case if_kw: return "if";
+    case import_kw: return "import";
     case int_kw: return "int";
+    case module_kw: return "module";
     case return_kw: return "return";
     case struct_kw: return "struct";
     case this_kw: return "this";
@@ -102,9 +105,12 @@ init_symbols(Symbol_table& syms)
   syms.put<Symbol>("continue", continue_kw);
   syms.put<Symbol>("def", def_kw);
   syms.put<Symbol>("else", else_kw);
+  syms.put<Symbol>("export", export_kw);
   syms.put<Symbol>("foreign", foreign_kw);
   syms.put<Symbol>("if", if_kw);
+  syms.put<Symbol>("import", import_kw);
   syms.put<Symbol>("int", int_kw);
+  syms.put<Symbol>("module", module_kw);
   syms.put<Symbol>("while", while_kw);
   syms.put<Symbol>("return", return_kw);
   syms.put<Symbol>("struct", struct_kw);

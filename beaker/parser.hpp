@@ -20,6 +20,10 @@ public:
   Parser(Symbol_table&, Token_stream&);
   Parser(Symbol_table&, Token_stream&, Location_map&);
 
+  // Name parsers
+  Expr* unqualified_name();
+  Expr* qualified_name();
+
   // Expression parsers
   Expr* primary_expr();
   Expr* call_expr();
@@ -39,6 +43,8 @@ public:
   Type const* type();
 
   // Declaration parsers
+  Specifier specifier_seq();
+
   Decl* decl();
   Decl* variable_decl(Specifier);
   Decl* function_decl(Specifier);
@@ -46,7 +52,8 @@ public:
   Decl* record_decl(Specifier);
   Decl* field_decl(Specifier);
   Decl* method_decl(Specifier);
-  Specifier specifier_seq();
+  Decl* module_decl(Specifier);
+  Decl* import_decl(Specifier);
 
   // Statement parsers
   Stmt* stmt();
@@ -110,6 +117,8 @@ private:
   Decl* on_record(Specifier, Token, Decl_seq const&, Decl_seq const&);
   Decl* on_field(Specifier, Token, Type const*);
   Decl* on_method(Specifier, Token, Decl_seq const&, Type const*, Stmt*);
+  Decl* on_module(Token, Expr*);
+  Decl* on_import(Token, Expr*);
   Decl* on_module(Decl_seq const&);
 
   // FIXME: Remove _stmt from handlers.
@@ -189,9 +198,9 @@ Parser::lookahead(int n) const
 
 
 // Save the location of the declaratio.
-inline void 
+inline void
 Parser::locate(void* p, Location l)
-{ 
+{
   locs_->emplace(p, l);
 }
 

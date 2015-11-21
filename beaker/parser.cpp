@@ -13,6 +13,41 @@
 #include <sstream>
 
 
+// Parse an unqualified name.
+//
+//    name -> identifier
+//
+// Note that this returns an expression.
+Expr*
+Parser::unqualified_name()
+{
+  if (Token tok = match_if(identifier_tok))
+    return on_id(tok);
+  error("expected name");
+}
+
+// Parse a qualified name.
+//
+//    qualified-name -> identifier | qualified-name '.' id
+//
+// Note that this returns a dot-expr.
+Expr*
+Parser::qualified_name()
+{
+  Expr* e1 = unqualified_name();
+  while (true) {
+    if (match_if(dot_tok)) {
+      Token tok = match(identifier_tok);
+      Expr* e2 = on_id(tok);
+      e1 = on_dot(e1, e2);
+    } else {
+      break;
+    }
+  }
+  return e1;
+}
+
+
 // Parse a primary expression.
 //
 //    primary-expr -> literal | identifier | '(' expr ')'
@@ -601,6 +636,36 @@ Parser::method_decl(Specifier spec)
 }
 
 
+// Parse a module declaraiton.
+//
+//    module-decl -> 'module' unqualified-name ';'
+Decl*
+Parser::module_decl(Specifier spec)
+{
+  if (spec)
+    error("invalid specifier on module-declaration");
+  Token tok = require(module_kw);
+  Expr* n = qualified_name();
+  match(semicolon_tok);
+  return on_module(tok, n);
+}
+
+
+// Parse an import declaration.
+//
+//    import-decl -> 'import' unqualified-name ';'
+Decl*
+Parser::import_decl(Specifier spec)
+{
+  if (spec)
+    error("invalid specifier on import-declaration");
+  Token tok = require(import_kw);
+  Expr* n = qualified_name();
+  match(semicolon_tok);
+  return on_import(tok, n);
+}
+
+
 // Parse a sequence of declaration specifiers.
 //
 //    specifier-seq -> specifier | specifier-seq specifier
@@ -611,6 +676,8 @@ Parser::specifier_seq()
   while (true) {
     if (match_if(foreign_kw))
       spec |= foreign_spec;
+    else if (match_if(export_kw))
+      spec |= export_spec;
     else
       break;
   }
@@ -638,6 +705,10 @@ Parser::decl()
       return function_decl(spec);
     case struct_kw:
       return record_decl(spec);
+    case module_kw:
+      return module_decl(spec);
+    case import_kw:
+      return import_decl(spec);
     default:
       // TODO: Is this a recoverable error?
       error("invalid declaration");
@@ -1282,6 +1353,19 @@ Parser::on_field(Specifier spec, Token n, Type const* t)
   Decl* decl = new Field_decl(n.symbol(), t);
   locate(decl, n.location());
   return decl;
+}
+
+
+Decl*
+Parser::on_module(Token tok, Expr* n)
+{
+  return nullptr;
+}
+
+Decl*
+Parser::on_import(Token tok, Expr* n)
+{
+  return nullptr;
 }
 
 
