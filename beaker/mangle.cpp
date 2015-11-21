@@ -203,10 +203,11 @@ mangle(Expr const* e)
 void
 mangle_scope(std::ostream& os, Decl const* d)
 {
-  if (Module_decl const* m = d->module()) {
-    mangle(os, m->module());
-    os << '_';
-  }
+  if (Module_decl const* m = d->module())
+    if (Expr* e = m->module()) {
+      mangle(os, e);
+      os << '_';
+    }
 }
 
 
