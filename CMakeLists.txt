@@ -11,7 +11,7 @@ find_package(Boost 1.55.0 REQUIRED COMPONENTS system filesystem)
 
 # LLVM dependencies
 find_package(LLVM 3.6 REQUIRED CONFIG)
-llvm_map_components_to_libnames(LLVM_LIBRARIES core support)
+llvm_map_components_to_libnames(LLVM_LIBRARIES core)
 
 # Compiler configuration
 set(CMAKE_CXX_FLAGS "-Wall -std=c++1y")
