@@ -148,21 +148,38 @@ Elaborator::locate(void const* p)
 }
 
 
-
+// An RAII class that helps manage the scope stack.
+// When constructed, a new scope is pushed on to
+// the stack. On exit, that scope is removed.
 struct Elaborator::Scope_sentinel
 {
+  // Initialize the new scope sentinel. A declaration
+  // `d` can be associated with the new scope.
   Scope_sentinel(Elaborator& e, Decl* d = nullptr)
-    : elab(e)
+    : elab(e), take(false)
   {
     elab.stack.push(d);
   }
 
+  // Push an existing scope onto the stack. Note that
+  // this is not destroyed when the sentinel goes out
+  // of scope.
+  Scope_sentinel(Elaborator& e, Scope* s)
+    : elab(e), take(true)
+  {
+    elab.stack.push(s);
+  }
+
   ~Scope_sentinel()
   {
-    elab.stack.pop();
+    if (take)
+      elab.stack.take();
+    else
+      elab.stack.pop();
   }
 
   Elaborator& elab;
+  bool        take;
 };
 
 
