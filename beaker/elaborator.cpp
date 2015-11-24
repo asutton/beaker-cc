@@ -929,8 +929,10 @@ Elaborator::elaborate(Dot_expr* e)
   if (ovl->size() == 1) {
     Decl*d = ovl->front();
     e2 = new Decl_expr(d->type(), d);
-    if (Field_decl* f = as<Field_decl>(d))
-      return new Field_expr(e1, e2, f);
+    if (Field_decl* f = as<Field_decl>(d)) {
+      Type const* t = e2->type()->ref();
+      return new Field_expr(t, e1, e2, f);
+    }
     if (Method_decl* m = as<Method_decl>(d)) {
       return new Method_expr(e1, e2, m);
     }
