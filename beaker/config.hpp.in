@@ -1,0 +1,89 @@
+// Copyright (c) 2015 Andrew Sutton
+// All rights reserved
+
+#ifndef BEAKER_CONFIG_HPP
+#define BEAKER_CONFIG_HPP
+
+// Tools
+#define BEAKER_LLVM_IR_COMPILER   "@LLVM_IR_COMPILER@"
+#define BEAKER_NATIVE_C_COMPILER  "@CMAKE_C_COMPILER@"
+#define BEAKER_NATIVE_AS          "@CMAKE_C_COMPILER@"
+#define BEAKER_NATIVE_LD          "@CMAKE_C_COMPILER@"
+
+#define BEAKER_NATIVE_AR          "@CMAKE_AR@"
+
+
+// File properties.
+#define BEAKER_OBJECT_EXT     "@CMAKE_C_OUTPUT_EXTENSION@"
+#define BEAKER_EXECUTABLE_EXT "@CMAKE_EXECUTABLE_SUFFIX@"
+#define BEAKER_LIBRARY_PRE    "@CMAKE_SHARED_LIBRARY_PREFIX@"
+#define BEAKER_LIBRARY_EXT    "@CMAKE_SHARED_LIBRARY_SUFFIX@"
+#define BEAKER_ARCHIVE_PRE    "@CMAKE_STATIC_LIBRARY_PREFIX@"
+#define BEAKER_ARCHIVE_EXT    "@CMAKE_STATIC_LIBRARY_SUFFIX@"
+
+
+inline char const*
+llvm_compiler()
+{
+  return BEAKER_LLVM_IR_COMPILER;
+}
+
+
+inline char const*
+native_c_compiler()
+{
+  return BEAKER_NATIVE_C_COMPILER;
+}
+
+
+inline char const*
+native_assembler()
+{
+  return BEAKER_NATIVE_AS;
+}
+
+
+inline char const*
+native_archiver()
+{
+  return BEAKER_NATIVE_AR;
+}
+
+
+inline char const*
+native_linker()
+{
+  return BEAKER_NATIVE_LD;
+}
+
+
+inline char const*
+object_extension()
+{
+  return BEAKER_OBJECT_EXT;
+}
+
+
+inline char const*
+executable_extension()
+{
+  return BEAKER_EXECUTABLE_EXT;
+}
+
+
+inline char const*
+library_extension()
+{
+  return BEAKER_LIBRARY_EXT;
+}
+
+
+inline char const*
+archive_extension()
+{
+  return BEAKER_ARCHIVE_EXT;
+}
+
+
+#endif
+
