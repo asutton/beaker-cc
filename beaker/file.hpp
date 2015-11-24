@@ -9,7 +9,16 @@
 #include <boost/filesystem.hpp>
 
 
-using Path = boost::filesystem::path;
+namespace fs = boost::filesystem;
+
+
+// A path represents the location of a file in the
+// file system.
+using Path = fs::path;
+
+
+// A sequence of paths.
+using Path_seq = std::vector<Path>;
 
 
 // An input file.

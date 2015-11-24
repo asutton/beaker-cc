@@ -6,6 +6,12 @@
 add_definitions(${LLVM_DEFINITIONS})
 
 
+# Generate a static configuration header in the
+# build directory.
+configure_file("config.hpp.in" "config.hpp")
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
+
 # The Core Beaker library
 add_library(beaker STATIC
   file.cpp
@@ -31,6 +37,7 @@ add_library(beaker STATIC
   evaluator.cpp
   mangle.cpp
   generator.cpp
+  job.cpp
 )
 
 
@@ -43,6 +50,7 @@ set(libs
   ${CMAKE_THREAD_LIBS_INIT}
   ${Boost_SYSTEM_LIBRARIES}
   ${Boost_FILESYSTEM_LIBRARIES}
+  ${Boost_PROGRAM_OPTIONS_LIBRARIES}
   ${LLVM_LIBRARIES})
 
 
