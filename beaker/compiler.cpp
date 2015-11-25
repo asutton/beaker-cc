@@ -208,17 +208,16 @@ compiler_main(int argc, char* argv[])
   }
 
   // If only compiling, stop here.
-  if (conf.compile)
-    return 0;
-
-  // Produce an executable or a library.
   bool ok = false;
-  if (conf.build == program_build)
-    ok = executable(outputs, output, conf);
-  else if (conf.build == library_build)
-    ok = library(outputs, output, conf);
+  if (!conf.compile) {
+    // Produce an executable or a library.
+    if (conf.build == program_build)
+      ok = executable(outputs, output, conf);
+    else if (conf.build == library_build)
+      ok = library(outputs, output, conf);
+  }
 
-  // FIXME: WE
+  /// Remove temporary files after build.
   if (!conf.keep) {
     for (Path const& p : temps)
       fs::remove(p);
