@@ -21,7 +21,7 @@ struct Job
     : exec(p), args(args)
   { }
 
-  void run();
+  bool run();
 
   Path       exec;
   String_seq args;

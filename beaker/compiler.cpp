@@ -20,95 +20,6 @@
 using namespace std;
 
 
-// The different kinds of files that can be operated
-// on by tools in the toolchain.
-enum File_kind
-{
-  unspecified_file, // Not one of the files below.
-
-  // Input languages
-  beaker_file,     // Beaker source text
-  
-  // Intermediate languages
-  ir_file,         // LLVM source text
-  bitcode_file,    // LLVM bitcode
-  asm_file,        // Native assembly source text
-
-  // Binary representations
-  object_file,     // Native objectd file
-  library_file,    // Dynamic libraries (.so/.dylib/.dll)
-  archive_file,    // Static libraries (.a/.lib)
-  program_file     // Executable programs (<noext>/.exe)
-};
-
-
-// Returns the kind of file associated with the input
-// text. Note that
-File_kind
-get_file_kind(Path const& p)
-{
-  Path ext = p.extension();
-  if (ext == ".bkr")
-    return beaker_file;
-  if (ext == ".ll")
-    return ir_file;
-  if (ext == ".bc")
-    return bitcode_file;
-  if (ext == ".s")
-    return asm_file;
-  if (ext == object_extension())
-    return object_file;
-  if (ext == library_extension())
-    return library_file;
-  if (ext == archive_extension())
-    return archive_file;
-  if (ext == executable_extension())
-    return program_file;
-  if (ext == ".out")
-    return program_file;
-  else
-    return unspecified_file; 
-}
-
-
-// Returns true if the file kind is the product
-// of linking.
-inline bool
-is_linked_file(File_kind k)
-{
-  switch (k) {
-    case library_file:
-    case archive_file:
-    case program_file:
-      return true;
-    default:
-      return false;
-  }
-}
-
-
-// Translate a Beaker file into LLVM IR.
-Path
-to_ir_file(Path p)
-{
-  return p.replace_extension(".ll");
-}
-
-
-Path
-to_asm_file(Path p)
-{
-  return p.replace_extension(".s");
-}
-
-
-Path
-to_object_file(Path p)
-{
-  return p.replace_extension(object_extension());
-}
-
-
 void
 usage(std::ostream& os, po::options_description& desc)
 {
@@ -126,8 +37,8 @@ main(int argc, char* argv[])
   init_colors();
   init_symbols(syms);
 
-  po::options_description general("general options");
-  general.add_options()
+  po::options_description common("common options");
+  common.add_options()
     ("help",     "print help message")
     ("version",  "print version message")
     ("input,i",   po::value<String_seq>(), "specify input files")
@@ -138,7 +49,7 @@ main(int argc, char* argv[])
     ("compile,c", "compile to object files");
 
   po::options_description all;
-  all.add(general)
+  all.add(common)
      .add(compiler);
 
   po::positional_options_description pos;
@@ -156,6 +67,9 @@ main(int argc, char* argv[])
   // Canonicalize the name of the program.
   Path argv0 = fs::canonical(argv[0]);
 
+  std::cout << argv0 << '\n';
+
+#if 0
   // Check for obvious flags first.
   if (vm.count("help")) {
     usage(std::cout, all);
@@ -256,7 +170,6 @@ main(int argc, char* argv[])
     outputs.emplace_back(in.string());
   }
 
-
   // If needed, perform the final linker stage.
   //
   // FIXME: Don't compiler if -c is set.
@@ -271,6 +184,7 @@ main(int argc, char* argv[])
   for (Job& j : jobs)
     j.run();
 
+#endif
 
   #if 0
 

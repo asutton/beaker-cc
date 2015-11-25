@@ -41,7 +41,6 @@ add_library(beaker STATIC
 )
 
 
-
 # Libraries requried for executable targets.
 set(libs
   beaker
@@ -54,10 +53,22 @@ set(libs
   ${LLVM_LIBRARIES})
 
 
-# Create the beaker compiler.
+# The translator is performs front-end translation
+# to an intermediate representation. This is analogous
+# to cc1 for GCC/Clang, which translats C to assembly
+# language.
+add_executable(beaker-translate translate.cpp)
+target_link_libraries(beaker-translate ${libs})
+
+
+# The compiler is the main driver for compilation. 
+# It takes a set of input files and produces linked
+# outputs (programs, libraries, archives).
 add_executable(beaker-compile compiler.cpp)
 target_link_libraries(beaker-compile ${libs})
 
-# Create the beaker runtime interpreter.
+
+# The runtime interpreter executes a parsed beaker
+# program without compiling to native code.
 add_executable(beaker-interpret interpreter.cpp)
 target_link_libraries(beaker-interpret ${libs})
