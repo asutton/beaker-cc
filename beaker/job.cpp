@@ -22,11 +22,12 @@ Job::run()
 
   // Actually run the command.
   //
-  // TODO: Improve diagnostics!
+  // FIXME: If the error is produced as a result of the
+  // system() call, then diagnose that here. Otherwise,
+  // if the program returned non-zero, then assume that
+  // it's errors have been diagnosed.
   int err = system(ss.str().c_str());
-  if (err) {
-    std::cout << "error exeucting " << exec.string() << '\n';
+  if (err)
     return false;
-  }
   return true;
 }

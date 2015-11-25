@@ -53,19 +53,21 @@ set(libs
   ${LLVM_LIBRARIES})
 
 
-# The translator is performs front-end translation
-# to an intermediate representation. This is analogous
-# to cc1 for GCC/Clang, which translats C to assembly
-# language.
-add_executable(beaker-translate translate.cpp)
-target_link_libraries(beaker-translate ${libs})
-
-
 # The compiler is the main driver for compilation. 
 # It takes a set of input files and produces linked
 # outputs (programs, libraries, archives).
-add_executable(beaker-compile compiler.cpp)
+add_executable(beaker-compile driver.cpp compiler.cpp translator.cpp)
 target_link_libraries(beaker-compile ${libs})
+
+
+# Make a copy of the compiler. This will be used
+# to invoke the fornt end equivalent of cc1.
+#
+# FIXME: This should depend on beaker-compile rather
+# than being run every time.
+add_custom_target(beaker-translate ALL
+  COMMAND ${CMAKE_COMMAND} -E copy beaker-compile beaker-translate
+  DEPENDS beaker-compile)
 
 
 # The runtime interpreter executes a parsed beaker

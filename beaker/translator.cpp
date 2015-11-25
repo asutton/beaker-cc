@@ -23,7 +23,7 @@
 Symbol_table syms;
 
 
-void
+static void
 usage(std::ostream& os, po::options_description& desc)
 {
   os << "usage: beaker-translate [options] <input>\n";
@@ -33,12 +33,12 @@ usage(std::ostream& os, po::options_description& desc)
 
 // FIXME: These should take arguments that have been
 // passed through the command line.
-bool compile(Path const&, Path const&);
-bool lower(Path const&, Path const&);
+static bool compile(Path const&, Path const&);
+static bool lower(Path const&, Path const&);
 
 
 int
-main(int argc, char* argv[])
+translator_main(int argc, char* argv[])
 {
   // Intitialize various subsystems.
   //
@@ -96,7 +96,7 @@ main(int argc, char* argv[])
 
   // Validate the input.
   if (!vm.count("input")) {
-    std::cerr << "error: no input files given\n";
+    std::cerr << "error: no input file given\n";
     usage(std::cerr, all);
     return -1;
   }
@@ -118,7 +118,7 @@ main(int argc, char* argv[])
     temp = to_ir_file(input.filename());
     if (!compile(input, temp))
       return -1;
-    input = std::move(temp);
+    input = temp;
   }
 
   // Lower llvm input to assembly.

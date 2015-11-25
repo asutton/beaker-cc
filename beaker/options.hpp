@@ -20,4 +20,7 @@
 namespace po = boost::program_options;
 
 
+using Arguments = po::variables_map;
+
+
 #endif
