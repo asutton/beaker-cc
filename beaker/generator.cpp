@@ -447,18 +447,52 @@ Generator::gen(Ge_expr const* e)
 llvm::Value*
 Generator::gen(And_expr const* e)
 {
-  llvm::Value* l = gen(e->left());
-  llvm::Value* r = gen(e->right());
-  return build.CreateAnd(l, r);
+  llvm::BasicBlock* head_block = build.GetInsertBlock();
+  llvm::BasicBlock* tail_block = llvm::BasicBlock::Create(cxt, "", fn, head_block->getNextNode());
+  llvm::BasicBlock* then_block = llvm::BasicBlock::Create(cxt, "", fn, tail_block);
+
+  // Generate code for the left operand.
+  llvm::Value* left = gen(e->left());
+
+  build.CreateCondBr(left, then_block, tail_block);
+  build.SetInsertPoint(then_block);
+
+  // Generate code for the right operand.
+  llvm::Value* right = gen(e->right());
+
+  build.CreateBr(tail_block);
+  build.SetInsertPoint(tail_block);
+
+  llvm::PHINode* phi_inst = build.CreatePHI(build.getInt1Ty(), 2);
+  phi_inst->addIncoming(build.getFalse(), head_block);
+  phi_inst->addIncoming(right, then_block);
+  return phi_inst;
 }
 
 
 llvm::Value*
 Generator::gen(Or_expr const* e)
 {
-  llvm::Value* l = gen(e->left());
-  llvm::Value* r = gen(e->right());
-  return build.CreateOr(l, r);
+  llvm::BasicBlock* head_block = build.GetInsertBlock();
+  llvm::BasicBlock* tail_block = llvm::BasicBlock::Create(cxt, "", fn, head_block->getNextNode());
+  llvm::BasicBlock* then_block = llvm::BasicBlock::Create(cxt, "", fn, tail_block);
+
+  // Generate code for the left operand.
+  llvm::Value* left = gen(e->left());
+
+  build.CreateCondBr(left, tail_block, then_block);
+  build.SetInsertPoint(then_block);
+
+  // Generate code for the right operand.
+  llvm::Value* right = gen(e->right());
+
+  build.CreateBr(tail_block);
+  build.SetInsertPoint(tail_block);
+
+  llvm::PHINode* phi_inst = build.CreatePHI(build.getInt1Ty(), 2);
+  phi_inst->addIncoming(build.getTrue(), head_block);
+  phi_inst->addIncoming(right, then_block);
+  return phi_inst;
 }
 
 
@@ -625,7 +659,7 @@ Generator::gen(Stmt const* s)
 void
 Generator::gen(Empty_stmt const* s)
 {
-  throw std::runtime_error("not implemented");
+  // Do nothing.
 }
 
 
@@ -725,8 +759,8 @@ Generator::gen(While_stmt const* s)
 
   // Create the new loop blocks.
   top = llvm::BasicBlock::Create(cxt, "while.top", fn);
-  bottom = llvm::BasicBlock::Create(cxt, "while.bot", fn);
-  llvm::BasicBlock* body = llvm::BasicBlock::Create(cxt, "while.body", fn);
+  bottom = llvm::BasicBlock::Create(cxt, "while.bottom", fn);
+  llvm::BasicBlock* body = llvm::BasicBlock::Create(cxt, "while.body", fn, bottom);
   build.CreateBr(top);
 
   // Emit the condition test.
