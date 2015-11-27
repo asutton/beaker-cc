@@ -5,6 +5,7 @@
 #include "job.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
+#include "decl.hpp"
 #include "elaborator.hpp"
 #include "generator.hpp"
 #include "error.hpp"
@@ -12,16 +13,17 @@
 #include <iostream>
 #include <fstream>
 
-
+// FIXME: It would be better if the generator hid all
+// of these details from us.
 #include <llvm/IR/Module.h>
+#include <llvm/Support/FileSystem.h>
 #include <llvm/Support/raw_ostream.h>
 
 
-
-enum Build_kind
+enum Target
 {
-  library_build,
-  program_build,
+  module_tgt,
+  program_tgt,
 };
 
 
@@ -32,36 +34,45 @@ struct Config
   bool keep     = false;
   bool assemble = false;
   bool compile  = false;
-  int  build    = program_build;
+  Target target = program_tgt;
 };
 
 
 static void
 usage(std::ostream& os, po::options_description& desc)
 {
-  os << "usage: beaker-compile [options] input-file...\n\n";
+  os << "usage: beaker-compile [options] input-files...\n\n";
   os << desc << '\n';
 }
 
 
-static bool translate(Path const&, Path const&, Config const&);
+static bool parse(Path const&, Config const&);
+static bool parse(Path_seq const&, Path const&, Config const&);
+
+static bool lower(Path const&, Path const&, Config const&);
 static bool assemble(Path const&, Path const&, Config const&);
 static bool executable(Path_seq const&, Path const&, Config const&);
-static bool library(Path_seq const&, Path const&, Config const&);
+static bool module(Path_seq const&, Path const&, Config const&);
 
+
+// Global resources.
+Location_map locs; // Source code locations
+Symbol_table syms; // The symbol table
+Module_decl  mod;  // The translation module
 
 
 int
 compiler_main(int argc, char* argv[])
 {
   init_colors();
+  init_symbols(syms);
 
   po::options_description common("common options");
   common.add_options()
     ("help",     "print help message")
     ("version",  "print version message")
-    ("input,i",   po::value<String_seq>(), "specify input files")
-    ("output,o",  po::value<String>(),     "specify the output file")
+    ("input,i",   po::value<String_seq>(), "specify build inputs")
+    ("output,o",  po::value<String>(),     "specify the build output file")
     ("keep,k",    "keep temporary files");
 
   // FIXME: These really define the compilation mode.
@@ -71,13 +82,13 @@ compiler_main(int argc, char* argv[])
   //    -c implies no linking
   //
   //    -b [archive|library|program]
-  // 
+  //
   po::options_description compiler("compile options");
   compiler.add_options()
     ("assemble,s", "compile to native assembly")
-    ("compile,c",  "compile to object files")
-    ("build,b",     po::value<String>()->default_value("program"),
-                   "produce a library or program");
+    ("compile,c",  "compile but do not link")
+    ("target,t",   po::value<String>()->default_value("program"),
+                   "produce an archive, module, or program");
 
   po::positional_options_description pos;
   pos.add("input", -1);
@@ -109,8 +120,7 @@ compiler_main(int argc, char* argv[])
     return 0;
   }
   if (vm.count ("version")) {
-    // TODO: Generate the version number from the 
-    // build.
+    // TODO: Generate the version number from the build.
     std::cout << "beaker v0.0" << '\n';
     return 0;
   }
@@ -118,32 +128,34 @@ compiler_main(int argc, char* argv[])
   // Check options.
   if (vm.count("compile"))
     conf.compile = true;
-  
+
   if (vm.count("assemble")) {
     conf.assemble = true;
     conf.compile = true;
   }
 
-  if (vm.count("build")) {
-    String b = vm["build"].as<String>();
-    if (b == "program") {
-      conf.build = program_build;
-    } else if (b == "library") {
-      conf.build = library_build;
+  if (vm.count("target")) {
+    String t = vm["target"].as<String>();
+    if (t == "program") {
+      conf.target = program_tgt;
+    } else if (t == "module") {
+      conf.target = module_tgt;
     } else  {
-      std::cerr << "error: invalid build specification\n";
+      std::cerr << "error: invalid build target\n";
       usage(std::cerr, all);
       return -1;
     }
-  }    
-    
+  }
+
   // Validate the input files.
   if (!vm.count("input")) {
     std::cerr << "error: no input files given\n";
     usage(std::cerr, all);
     return -1;
   }
-  String_seq inputs = vm["input"].as<String_seq>();
+  Path_seq inputs;
+  for (String const& s : vm["input"].as<String_seq>())
+    inputs.push_back(s);
 
   // Look for an output file. If not given, assume that
   // the end result is going to be a native binary. Note
@@ -156,93 +168,122 @@ compiler_main(int argc, char* argv[])
     output = vm["output"].as<String>();
   }
 
-  // TODO: If there are multiple inputs and a non-linked 
-  // output file, that's an error.
-  if (inputs.size() > 1) {
-    File_kind k = get_file_kind(output);
-    if (!is_linked_file(k)) {
-      std::cerr << "error: invalid output specified for multiple inputs\n";
-      return -1;
-    }
-  }
-
-  // Produce a series of jobs that lowers all inputs
-  // to object files.
+  // Parse all of the input files into the translation module.
   //
-  // TODO: It might be worthwhile to produce a series or
-  // graph of jobs rather than doing each as needed. This
-  // would allow for parallel builds.
-  Path_seq outputs;
-  Path_seq temps;
-  for (String const& str : inputs) {
-    Path in = str;
+  // FIXME: We should collect a set of output files from
+  // parsing since we could potentially pass .ll/.bc/.s/.o
+  // files to the next phase of transdlation.
+  //
+  // FIXME: Clean up temporary files.
+  Path ir = to_ir_file(output);
+  if (!parse(inputs, ir, conf))
+    return -1;
 
-    // Translate to assembly.
-    File_kind k = get_file_kind(in);
-    if (k == beaker_file || k == ir_file || k == bitcode_file) {
-      Path temp = to_asm_file(in.filename());
-      if (!translate(in, temp, conf))
-        return -1;
-      if (!conf.assemble)
-        temps.push_back(temp);
-      in = temp;
-      k = asm_file;
-    }
+  Path as = to_asm_file(output);
+  if (!lower(ir, as, conf))
+    return -1;
+  if (conf.assemble)
+    return 0;
 
-    // If -s is turned on, then don't generate object files.
-    if (conf.assemble)
-      continue;
+  Path obj = to_object_file(output);
+  if (!assemble(as, obj, conf))
+    return -1;
+  if (conf.compile)
+    return 0;
 
-    // Produce object code.
-    if (k == asm_file) {
-      Path temp = to_object_file(in.filename());
-      if (!assemble(in, temp, conf))
-        return -1;
-      if (!conf.compile)
-        temps.push_back(temp);
-      in = temps.back();
-    }
+  // Generate the linked result.
+  if (conf.target == program_tgt)
+    return executable({obj}, output, conf);
+  if (conf.target == module_tgt)
+    return module({obj}, output, conf);
 
-    // Save outputs.    
-    outputs.emplace_back(in);
-  }
-
-  // If only compiling, stop here.
-  bool ok = false;
-  if (!conf.compile) {
-    // Produce an executable or a library.
-    if (conf.build == program_build)
-      ok = executable(outputs, output, conf);
-    else if (conf.build == library_build)
-      ok = library(outputs, output, conf);
-  }
-
-  /// Remove temporary files after build.
-  if (!conf.keep) {
-    for (Path const& p : temps)
-      fs::remove(p);
-  }
-
-  return ok ? 0 : -1;
+  return 0;
 }
 
 
-// Lower an input source to a native assembly file
-// using translate program.
-bool 
-translate(Path const& in, Path const& out, Config const& conf)
+// Parse the input file into the module.
+bool
+parse(Path const& in, Config const& conf)
 {
-  extern Path translator;
-  
-  // Build the argument sequence.
-  String_seq args;
-  if (conf.keep)
-    args.push_back("-k");
-  args.push_back(format("-o {}", out.string()));
-  args.push_back(in.string());
+  try {
+    // Read the input source.
+    File src = in.c_str();
+    Input_buffer buf = src;
 
-  // Build and run the job.
-  Job job(translator.string(), args);
+    // Lex the input source.
+    Token_stream ts;
+    Location_map locs;
+    Lexer lex(syms, buf);
+    if (!lex.lex(ts))
+      return false;
+
+    // Parse the token stream.
+    Parser parse(syms, ts, locs);
+    if (!parse.module(&mod))
+      return false;
+
+    return true;
+  }
+
+  // Diagnose uncaught translation errors and exit
+  // gracefully. All other uncaught exceptions are
+  // ICEs and we want those to fail noisily. Note
+  // that re-throwing does not re-establish the
+  // origin of the error for the purpose of debugging.
+  catch (Translation_error& err) {
+    diagnose(err);
+    return false;
+  }
+}
+
+
+bool
+parse(Path_seq const& in, Path const& out, Config const& conf)
+{
+  bool ok = true;
+  for (Path const& p : in) {
+    if (get_file_kind(p) == beaker_file)
+      ok &= parse(p, conf);
+    else {
+      // FIXME: LLVM IR/BC or assembly could (should?) be
+      // lowered and passed through to the link phase. That
+      // would allow a module to contain native assembly,
+      // and used internally via foreign declarations.
+      std::cerr << "error: unknown input file\n";
+      return -1;
+    }
+  }
+  if (!ok)
+    return -1;
+
+  // Elaborate the parse result.
+  Elaborator elab(locs, syms);
+  elab.elaborate(&mod);
+
+  // Translate to LLVM.
+  Generator gen;
+  llvm::Module* ir = gen(&mod);
+
+  // Write the output to an IR file, not the requested
+  // output. That happens later.
+  Path p = to_ir_file(out);
+
+  // Write the result to the output file.
+  std::error_code err;
+  llvm::raw_fd_ostream ofs(p.string(), err, llvm::sys::fs::F_None);
+  ofs << *ir;
+  return true;
+}
+
+
+// Lower LLVM IR/BC to native assembly.
+bool
+lower(Path const& in, Path const& out, Config const& conf)
+{
+  Job job(llvm_compiler(), {
+    format("-o {}", out.string()),
+    in.string()
+  });
   return job.run();
 }
 
@@ -252,7 +293,7 @@ translate(Path const& in, Path const& out, Config const& conf)
 // FIXME: We should be using the native assembler and
 // not a C compiler for this program. Note that we
 // add the "-c" option as a result of this decision.
-bool 
+bool
 assemble(Path const& in, Path const& out, Config const& conf)
 {
   Job job(native_assembler(), {
@@ -264,12 +305,12 @@ assemble(Path const& in, Path const& out, Config const& conf)
 }
 
 
-// Link a sequence of object files into an executable
-// program. Note that this uses the C compiler, so
-// we implicitly link against the C runtime.
+// Link a sequence of object files into an executable program.
+// Note that this uses the C compiler, so we implicitly link
+// against the C runtime.
 //
 // TODO: Don't link against the C runtime!
-bool 
+bool
 executable(Path_seq const& in, Path const& out, Config const& conf)
 {
   // Build the argument list.
@@ -286,8 +327,8 @@ executable(Path_seq const& in, Path const& out, Config const& conf)
 
 // Link a sequence of object files into a shared
 // library.
-bool 
-library(Path_seq const& in, Path const& out, Config const& conf)
+bool
+module(Path_seq const& in, Path const& out, Config const& conf)
 {
   // Build the argument list.
   String_seq args;

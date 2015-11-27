@@ -46,10 +46,10 @@ translator_main(int argc, char* argv[])
   init_colors();
   init_symbols(syms);
 
-  // TODO: Support extraction to other intermediate formats? 
+  // TODO: Support extraction to other intermediate formats?
   // Maybe C, for example? Gimple?
   //
-  // Note that an introspection tool would have a considerably 
+  // Note that an introspection tool would have a considerably
   // different interface.
   po::options_description common("options");
   common.add_options()
@@ -88,7 +88,7 @@ translator_main(int argc, char* argv[])
   }
 
   if (vm.count ("version")) {
-    // TODO: Generate the version number from the 
+    // TODO: Generate the version number from the
     // build.
     std::cout << "beaker v0.0" << '\n';
     return 0;
@@ -178,17 +178,3 @@ compile(Path const& in, Path const& out)
     return false;
   }
 }
-
-
-
-// Lower LLVM IR/BC to native assembly.
-bool
-lower(Path const& in, Path const& out)
-{
-  Job job(llvm_compiler(), {
-    format("-o {}", out.string()),
-    in.string()
-  });
-  return job.run();
-}
-

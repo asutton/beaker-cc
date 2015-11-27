@@ -851,7 +851,7 @@ Parser::stmt()
 //
 // TODO: Return an empty module.
 Decl*
-Parser::module()
+Parser::module(Module_decl* m)
 {
   Decl_seq decls;
   while (!ts_.eof()) {
@@ -863,7 +863,7 @@ Parser::module()
       consume_thru(term_);
     }
   }
-  return on_module(decls);
+  return on_module(m, decls);
 }
 
 
@@ -1285,13 +1285,14 @@ Parser::on_field(Specifier spec, Token n, Type const* t)
 }
 
 
-// FIXME: The name of the module should be the name of the
-// file, or maybe even the absolute path of the file.
+// Append the parsed declarations to the module.
+// This returns the module m.
 Decl*
-Parser::on_module(Decl_seq const& d)
+Parser::on_module(Module_decl* m, Decl_seq const& d)
 {
-  Symbol const* sym = syms_.get("<input>");
-  return new Module_decl(sym, d);
+  Decl_seq& d0 = m->decls_;
+  d0.insert(d0.end(), d.begin(), d.end());
+  return m;
 }
 
 

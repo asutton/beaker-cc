@@ -53,21 +53,11 @@ set(libs
   ${LLVM_LIBRARIES})
 
 
-# The compiler is the main driver for compilation. 
+# The compiler is the main driver for compilation.
 # It takes a set of input files and produces linked
 # outputs (programs, libraries, archives).
-add_executable(beaker-compile driver.cpp compiler.cpp translator.cpp)
+add_executable(beaker-compile driver.cpp compiler.cpp)
 target_link_libraries(beaker-compile ${libs})
-
-
-# Make a copy of the compiler. This will be used
-# to invoke the fornt end equivalent of cc1.
-#
-# FIXME: This should depend on beaker-compile rather
-# than being run every time.
-add_custom_target(beaker-translate ALL
-  COMMAND ${CMAKE_COMMAND} -E copy beaker-compile beaker-translate
-  DEPENDS beaker-compile)
 
 
 # The runtime interpreter executes a parsed beaker
