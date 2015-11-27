@@ -114,6 +114,46 @@ Elaborator::qualified_lookup(Scope* s, Symbol const* sym)
 // Elaboration of types
 
 
+inline bool
+requires_definition(Type const* t)
+{
+  // A type T[n] requires a definition iff T requires
+  // a definition.
+  if (Array_type const* a = as<Array_type>(t))
+    t = a->type();
+
+  // A user-defined type T requires a definition iff it
+  // is not a reference or block type.
+  if (is<Record_type>(t))
+    return true;
+  return false;
+}
+
+
+// Elaborate a type. If the type is requried to be a complete
+// type then recursively elaborate it.
+Type const*
+Elaborator::elaborate_type(Type const* t)
+{
+  Type const* t1 = elaborate(t);
+  if (requires_definition(t1))
+    t1 = elaborate_def(t);
+  return t1;
+}
+
+
+Type const*
+Elaborator::elaborate_def(Type const* t)
+{
+  if (Record_type const* r = as<Record_type>(t)) {
+    elaborate_def(r->declaration());
+    return t;
+  }
+  lingo_unreachable();
+}
+
+
+
 Type const*
 Elaborator::elaborate(Type const* t)
 {
@@ -1444,6 +1484,11 @@ Elaborator::elaborate_def(Parameter_decl* d)
 Decl*
 Elaborator::elaborate_def(Record_decl* d)
 {
+  // If the declaration has already been declared,
+  // then don't re-elaborate it.
+  if (defined.count(d))
+    return d;
+
   // Elaborate fields and then method declarations.
   //
   // TODO: What are the lookup rules for default
@@ -1451,11 +1496,16 @@ Elaborator::elaborate_def(Record_decl* d)
   //
   //    struct S {
   //      x : int = 1;
-  //      y : int = x + 2; // Probably ok
+  //      y : int = x + 2; // Seems resonable.
+  //
   //      a : int = b - 1; // OK?
   //      b : int = 0;
-  //      c : int = f();   // OK?
+  //      // Making this okay could impose an alternative
+  //      // initialization order.
+  //
+  //      g : int = f();   // OK?
   //      def f() -> int { ... }
+  //      // What if f() refers to an uninitialized fiedl?
   //    }
   //
   // If we allow the 2nd, then we need to do two
@@ -1471,6 +1521,7 @@ Elaborator::elaborate_def(Record_decl* d)
   for (Decl*& m : d->members_)
     m = elaborate_def(m);
 
+  defined.insert(d);
   return d;
 }
 

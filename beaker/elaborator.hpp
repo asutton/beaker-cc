@@ -17,6 +17,12 @@
 #include "location.hpp"
 #include "scope.hpp"
 
+#include <unordered_set>
+
+
+// Track defined declarations.
+using Decl_set = std::unordered_set<Decl*>;
+
 
 // The elaborator is responsible for the annotation of
 // an AST with type and other information.
@@ -26,6 +32,8 @@ class Elaborator
 public:
   Elaborator(Location_map&, Symbol_table&);
 
+  Type const* elaborate_type(Type const*);
+  Type const* elaborate_def(Type const*);
   Type const* elaborate(Type const*);
   Type const* elaborate(Id_type const*);
   Type const* elaborate(Boolean_type const*);
@@ -130,7 +138,8 @@ public:
 private:
   Location_map& locs;
   Symbol_table& syms;
-  Scope_stack  stack;
+  Scope_stack   stack;
+  Decl_set      defined;
 };
 
 
