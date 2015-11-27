@@ -24,11 +24,16 @@
 using Decl_set = std::unordered_set<Decl*>;
 
 
+// Track recursive definitions of records.
+using Decl_stack = std::vector<Decl*>;
+
+
 // The elaborator is responsible for the annotation of
 // an AST with type and other information.
 class Elaborator
 {
   struct Scope_sentinel;
+  struct Defining_sentinel;
 public:
   Elaborator(Location_map&, Symbol_table&);
 
@@ -132,6 +137,8 @@ public:
   void locate(void const*, Location);
   Location locate(void const*);
 
+  bool is_defining(Decl const*) const;
+
   // Found symbols.
   Function_decl* main = nullptr;
 
@@ -140,6 +147,7 @@ private:
   Symbol_table& syms;
   Scope_stack   stack;
   Decl_set      defined;
+  Decl_stack    defining;
 };
 
 
@@ -199,6 +207,23 @@ struct Elaborator::Scope_sentinel
 
   Elaborator& elab;
   bool        take;
+};
+
+
+struct Elaborator::Defining_sentinel
+{
+  Defining_sentinel(Elaborator& e, Decl* d)
+    : elab(e)
+  {
+    elab.defining.push_back(d);
+  }
+
+  ~Defining_sentinel()
+  {
+    elab.defining.pop_back();
+  }
+
+  Elaborator& elab;
 };
 
 

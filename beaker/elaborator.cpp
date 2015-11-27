@@ -120,7 +120,7 @@ requires_definition(Type const* t)
   // A type T[n] requires a definition iff T requires
   // a definition.
   if (Array_type const* a = as<Array_type>(t))
-    t = a->type();
+    return requires_definition(a->type());
 
   // A user-defined type T requires a definition iff it
   // is not a reference or block type.
@@ -137,7 +137,7 @@ Elaborator::elaborate_type(Type const* t)
 {
   Type const* t1 = elaborate(t);
   if (requires_definition(t1))
-    t1 = elaborate_def(t);
+    t1 = elaborate_def(t1);
   return t1;
 }
 
@@ -1191,7 +1191,7 @@ Elaborator::elaborate(Decl* d)
 Decl*
 Elaborator::elaborate(Variable_decl* d)
 {
-  d->type_ = elaborate(d->type_);
+  d->type_ = elaborate_type(d->type_);
 
   // Declare the variable.
   declare(d);
@@ -1225,7 +1225,7 @@ Elaborator::elaborate(Function_decl* d)
 Decl*
 Elaborator::elaborate(Parameter_decl* d)
 {
-  d->type_ = elaborate(d->type_);
+  d->type_ = elaborate_type(d->type_);
   declare(d);
   return d;
 }
@@ -1301,7 +1301,7 @@ Elaborator::elaborate_decl(Decl* d)
 Decl*
 Elaborator::elaborate_decl(Variable_decl* d)
 {
-  d->type_ = elaborate(d->type_);
+  d->type_ = elaborate_type(d->type_);
   declare(d);
   return d;
 }
@@ -1310,7 +1310,7 @@ Elaborator::elaborate_decl(Variable_decl* d)
 Decl*
 Elaborator::elaborate_decl(Function_decl* d)
 {
-  d->type_ = elaborate(d->type_);
+  d->type_ = elaborate_type(d->type_);
   declare(d);
 
   // Remember if we've seen a function named main().
@@ -1342,7 +1342,7 @@ Elaborator::elaborate_decl(Parameter_decl* d)
 Decl*
 Elaborator::elaborate_decl(Field_decl* d)
 {
-  d->type_ = elaborate(d->type_);
+  d->type_ = elaborate_type(d->type_);
   declare(d);
   return d;
 }
@@ -1477,6 +1477,16 @@ Elaborator::elaborate_def(Parameter_decl* d)
 }
 
 
+// Returns true if we are currently defining the declaration d.
+// That is te case when the declaraiton appears in the decl
+// stack.
+bool
+Elaborator::is_defining(Decl const* d) const
+{
+  return count(defining.begin(), defining.end(), d);
+}
+
+
 // FIXME: If the type of a member variable requires the
 // definition of a user-defined type, then we need to
 // recursively elaborate that. However, we need to be
@@ -1488,6 +1498,18 @@ Elaborator::elaborate_def(Record_decl* d)
   // then don't re-elaborate it.
   if (defined.count(d))
     return d;
+
+  // Prevent recursive type definitions.
+  if (is_defining(d)) {
+    std::cerr << format("cyclic definition of '{}'\n", *d->name());
+    for (auto iter = defining.rbegin(); iter != defining.rend(); ++iter) {
+      if (*iter == d)
+        break;
+      std::cerr << format("  referenced in the definition of '{}'\n", *(*iter)->name());
+    }
+    throw Type_error(locate(d), format("cyclic definition of '{}'", *d->name()));
+  }
+  Defining_sentinel def(*this, d);
 
   // Elaborate fields and then method declarations.
   //
