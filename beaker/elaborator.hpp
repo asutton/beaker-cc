@@ -79,12 +79,22 @@ public:
 
   // Support for two-phase elaboration.
   Decl* elaborate_decl(Decl*);
+  Decl* elaborate_decl(Variable_decl*);
+  Decl* elaborate_decl(Function_decl*);
+  Decl* elaborate_decl(Parameter_decl*);
+  Decl* elaborate_decl(Record_decl*);
   Decl* elaborate_decl(Field_decl*);
   Decl* elaborate_decl(Method_decl*);
+  Decl* elaborate_decl(Module_decl*);
 
   Decl* elaborate_def(Decl*);
+  Decl* elaborate_def(Variable_decl*);
+  Decl* elaborate_def(Function_decl*);
+  Decl* elaborate_def(Parameter_decl*);
+  Decl* elaborate_def(Record_decl*);
   Decl* elaborate_def(Field_decl*);
   Decl* elaborate_def(Method_decl*);
+  Decl* elaborate_def(Module_decl*);
 
   Stmt* elaborate(Stmt*);
   Stmt* elaborate(Empty_stmt*);
@@ -130,14 +140,14 @@ Elaborator::Elaborator(Location_map& loc, Symbol_table& s)
 { }
 
 
-inline void 
+inline void
 Elaborator::locate(void const* p, Location l)
 {
   locs.emplace(p, l);
 }
 
 
-inline Location 
+inline Location
 Elaborator::locate(void const* p)
 {
   auto iter = locs.find(p);
