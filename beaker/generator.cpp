@@ -453,13 +453,11 @@ Generator::gen(And_expr const* e)
 
   // Generate code for the left operand.
   llvm::Value* left = gen(e->left());
-
   build.CreateCondBr(left, then_block, tail_block);
   build.SetInsertPoint(then_block);
 
   // Generate code for the right operand.
   llvm::Value* right = gen(e->right());
-
   build.CreateBr(tail_block);
   build.SetInsertPoint(tail_block);
 
@@ -479,13 +477,11 @@ Generator::gen(Or_expr const* e)
 
   // Generate code for the left operand.
   llvm::Value* left = gen(e->left());
-
   build.CreateCondBr(left, tail_block, then_block);
   build.SetInsertPoint(then_block);
 
   // Generate code for the right operand.
   llvm::Value* right = gen(e->right());
-
   build.CreateBr(tail_block);
   build.SetInsertPoint(tail_block);
 
