@@ -881,7 +881,7 @@ Elaborator::elaborate(Call_expr* e)
   // arguments during overload resolution.
   Expr_seq& args = e->arguments();
   for (Expr*& a : args)
-    a = require_value(*this, a);
+    a = elaborate(a);
 
   // If the target is of the form x.m or x.ovl, insert x
   // into the argument list and update the function target.
@@ -911,6 +911,7 @@ Elaborator::elaborate(Call_expr* e)
     // of the named function.
     e->type_ = t->return_type();
     e->first = f;
+    e->second = conv;
   }
 
   // Guarantee that f is an expression that refers
