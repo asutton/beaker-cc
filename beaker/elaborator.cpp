@@ -911,6 +911,7 @@ Elaborator::elaborate(Call_expr* e)
     // of the named function.
     e->type_ = t->return_type();
     e->first = f;
+    e->second = conv;
   }
 
   // Guarantee that f is an expression that refers
