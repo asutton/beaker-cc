@@ -21,6 +21,7 @@ Input_buffer::Input_buffer(File const& f)
 
 
 
+
 // Returns the current character and advances the
 // stream.
 char
@@ -184,7 +185,7 @@ Lexer::on_word()
   return Token(loc_, sym->token(), sym);
 }
 
-inline Token
+Token
 Lexer::on_f_slash(){
   //Look for lambda identifier in Symbol_table
   //if it's found mutate the identifier

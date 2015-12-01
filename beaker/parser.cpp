@@ -504,12 +504,12 @@ Parser::lambda_decl()
 
   // function declaration
   if (match_if(semicolon_tok))
-    return on_function(spec, n, parms, t);
+    return on_function(no_spec, n, parms, t);
 
   // function-definition.
   Stmt* s = block_stmt();
 
-  return on_function(spec, n, parms, t, s);
+  return on_function(no_spec, n, parms, t, s);
 
 }
 
