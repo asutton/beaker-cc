@@ -175,6 +175,10 @@ public:
   Token ampersand();
   Token bar();
 
+  //NOTE NOTE NOTE
+  //ADDITIONS FOR LAMBDAS
+  Token f_slash();
+
   Token integer();
   Token word();
   Token character();
@@ -187,6 +191,7 @@ private:
   // Semantic actions
   Token on_token();
   Token on_word();
+  Token on_f_slash();
   Token on_integer();
   Token on_character();
   Token on_string();
@@ -259,6 +264,11 @@ Lexer::scan(Token_stream& ts)
 {
   if (Token tok = scan()) {
     ts.put(tok);
+    //FIXME is this ok or is it too hacky?
+    //HACK for lambda function identifier injection
+    if(tok.kind() == f_slash_tok){
+      ts.put(on_f_slash());
+    }
     return true;
   }
   return false;
@@ -470,6 +480,11 @@ Lexer::bar()
     return error();
 }
 
+inline Token
+Lexer::f_slash()
+{
+  return symbol1();
+}
 
 // Match a keyword or identifier in the language.
 inline Token

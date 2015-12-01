@@ -475,6 +475,43 @@ Parser::function_decl(Specifier spec)
   return on_function(spec, n, parms, t, s);
 }
 
+// NOTE ADD LAMDBA PARSER HERE
+Decl*
+Parser::lambda_decl()
+{
+  require(f_slash_tok);
+
+  //Match the identifier inserted earlier
+  Token n = match(identifier_tok);
+
+  // parameter-clause
+  Decl_seq parms;
+  match(lparen_tok);
+  while (lookahead() != rparen_tok) {
+    Decl* p = parameter_decl();
+    parms.push_back(p);
+
+    if (match_if(comma_tok))
+      continue;
+    else
+      break;
+  }
+  match(rparen_tok);
+
+  // return-type
+  match(arrow_tok);
+  Type const* t = type();
+
+  // function declaration
+  if (match_if(semicolon_tok))
+    return on_function(spec, n, parms, t);
+
+  // function-definition.
+  Stmt* s = block_stmt();
+
+  return on_function(spec, n, parms, t, s);
+
+}
 
 // Parse a parameter declaration.
 //
@@ -636,6 +673,7 @@ Parser::decl()
       return variable_decl(spec);
     case def_kw:
       return function_decl(spec);
+    //NOTE ADD LAMDBA CASE HERE backslash_kw
     case struct_kw:
       return record_decl(spec);
     default:

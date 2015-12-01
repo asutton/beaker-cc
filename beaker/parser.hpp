@@ -42,6 +42,12 @@ public:
   Decl* decl();
   Decl* variable_decl(Specifier);
   Decl* function_decl(Specifier);
+
+  // NOTE NOTE NOTE
+  //ADDITIONS FOR LAMBDAS
+  Decl* lambda_decl();
+
+
   Decl* parameter_decl();
   Decl* record_decl(Specifier);
   Decl* field_decl(Specifier);

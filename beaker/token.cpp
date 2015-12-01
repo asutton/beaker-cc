@@ -40,6 +40,10 @@ spelling(Token_kind k)
     case amp_tok: return "&";
     case arrow_tok: return "->";
 
+    //NOTE NOTE NOTE NOTE NOTE
+    //ADDITIONS
+    case f_slash_tok: return "\\";
+
     case bool_kw: return "bool";
     case break_kw: return "break";
     case char_kw: return "char";
@@ -94,6 +98,10 @@ init_symbols(Symbol_table& syms)
   syms.put<Symbol>("!", not_tok);
   syms.put<Symbol>("&", amp_tok);
   syms.put<Symbol>("->", arrow_tok);
+
+  //NOTE NOTE NOTE NOTE NOTE NOTE
+  //ADDITIONS
+  syms.put<Symbol>("\\", f_slash_tok);
 
   // Keywords
   syms.put<Symbol>("bool", bool_kw);

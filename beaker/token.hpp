@@ -52,6 +52,10 @@ enum Token_kind
   amp_tok,
   arrow_tok,
 
+  //NOTE NOTE NOTE NOTE NOTE
+  //ADDITIONS
+  f_slash_tok,
+
   // Keywords
   bool_kw,
   break_kw,
