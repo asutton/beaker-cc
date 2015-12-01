@@ -11,6 +11,7 @@
 
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/IRBuilder.h>
+#include <stack>
 
 
 // Used to maintain a mapping of Beaker declarations
@@ -28,9 +29,11 @@
 using Symbol_env = Environment<Decl const*, llvm::Value*>;
 using Symbol_stack = Stack<Symbol_env>;
 
+
 // Like the symbol environment, except that all
 // type annotations are global.
 using Type_env = Environment<Decl const*, llvm::Type*>;
+
 
 // A global string table, used to unify string
 // declarations. This maps strings to global string
@@ -60,6 +63,7 @@ struct Generator
   llvm::Value* gen(Expr const*);
   llvm::Value* gen(Literal_expr const*);
   llvm::Value* gen(Id_expr const*);
+  llvm::Value* gen(Decl_expr const*);
   llvm::Value* gen(Add_expr const*);
   llvm::Value* gen(Sub_expr const*);
   llvm::Value* gen(Mul_expr const*);
@@ -77,7 +81,9 @@ struct Generator
   llvm::Value* gen(Or_expr const*);
   llvm::Value* gen(Not_expr const*);
   llvm::Value* gen(Call_expr const*);
-  llvm::Value* gen(Member_expr const*);
+  llvm::Value* gen(Dot_expr const*);
+  llvm::Value* gen(Field_expr const*);
+  llvm::Value* gen(Method_expr const*);
   llvm::Value* gen(Index_expr const*);
   llvm::Value* gen(Value_conv const*);
   llvm::Value* gen(Block_conv const*);
@@ -110,17 +116,34 @@ struct Generator
   void gen_local(Variable_decl const*);
   void gen_global(Variable_decl const*);
 
+  // Helper functions for determining where
+  // breaks and continues should go to
+  void make_branch(llvm::BasicBlock*, llvm::BasicBlock*);
+  void resolve_illformed_blocks(llvm::Function*);
+
+
   llvm::LLVMContext cxt;
   llvm::IRBuilder<> build;
+
+  // Current module.
   llvm::Module*     mod;
+
+  // Current function.
   llvm::Function*   fn;
   llvm::Value*      ret;
+  llvm::BasicBlock* entry;  // Function entry
+  llvm::BasicBlock* exit;   // Function exit
+  llvm::BasicBlock* top;    // Loop top
+  llvm::BasicBlock* bottom; // Loop bottom
 
+
+  // Environment.
   Symbol_stack      stack;
   Type_env          types;
   String_env        strings;
 
   struct Symbol_sentinel;
+  struct Loop_sentinel;
 };
 
 
@@ -146,6 +169,28 @@ struct Generator::Symbol_sentinel
   }
 
   Generator& gen;
+};
+
+
+// An RAII class that manages the top and bottom
+// blocks of loops. These are the current jump
+// targets for the break and continue statements.
+struct Generator::Loop_sentinel
+{
+  Loop_sentinel(Generator& g)
+    : gen(g), top(gen.top), bot(gen.bottom)
+  {
+  }
+
+  ~Loop_sentinel()
+  {
+    gen.top = top;
+    gen.bottom = bot;
+  }
+
+  Generator& gen;
+  llvm::BasicBlock* top;  // Pevious loop top
+  llvm::BasicBlock* bot;  // Previos loop bottom
 };
 
 

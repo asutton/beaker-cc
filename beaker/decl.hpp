@@ -5,6 +5,7 @@
 #define BEAKER_DECL_HPP
 
 #include "prelude.hpp"
+#include "scope.hpp"
 #include "specifier.hpp"
 
 
@@ -132,33 +133,56 @@ struct Parameter_decl : Decl
 
 
 // Declares a user-defined record type.
+//
+// The record class maintains two sets of declarations:
+// fields, which constitute its actual type, and
+// another set of member declarations (e.g., methods,
+// nested types, templates, constants, etc). These
+// aren't really part of the object, just part of
+// the scope.
+//
+// A record declaration defines a scope. Declarations
+// within the record are cached here for use during
+// member lookup.
 struct Record_decl : Decl
 {
-  Record_decl(Symbol const* n, Decl_seq const& f)
-    : Decl(n, nullptr), fields_(f)
+  Record_decl(Symbol const* n, Decl_seq const& f, Decl_seq const& m)
+    : Decl(n, nullptr), fields_(f), members_(m), scope_(this)
   { }
 
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
 
   Decl_seq const& fields() const { return fields_; }
+  Decl_seq const& members() const { return members_; }
+
+  Scope*          scope()       { return &scope_; }
+  Scope const*    scope() const { return &scope_; }
 
   Decl_seq fields_;
+  Decl_seq members_;
+  Scope    scope_;
 };
 
 
 // A member variable of a record.
+//
+// TODO: Cache the field index?
 struct Field_decl : Decl
 {
   using Decl::Decl;
 
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
+
+  Record_decl const* context() const { return cast<Record_decl>(cxt_); }
+
+  int index() const;
 };
 
 
 // A member function of a record. A member function of
-// a record T has an implicit parameter named 'this' whose 
+// a record T has an implicit parameter named 'this' whose
 // type is T&.
 struct Method_decl : Function_decl
 {
@@ -166,12 +190,18 @@ struct Method_decl : Function_decl
 
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
+
+  Record_decl const* context() const { return cast<Record_decl>(cxt_); }
 };
 
 
 // A module is a sequence of top-level declarations.
 struct Module_decl : Decl
 {
+  Module_decl()
+    : Decl(nullptr, nullptr)
+  { }
+
   Module_decl(Symbol const* n, Decl_seq const& d)
     : Decl(n, nullptr), decls_(d)
   { }
@@ -213,7 +243,7 @@ is_local_variable(Variable_decl const* v)
 // Returns true if the declaration defines an object.
 // Only variables, parameters, and fields define objects.
 inline bool
-defines_object(Decl const* d)
+is_object(Decl const* d)
 {
   return is<Variable_decl>(d)
       || is<Parameter_decl>(d)

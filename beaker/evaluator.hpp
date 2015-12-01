@@ -45,6 +45,7 @@ public:
   Value eval(Expr const*);
   Value eval(Literal_expr const*);
   Value eval(Id_expr const*);
+  Value eval(Decl_expr const*);
   Value eval(Add_expr const*);
   Value eval(Sub_expr const*);
   Value eval(Mul_expr const*);
@@ -62,7 +63,9 @@ public:
   Value eval(Or_expr const*);
   Value eval(Not_expr const*);
   Value eval(Call_expr const*);
-  Value eval(Member_expr const*);
+  Value eval(Dot_expr const*);
+  Value eval(Field_expr const*);
+  Value eval(Method_expr const*);
   Value eval(Index_expr const*);
   Value eval(Value_conv const*);
   Value eval(Block_conv const*);

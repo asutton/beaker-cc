@@ -1,0 +1,12 @@
+def main() -> int
+{
+  var x : int = 0;
+  while (true) {
+    x = x + 1;
+    if (x < 10)
+      continue;
+    else
+      break;
+  }
+  return x;
+}

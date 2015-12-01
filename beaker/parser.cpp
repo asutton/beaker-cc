@@ -368,7 +368,7 @@ Parser::postfix_type()
     // reference-type
     if (match_if(amp_tok))
       t = on_reference_type(t);
-    
+
     // array-types
     else if (match_if(lbrack_tok)) {
       if (match_if(rbrack_tok))
@@ -518,20 +518,21 @@ Parser::record_decl(Specifier spec)
 
   // record-body and field-seq
   require(lbrace_tok);
-  Decl_seq fs;
+  Decl_seq fs, ms;
   while (lookahead() != rbrace_tok) {
     Specifier spec = specifier_seq();
-    Decl* f;
-    if (lookahead() == def_kw)
-      f = method_decl(spec);
-    else if(lookahead() == identifier_tok)
-      f = field_decl(spec);
-    else
-      Syntax_error(ts_.location(), "invalid member declaration");
-    fs.push_back(f);
+    if (lookahead() == def_kw) {
+      Decl* m = method_decl(spec);
+      ms.push_back(m);
+    } else if(lookahead() == identifier_tok) {
+      Decl* f = field_decl(spec);
+      fs.push_back(f);
+    } else {
+      throw Syntax_error(ts_.location(), "invalid member declaration");
+    }
   }
   match(rbrace_tok);
-  return on_record(spec, n, fs);
+  return on_record(spec, n, fs, ms);
 }
 
 
@@ -562,7 +563,7 @@ Parser::field_decl(Specifier spec)
 //
 // TODO: Support out-of-class definitions?
 //
-// TODO: Support specifiers to modify the "this" 
+// TODO: Support specifiers to modify the "this"
 // parameter. Maybe before the return type? Maybe
 // as part of the specifiers?
 //
@@ -850,7 +851,7 @@ Parser::stmt()
 //
 // TODO: Return an empty module.
 Decl*
-Parser::module()
+Parser::module(Module_decl* m)
 {
   Decl_seq decls;
   while (!ts_.eof()) {
@@ -862,7 +863,7 @@ Parser::module()
       consume_thru(term_);
     }
   }
-  return on_module(decls);
+  return on_module(m, decls);
 }
 
 
@@ -1190,7 +1191,7 @@ Parser::on_index(Expr* e1, Expr* e2)
 Expr*
 Parser::on_dot(Expr* e1, Expr* e2)
 {
-  return new Member_expr(e1, e2);
+  return new Dot_expr(e1, e2);
 }
 
 
@@ -1203,7 +1204,9 @@ Decl*
 Parser::on_variable(Specifier spec, Token tok, Type const* t)
 {
   Expr* init = new Default_init(t);
-  return new Variable_decl(spec, tok.symbol(), t, init);
+  Decl* decl = new Variable_decl(spec, tok.symbol(), t, init);
+  locate(decl, tok.location());
+  return decl;
 }
 
 
@@ -1211,7 +1214,9 @@ Decl*
 Parser::on_variable(Specifier spec, Token tok, Type const* t, Expr* e)
 {
   Expr* init = new Copy_init(t, e);
-  return new Variable_decl(spec, tok.symbol(), t, init);
+  Decl* decl = new Variable_decl(spec, tok.symbol(), t, init);
+  locate(decl, tok.location());
+  return decl;
 }
 
 
@@ -1246,14 +1251,18 @@ Decl*
 Parser::on_function(Specifier spec, Token tok, Decl_seq const& p, Type const* t, Stmt* b)
 {
   Type const* f = get_function_type(p, t);
-  return new Function_decl(tok.symbol(), f, p, b);
+  Decl* decl = new Function_decl(tok.symbol(), f, p, b);
+  locate(decl, tok.location());
+  return decl;
 }
 
 
 Decl*
-Parser::on_record(Specifier spec, Token n, Decl_seq const& fs)
+Parser::on_record(Specifier spec, Token n, Decl_seq const& fs, Decl_seq const& ms)
 {
-  return new Record_decl(n.symbol(), fs);
+  Decl* decl = new Record_decl(n.symbol(), fs, ms);
+  locate(decl, n.location());
+  return decl;
 }
 
 
@@ -1261,24 +1270,29 @@ Decl*
 Parser::on_method(Specifier spec, Token tok, Decl_seq const& p, Type const* t, Stmt* b)
 {
   Type const* f = get_function_type(p, t);
-  return new Method_decl(tok.symbol(), f, p, b);
+  Decl* decl = new Method_decl(tok.symbol(), f, p, b);
+  locate(decl, tok.location());
+  return decl;
 }
 
 
 Decl*
 Parser::on_field(Specifier spec, Token n, Type const* t)
 {
-  return new Field_decl(n.symbol(), t);
+  Decl* decl = new Field_decl(n.symbol(), t);
+  locate(decl, n.location());
+  return decl;
 }
 
 
-// FIXME: The name of the module should be the name of the
-// file, or maybe even the absolute path of the file.
+// Append the parsed declarations to the module.
+// This returns the module m.
 Decl*
-Parser::on_module(Decl_seq const& d)
+Parser::on_module(Module_decl* m, Decl_seq const& d)
 {
-  Symbol const* sym = syms_.get("<input>");
-  return new Module_decl(sym, d);
+  Decl_seq& d0 = m->decls_;
+  d0.insert(d0.end(), d.begin(), d.end());
+  return m;
 }
 
 

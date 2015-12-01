@@ -22,6 +22,7 @@ std::ostream& operator<<(std::ostream&, Record_type const&);
 std::ostream& operator<<(std::ostream&, Expr const&);
 std::ostream& operator<<(std::ostream&, Literal_expr const&);
 std::ostream& operator<<(std::ostream&, Id_expr const&);
+std::ostream& operator<<(std::ostream&, Decl_expr const&);
 std::ostream& operator<<(std::ostream&, Add_expr const&);
 std::ostream& operator<<(std::ostream&, Sub_expr const&);
 std::ostream& operator<<(std::ostream&, Mul_expr const&);
@@ -39,13 +40,24 @@ std::ostream& operator<<(std::ostream&, And_expr const&);
 std::ostream& operator<<(std::ostream&, Or_expr const&);
 std::ostream& operator<<(std::ostream&, Not_expr const&);
 std::ostream& operator<<(std::ostream&, Call_expr const&);
-std::ostream& operator<<(std::ostream&, Member_expr const&);
+std::ostream& operator<<(std::ostream&, Dot_expr const&);
+std::ostream& operator<<(std::ostream&, Field_expr const&);
+std::ostream& operator<<(std::ostream&, Method_expr const&);
 std::ostream& operator<<(std::ostream&, Index_expr const&);
 std::ostream& operator<<(std::ostream&, Value_conv const&);
 std::ostream& operator<<(std::ostream&, Block_conv const&);
 std::ostream& operator<<(std::ostream&, Default_init const&);
 std::ostream& operator<<(std::ostream&, Copy_init const&);
 std::ostream& operator<<(std::ostream&, Reference_init const&);
+
+std::ostream& operator<<(std::ostream&, Decl const&);
+std::ostream& operator<<(std::ostream&, Variable_decl const&);
+std::ostream& operator<<(std::ostream&, Function_decl const&);
+std::ostream& operator<<(std::ostream&, Parameter_decl const&);
+std::ostream& operator<<(std::ostream&, Record_decl const&);
+std::ostream& operator<<(std::ostream&, Field_decl const&);
+std::ostream& operator<<(std::ostream&, Method_decl const&);
+std::ostream& operator<<(std::ostream&, Module_decl const&);
 
 
 #endif

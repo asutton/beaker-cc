@@ -73,3 +73,34 @@ convert(Expr* e, Type const* t)
 
   return nullptr;
 }
+
+
+// Convert a seequence of arguments to a corresponding
+// parameter type. The conversion is successful only
+// when all individual conversions are successful.
+// This is the case when the result vector contains
+// no null pointers.
+Expr_seq
+convert(Expr_seq const& args, Type_seq const& parms)
+{
+  Expr_seq conv(args.size(), nullptr);
+
+  // If there is a mismatch in size, just return.
+  //
+  // TODO: Handle variadic funcitons and default
+  // arguments.
+  if (args.size() < parms.size())
+    return conv;
+  if (parms.size() < args.size())
+    return conv;
+
+  // Convert each argument in turn.
+  //
+  // TODO: Note that we actually perform initialization
+  // for each argument. How does that interoperate with
+  // conversions?
+  for (std::size_t i = 0; i < parms.size(); ++i)
+    conv[i] = convert(args[i], parms[i]);
+
+  return conv;
+}

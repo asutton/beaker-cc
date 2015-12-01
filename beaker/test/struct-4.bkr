@@ -1,0 +1,15 @@
+
+struct S0
+{
+  x : S1;
+}
+
+struct S1
+{
+  y : int;
+}
+
+struct S2
+{
+  z : S0;
+}

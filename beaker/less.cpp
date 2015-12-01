@@ -165,6 +165,16 @@ is_less(Literal_expr const* a, Literal_expr const* b)
 }
 
 
+// Compare two decl expressions based on the identity
+// of the referred-to declarations.
+inline bool
+is_less(Decl_expr const* a, Decl_expr const* b)
+{
+  std::less<void const*> cmp;
+  return cmp(a->declaration(), b->declaration());
+}
+
+
 // FIXME: Actually implement this!
 bool
 is_less(Expr const* a, Expr const* b)
@@ -175,6 +185,7 @@ is_less(Expr const* a, Expr const* b)
 
     bool operator()(Literal_expr const* a) { return is_less(a, cast<Literal_expr>(b)); }
     bool operator()(Id_expr const* a) { lingo_unreachable(); }
+    bool operator()(Decl_expr const* a) { return is_less(a, cast<Decl_expr>(b));; }
     bool operator()(Add_expr const* a) { lingo_unreachable(); }
     bool operator()(Sub_expr const* a) { lingo_unreachable(); }
     bool operator()(Mul_expr const* a) { lingo_unreachable(); }
@@ -192,7 +203,9 @@ is_less(Expr const* a, Expr const* b)
     bool operator()(Or_expr const* a) { lingo_unreachable(); }
     bool operator()(Not_expr const* a) { lingo_unreachable(); }
     bool operator()(Call_expr const* a) { lingo_unreachable(); }
-    bool operator()(Member_expr const* a) { lingo_unreachable(); }
+    bool operator()(Dot_expr const* a) { lingo_unreachable(); }
+    bool operator()(Field_expr const* a) { lingo_unreachable(); }
+    bool operator()(Method_expr const* a) { lingo_unreachable(); }
     bool operator()(Index_expr const* a) { lingo_unreachable(); }
     bool operator()(Value_conv const* a) { lingo_unreachable(); }
     bool operator()(Block_conv const* a) { lingo_unreachable(); }
