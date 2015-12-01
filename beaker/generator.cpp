@@ -629,7 +629,7 @@ Generator::gen(Reference_init const* e)
 //
 // The statement generator is responsible for
 // the generation of statements at block scope.
-
+ 
 void
 Generator::gen(Stmt const* s)
 {
