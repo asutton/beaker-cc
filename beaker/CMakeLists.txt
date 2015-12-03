@@ -31,9 +31,9 @@ target_compile_definitions(beaker PUBLIC ${LLVM_DEFINITIONS})
 target_include_directories(
   beaker
     PUBLIC
+      $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
       ${Boost_INCLUDE_DIRS}
       ${LLVM_INCLUDE_DIRS}
-      $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
 )
 target_link_libraries(
   beaker

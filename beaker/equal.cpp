@@ -21,7 +21,7 @@ is_equal(std::vector<T*> const& a, std::vector<T*> const& b)
 inline bool
 is_equal(Function_type const* a, Function_type const* b)
 {
-  return is_equal(a->parameter_types(), b->parameter_types()) 
+  return is_equal(a->parameter_types(), b->parameter_types())
       && is_equal(a->return_type(), b->return_type());
 }
 

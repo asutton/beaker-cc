@@ -1,4 +1,3 @@
-
 #ifndef BEAKER_HASH_HPP
 #define BEAKER_HASH_HPP
 
@@ -11,7 +10,7 @@
 #include <unordered_map>
 
 
-// FIXME: This is broken. The use of boost::hash_combine 
+// FIXME: This is broken. The use of boost::hash_combine
 // does not call the appropriate overloads for pointers
 // to AST objects, so equivalent trees produces non-equal
 // hashes.

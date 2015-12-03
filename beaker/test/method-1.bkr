@@ -1,4 +1,3 @@
-
 struct S
 {
   def f() -> int { return 0; }

@@ -59,5 +59,3 @@ can_overload(Decl const* d1, Decl const* d2)
   return true;
 }
 
-
-

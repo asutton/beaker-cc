@@ -1,4 +1,3 @@
-
 // Check redefinition of parameters.
 
 def f(n : int, n : int) -> int { // error

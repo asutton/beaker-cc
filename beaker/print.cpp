@@ -368,7 +368,7 @@ operator<<(std::ostream& os, Reference_init const& e)
 // definitions.
 
 // FIXME: Actually implement this.
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, Decl const& d)
 {
   /*
@@ -441,6 +441,4 @@ operator<<(std::ostream& os, Module_decl const& d)
 {
   return os;
 }
-
-
 

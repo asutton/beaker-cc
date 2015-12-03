@@ -272,5 +272,4 @@ apply(Type const* t, F fn)
 }
 
 
-
 #endif

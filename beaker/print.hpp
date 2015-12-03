@@ -59,5 +59,4 @@ std::ostream& operator<<(std::ostream&, Field_decl const&);
 std::ostream& operator<<(std::ostream&, Method_decl const&);
 std::ostream& operator<<(std::ostream&, Module_decl const&);
 
-
 #endif

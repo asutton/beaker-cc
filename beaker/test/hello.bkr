@@ -1,5 +1,3 @@
-
-
 foreign def puts(char[]) -> int;
 
 def main() -> int
