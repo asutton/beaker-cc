@@ -61,7 +61,7 @@ public:
   Stmt* expression_stmt();
 
   // Top-level.
-  Decl* module();
+  Decl* module(Module_decl*);
 
   // Parse state
   bool ok() const { return errs_ == 0; }
@@ -110,7 +110,7 @@ private:
   Decl* on_record(Specifier, Token, Decl_seq const&, Decl_seq const&);
   Decl* on_field(Specifier, Token, Type const*);
   Decl* on_method(Specifier, Token, Decl_seq const&, Type const*, Stmt*);
-  Decl* on_module(Decl_seq const&);
+  Decl* on_module(Module_decl*, Decl_seq const&);
 
   // FIXME: Remove _stmt from handlers.
   Stmt* on_empty();

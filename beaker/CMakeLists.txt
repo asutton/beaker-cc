@@ -1,6 +1,11 @@
 # Copyright (c) 2015 Andrew Sutton
 # All rights reserved
 
+# Generate a static configuration header in the
+# build directory.
+configure_file("config.hpp.in" "config.hpp")
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
 # Add the core Beaker library.
 add_library(beaker
   file.cpp
@@ -26,6 +31,7 @@ add_library(beaker
   evaluator.cpp
   mangle.cpp
   generator.cpp
+  job.cpp
 )
 target_compile_definitions(beaker PUBLIC ${LLVM_DEFINITIONS})
 target_include_directories(
@@ -43,10 +49,14 @@ target_link_libraries(
       ${LLVM_LIBRARIES}
 )
 
-# Create the beaker compiler.
-add_executable(beaker-compile compiler.cpp)
+# The compiler is the main driver for compilation.
+# It takes a set of input files and produces linked
+# outputs (programs, libraries, archives).
+add_executable(beaker-compile driver.cpp compiler.cpp)
 target_link_libraries(beaker-compile beaker)
 
-# Create the beaker runtime interpreter.
+
+# The runtime interpreter executes a parsed beaker
+# program without compiling to native code.
 add_executable(beaker-interpret interpreter.cpp)
 target_link_libraries(beaker-interpret beaker)

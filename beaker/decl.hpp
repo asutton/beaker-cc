@@ -198,6 +198,10 @@ struct Method_decl : Function_decl
 // A module is a sequence of top-level declarations.
 struct Module_decl : Decl
 {
+  Module_decl()
+    : Decl(nullptr, nullptr)
+  { }
+
   Module_decl(Symbol const* n, Decl_seq const& d)
     : Decl(n, nullptr), decls_(d)
   { }

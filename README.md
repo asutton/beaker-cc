@@ -84,3 +84,13 @@ These are likely to be:
   - lexing and parsing
   - generic environments
   - ???
+
+## Errata
+
+When lowering LLVM to native assembly on new versions of Mac OS X
+you may need to override the system triple to avoid linker warnings.
+Invoke `llc` like this:
+
+```
+llc -mtriple=x86_64-apple-macosx <input>
+```
