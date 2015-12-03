@@ -121,6 +121,7 @@ operator<<(std::ostream& os, Expr const& e)
     void operator()(Literal_expr const* e) { os << *e; }
     void operator()(Id_expr const* e) { os << *e; }
     void operator()(Decl_expr const* e) { os << *e; }
+    void operator()(Lambda_expr const * e) { os << *e; }
     void operator()(Add_expr const* e) { os << *e; }
     void operator()(Sub_expr const* e) { os << *e; }
     void operator()(Mul_expr const* e) { os << *e; }
@@ -174,6 +175,12 @@ operator<<(std::ostream& os, Decl_expr const& e)
   return os << *e.symbol();
 }
 
+// TODO: Should I include type? since the symbol spelling is randomly assigned
+std::ostream&
+operator<<(std::ostream& os, Lambda_expr const& e)
+{
+  return os << *e.symbol() << *e.type();
+}
 
 std::ostream&
 operator<<(std::ostream& os, Add_expr const&)
@@ -368,7 +375,7 @@ operator<<(std::ostream& os, Reference_init const& e)
 // definitions.
 
 // FIXME: Actually implement this.
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, Decl const& d)
 {
   /*
@@ -441,6 +448,3 @@ operator<<(std::ostream& os, Module_decl const& d)
 {
   return os;
 }
-
-
-

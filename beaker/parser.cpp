@@ -44,6 +44,11 @@ Parser::primary_expr()
   if (Token tok = match_if(string_tok))
     return on_str(tok);
 
+  // NOTE NOTE NOTE
+  // Lambda additions
+  if (lookahead() == f_slash_tok)
+    return lambda_expr();
+
   // paren-expr
   if (match_if(lparen_tok)) {
     Expr* e = expr();
@@ -55,6 +60,8 @@ Parser::primary_expr()
   // actually return nullptr and continue?
   error("expected primary expression");
 }
+
+
 
 
 // Parse a postfix expression.
@@ -278,6 +285,46 @@ Parser::logical_or_expr()
   return e1;
 }
 
+// NOTE NOTE NOTE
+// ADD LAMBDA EXPR here
+
+// NOTE ADD LAMDBA PARSER HERE
+Expr*
+Parser::lambda_expr()
+{
+  require(f_slash_tok);
+
+  //Match the identifier inserted earlier
+  Token n = match(identifier_tok);
+  // parameter-clause
+  Decl_seq parms;
+  match(lparen_tok);
+  while (lookahead() != rparen_tok)
+  {
+
+    Decl* p = parameter_decl();
+
+    parms.push_back(p);
+    if (match_if(comma_tok))
+    {
+      continue;
+    }
+    else
+      break;
+  }
+  match(rparen_tok);
+
+  // return-type
+  match(arrow_tok);
+  Type const* t = type();
+  // must be function-definition
+  Stmt* s = block_stmt();
+
+  //return a lambda expression
+  return on_lambda(n, parms, t, s);
+}
+
+
 
 Expr*
 Parser::expr()
@@ -475,43 +522,6 @@ Parser::function_decl(Specifier spec)
   return on_function(spec, n, parms, t, s);
 }
 
-// NOTE ADD LAMDBA PARSER HERE
-Decl*
-Parser::lambda_decl()
-{
-  require(f_slash_tok);
-
-  //Match the identifier inserted earlier
-  Token n = match(identifier_tok);
-
-  // parameter-clause
-  Decl_seq parms;
-  match(lparen_tok);
-  while (lookahead() != rparen_tok) {
-    Decl* p = parameter_decl();
-    parms.push_back(p);
-
-    if (match_if(comma_tok))
-      continue;
-    else
-      break;
-  }
-  match(rparen_tok);
-
-  // return-type
-  match(arrow_tok);
-  Type const* t = type();
-
-  // function declaration
-  if (match_if(semicolon_tok))
-    return on_function(no_spec, n, parms, t);
-
-  // function-definition.
-  Stmt* s = block_stmt();
-
-  return on_function(no_spec, n, parms, t, s);
-
-}
 
 // Parse a parameter declaration.
 //
@@ -666,14 +676,12 @@ Parser::decl()
 {
   // optional specifier-seq
   Specifier spec = specifier_seq();
-
   // entity-decl
   switch (lookahead()) {
     case var_kw:
       return variable_decl(spec);
     case def_kw:
       return function_decl(spec);
-    //NOTE ADD LAMDBA CASE HERE backslash_kw
     case struct_kw:
       return record_decl(spec);
     default:
@@ -869,6 +877,7 @@ Parser::stmt()
     case var_kw:
     case def_kw:
     case foreign_kw:
+    case f_slash_tok:
       return declaration_stmt();
 
     default:
@@ -1232,6 +1241,15 @@ Parser::on_dot(Expr* e1, Expr* e2)
   return new Dot_expr(e1, e2);
 }
 
+// NOTE NOTE NOTE
+// ADDITIONS FOR LAMBDAS
+//Lambda_expr(Symbol * s, Decl_seq const& d, Type const * t, Stmt* const& b)
+Expr *
+Parser::on_lambda(Token tok, Decl_seq const& p, Type const* t, Stmt* b)
+{
+  Type const* f = get_function_type(p, t);
+  return init<Lambda_expr>(tok.location(), tok.symbol(), p, f, b);
+}
 
 // TODO: Check declaration specifiers. Not every specifier
 // makes sense in every combination or for every declaration.
@@ -1293,6 +1311,9 @@ Parser::on_function(Specifier spec, Token tok, Decl_seq const& p, Type const* t,
   locate(decl, tok.location());
   return decl;
 }
+
+
+// NOTE NOTE NOTE
 
 
 Decl*

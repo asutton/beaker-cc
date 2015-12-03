@@ -293,6 +293,7 @@ Elaborator::elaborate(Expr* e)
     Expr* operator()(Literal_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Id_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Decl_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Lambda_expr * e) const { return elab.elaborate(e); }
     Expr* operator()(Add_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Sub_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Mul_expr* e) const { return elab.elaborate(e); }
@@ -395,6 +396,7 @@ Elaborator::elaborate(Decl_expr* e)
   return e;
 }
 
+Expr* 
 
 namespace
 {

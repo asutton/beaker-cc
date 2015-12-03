@@ -4,13 +4,13 @@
 #ifndef BEAKER_PARSER_HPP
 #define BEAKER_PARSER_HPP
 
+
 #include "prelude.hpp"
 #include "token.hpp"
 #include "specifier.hpp"
 
 
 class Input_buffer;
-
 
 // The parser performs syntactic analysis, transforming
 // a token stream into an AST.
@@ -22,6 +22,11 @@ public:
 
   // Expression parsers
   Expr* primary_expr();
+
+  // NOTE NOTE NOTE
+  //ADDITIONS FOR LAMBDAS
+  Expr* lambda_expr();
+
   Expr* call_expr();
   Expr* postfix_expr();
   Expr* unary_expr();
@@ -43,9 +48,7 @@ public:
   Decl* variable_decl(Specifier);
   Decl* function_decl(Specifier);
 
-  // NOTE NOTE NOTE
-  //ADDITIONS FOR LAMBDAS
-  Decl* lambda_decl();
+
 
 
   Decl* parameter_decl();
@@ -106,6 +109,10 @@ private:
   Expr* on_call(Expr*, Expr_seq const&);
   Expr* on_index(Expr*, Expr*);
   Expr* on_dot(Expr*, Expr*);
+  // NOTE NOTE NOTE
+  // LAMBDA ADDITIONS
+  Expr* on_lambda(Token, Decl_seq const&, Type const*, Stmt* );
+
 
   Decl* on_variable(Specifier, Token, Type const*);
   Decl* on_variable(Specifier, Token, Type const*, Expr*);

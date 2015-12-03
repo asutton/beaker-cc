@@ -54,6 +54,12 @@ public:
   Expr* elaborate(Literal_expr*);
   Expr* elaborate(Id_expr*);
   Expr* elaborate(Decl_expr*);
+
+  // NOTE NOTE NOTE
+  // ADDITIONS FOR LAMBDAS
+  Expr* elaborate(Lambda_expr*);
+
+
   Expr* elaborate(Add_expr* e);
   Expr* elaborate(Sub_expr* e);
   Expr* elaborate(Mul_expr* e);

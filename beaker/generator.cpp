@@ -320,9 +320,9 @@ Generator::gen(Decl_expr const* e)
 
   // Fetch the value from a reference declaration.
   Decl const* decl = bind->first;
+
   if (is_reference(decl))
     return build.CreateLoad(result);
-
   return result;
 }
 
@@ -629,7 +629,7 @@ Generator::gen(Reference_init const* e)
 //
 // The statement generator is responsible for
 // the generation of statements at block scope.
- 
+
 void
 Generator::gen(Stmt const* s)
 {
