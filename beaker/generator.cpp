@@ -1,13 +1,13 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
-#include "generator.hpp"
-#include "type.hpp"
-#include "expr.hpp"
-#include "stmt.hpp"
-#include "decl.hpp"
-#include "mangle.hpp"
-#include "evaluator.hpp"
+#include "beaker/generator.hpp"
+#include "beaker/type.hpp"
+#include "beaker/expr.hpp"
+#include "beaker/stmt.hpp"
+#include "beaker/decl.hpp"
+#include "beaker/mangle.hpp"
+#include "beaker/evaluator.hpp"
 
 #include "llvm/IR/Type.h"
 #include "llvm/IR/GlobalVariable.h"

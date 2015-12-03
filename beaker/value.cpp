@@ -1,14 +1,14 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
-#include "value.hpp"
-#include "decl.hpp"
+#include "beaker/value.hpp"
+#include "beaker/decl.hpp"
 
 #include <iostream>
 
 
 // Return a string value for the arary. This is
-// needed for any transformation to narrow string 
+// needed for any transformation to narrow string
 // literals in the evaluation character set.
 std::string
 Array_value::get_string() const
@@ -65,7 +65,7 @@ operator<<(std::ostream& os, Value const& v)
   struct Fn
   {
     std::ostream& os;
-    
+
     void operator()(Error_value const& v) { os << "<error>"; }
     void operator()(Integer_value const& v) { os << v; };
     void operator()(Function_value const& v) { os << v->name()->spelling(); };
@@ -124,10 +124,10 @@ zero_init(Aggregate_value& v)
 }
 
 // Zero initialzie the value.
-void 
+void
 zero_init(Value& v)
 {
-  struct Fn 
+  struct Fn
   {
     void operator()(Error_value& v) { };
     void operator()(Integer_value& v) { zero_init(v); };

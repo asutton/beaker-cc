@@ -13,9 +13,9 @@
 // errors and continuing elaboration. There may be some
 // cases where elaboration must stop.
 
-#include "prelude.hpp"
-#include "location.hpp"
-#include "scope.hpp"
+#include <beaker/prelude.hpp>
+#include <beaker/location.hpp>
+#include <beaker/scope.hpp>
 
 
 // The elaborator is responsible for the annotation of
@@ -130,14 +130,14 @@ Elaborator::Elaborator(Location_map& loc, Symbol_table& s)
 { }
 
 
-inline void 
+inline void
 Elaborator::locate(void const* p, Location l)
 {
   locs.emplace(p, l);
 }
 
 
-inline Location 
+inline Location
 Elaborator::locate(void const* p)
 {
   auto iter = locs.find(p);

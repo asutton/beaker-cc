@@ -4,7 +4,7 @@
 #ifndef BEAKER_PRINT_HPP
 #define BEAKER_PRINT_HPP
 
-#include "prelude.hpp"
+#include <beaker/prelude.hpp>
 
 #include <iosfwd>
 

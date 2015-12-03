@@ -1,10 +1,13 @@
+// Copyright (c) 2015 Andrew Sutton
+// All rights reserved
+
 #ifndef CONVERT_HPP
 #define CONVERT_HPP
 
 // The convert module defines various implicit conversion
 // routines used by the language.
 
-#include "prelude.hpp"
+#include <beaker/prelude.hpp>
 
 
 class Elaborator;

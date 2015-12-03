@@ -4,9 +4,9 @@
 #ifndef BEAKER_DECL_HPP
 #define BEAKER_DECL_HPP
 
-#include "prelude.hpp"
-#include "scope.hpp"
-#include "specifier.hpp"
+#include <beaker/prelude.hpp>
+#include <beaker/scope.hpp>
+#include <beaker/specifier.hpp>
 
 
 // Represents the declaration of a named entity.
@@ -155,7 +155,7 @@ struct Record_decl : Decl
 
   Decl_seq const& fields() const { return fields_; }
   Decl_seq const& members() const { return members_; }
-  
+
   Scope*          scope()       { return &scope_; }
   Scope const*    scope() const { return &scope_; }
 

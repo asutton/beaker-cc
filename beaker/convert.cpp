@@ -1,7 +1,10 @@
-#include "convert.hpp"
-#include "type.hpp"
-#include "expr.hpp"
-#include "decl.hpp"
+// Copyright (c) 2015 Andrew Sutton
+// All rights reserved
+
+#include "beaker/convert.hpp"
+#include "beaker/type.hpp"
+#include "beaker/expr.hpp"
+#include "beaker/decl.hpp"
 
 #include <iostream>
 

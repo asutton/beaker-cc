@@ -4,8 +4,8 @@
 #ifndef BEAKER_TYPE_HPP
 #define BEAKER_TYPE_HPP
 
-#include "prelude.hpp"
-#include "scope.hpp"
+#include <beaker/prelude.hpp>
+#include <beaker/scope.hpp>
 
 
 // The Type class represents the set of all types in the

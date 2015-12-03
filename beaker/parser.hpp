@@ -4,9 +4,9 @@
 #ifndef BEAKER_PARSER_HPP
 #define BEAKER_PARSER_HPP
 
-#include "prelude.hpp"
-#include "token.hpp"
-#include "specifier.hpp"
+#include <beaker/prelude.hpp>
+#include <beaker/token.hpp>
+#include <beaker/specifier.hpp>
 
 
 class Input_buffer;
@@ -189,9 +189,9 @@ Parser::lookahead(int n) const
 
 
 // Save the location of the declaratio.
-inline void 
+inline void
 Parser::locate(void* p, Location l)
-{ 
+{
   locs_->emplace(p, l);
 }
 

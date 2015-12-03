@@ -4,10 +4,10 @@
 #ifndef BEAKER_EXPR_HPP
 #define BEAKER_EXPR_HPP
 
-#include "prelude.hpp"
-#include "symbol.hpp"
-#include "overload.hpp"
-#include "value.hpp"
+#include <beaker/prelude.hpp>
+#include <beaker/symbol.hpp>
+#include <beaker/overload.hpp>
+#include <beaker/value.hpp>
 
 
 // The Expr class represents the set of all expressions

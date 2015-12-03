@@ -6,8 +6,8 @@
 
 // The specialized environment for lexical scoping.
 
-#include "environment.hpp"
-#include "overload.hpp"
+#include <beaker/environment.hpp>
+#include <beaker/overload.hpp>
 
 
 // A scope defines a maximal lexical region of a program

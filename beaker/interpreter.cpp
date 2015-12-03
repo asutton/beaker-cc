@@ -1,12 +1,12 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
-#include "lexer.hpp"
-#include "parser.hpp"
-#include "elaborator.hpp"
-#include "evaluator.hpp"
-#include "generator.hpp"
-#include "error.hpp"
+#include "beaker/lexer.hpp"
+#include "beaker/parser.hpp"
+#include "beaker/elaborator.hpp"
+#include "beaker/evaluator.hpp"
+#include "beaker/generator.hpp"
+#include "beaker/error.hpp"
 
 #include <iostream>
 #include <fstream>

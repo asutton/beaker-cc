@@ -4,10 +4,9 @@
 #ifndef BEAKER_EVALUATOR_HPP
 #define BEAKER_EVALUATOR_HPP
 
-
-#include "prelude.hpp"
-#include "value.hpp"
-#include "environment.hpp"
+#include <beaker/prelude.hpp>
+#include <beaker/value.hpp>
+#include <beaker/environment.hpp>
 
 
 // Dynamic binding of symbols to their values.

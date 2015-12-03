@@ -1,14 +1,14 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
-#include "elaborator.hpp"
-#include "type.hpp"
-#include "expr.hpp"
-#include "decl.hpp"
-#include "stmt.hpp"
-#include "convert.hpp"
-#include "evaluator.hpp"
-#include "error.hpp"
+#include "beaker/elaborator.hpp"
+#include "beaker/type.hpp"
+#include "beaker/expr.hpp"
+#include "beaker/decl.hpp"
+#include "beaker/stmt.hpp"
+#include "beaker/convert.hpp"
+#include "beaker/evaluator.hpp"
+#include "beaker/error.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -98,7 +98,7 @@ Elaborator::unqualified_lookup(Symbol const* sym)
 
 
 // Perform a qualified lookup of a name in the given
-// scope. This searches only that scope for a binding 
+// scope. This searches only that scope for a binding
 // for the identifier.
 Overload*
 Elaborator::qualified_lookup(Scope* s, Symbol const* sym)
@@ -151,7 +151,7 @@ Elaborator::elaborate(Id_type const* t)
     throw Lookup_error(locate(t), msg);
   }
 
-  // We can't currently overload types, so this could 
+  // We can't currently overload types, so this could
   // only mean that we found a funtion overload set.
   if (ovl->size() > 1) {
     String msg = format("'{}' does not name a type", *t);
@@ -299,10 +299,10 @@ Elaborator::elaborate(Literal_expr* e)
 // shall not declare a type.
 //
 // If lookup associates a single declaration D, with
-// declared type T, with the name, then the type of 
+// declared type T, with the name, then the type of
 // the expression is determined as follows:
 //
-//  - if D is an object, the  type of the expression 
+//  - if D is an object, the  type of the expression
 //    is T&;
 //  - otherwise, then the type is T.
 //
@@ -689,7 +689,7 @@ namespace
 {
 
 // Returns a dot-expr if e is of the form x.ovl.
-// Otherwise, returns nullptr. 
+// Otherwise, returns nullptr.
 inline Dot_expr*
 as_method_overload(Dot_expr* e)
 {
@@ -765,7 +765,7 @@ Elaborator::resolve(Overload_expr* ovl, Expr_seq const& args)
       cands.push_back(e);
   }
 
-  // FIXME: If the call is to a method, then write 
+  // FIXME: If the call is to a method, then write
   // out the method format for the call. Same as below.
   if (cands.empty()) {
     Location loc = locate(ovl);
@@ -788,7 +788,7 @@ Elaborator::resolve(Overload_expr* ovl, Expr_seq const& args)
 
 
 
-// Resolve a function call. The target of a function 
+// Resolve a function call. The target of a function
 // may be one of the following:
 //
 //    - a function f(args...)
@@ -805,7 +805,7 @@ Elaborator::resolve(Overload_expr* ovl, Expr_seq const& args)
 //
 //    x.y(args...) ~> y(x.args...)
 //
-// Let y be the new function target. 
+// Let y be the new function target.
 //
 // If the function target is an overload set, select
 // a function by overload resolution.
@@ -815,8 +815,8 @@ Elaborator::resolve(Overload_expr* ovl, Expr_seq const& args)
 // could be an object or field of class type with
 // one or more member call operators.
 //
-// TODO: Would it be better to differentiate 
-// function and method call and have those dealt 
+// TODO: Would it be better to differentiate
+// function and method call and have those dealt
 // with separately on the back end(s)?
 //
 // TODO: Support the lookup of member funtions using
@@ -836,7 +836,7 @@ Elaborator::elaborate(Call_expr* e)
   if (!is_callable(f))
     throw Type_error({}, "object is not callable");
 
-  // Elaborate the arguments (in place) prior to 
+  // Elaborate the arguments (in place) prior to
   // conversion. Do it now so we don't re-elaborate
   // arguments during overload resolution.
   Expr_seq& args = e->arguments();
@@ -934,11 +934,11 @@ Elaborator::elaborate(Dot_expr* e)
     if (Method_decl* m = as<Method_decl>(d)) {
       return new Method_expr(e1, e2, m);
     }
-  } 
+  }
 
-  // Otherwise, if the name resolves to a set of declarations, 
-  // then the declaration is still unresolved. Update the 
-  // expression with the overload set and defer until we find 
+  // Otherwise, if the name resolves to a set of declarations,
+  // then the declaration is still unresolved. Update the
+  // expression with the overload set and defer until we find
   // a function call.
   else {
     e->first = e1;
@@ -1194,7 +1194,7 @@ Elaborator::elaborate(Function_decl* d)
     // Ensure that main has foreign linkage.
     d->spec_ |= foreign_spec;
 
-    // TODO: Check argument tpypes 
+    // TODO: Check argument tpypes
   }
 
   // Enter the function scope and declare all

@@ -1,13 +1,13 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
-#include "parser.hpp"
-#include "symbol.hpp"
-#include "type.hpp"
-#include "expr.hpp"
-#include "decl.hpp"
-#include "stmt.hpp"
-#include "error.hpp"
+#include "beaker/parser.hpp"
+#include "beaker/symbol.hpp"
+#include "beaker/type.hpp"
+#include "beaker/expr.hpp"
+#include "beaker/decl.hpp"
+#include "beaker/stmt.hpp"
+#include "beaker/error.hpp"
 
 #include <iostream>
 #include <sstream>

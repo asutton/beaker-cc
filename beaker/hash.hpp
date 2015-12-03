@@ -1,8 +1,11 @@
+// Copyright (c) 2015 Andrew Sutton
+// All rights reserved
+
 #ifndef BEAKER_HASH_HPP
 #define BEAKER_HASH_HPP
 
-#include "prelude.hpp"
-#include "equal.hpp"
+#include <beaker/prelude.hpp>
+#include <beaker/equal.hpp>
 
 #include <boost/functional/hash.hpp>
 

@@ -1,10 +1,10 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
-#include "less.hpp"
-#include "type.hpp"
-#include "expr.hpp"
-#include "value.hpp"
+#include "beaker/less.hpp"
+#include "beaker/type.hpp"
+#include "beaker/expr.hpp"
+#include "beaker/value.hpp"
 
 #include <algorithm>
 #include <typeindex>

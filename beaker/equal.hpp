@@ -4,7 +4,7 @@
 #ifndef BEAKER_EQUAL_HPP
 #define BEAKER_EQUAL_HPP
 
-#include "prelude.hpp"
+#include <beaker/prelude.hpp>
 
 
 bool is_equal(Type const*, Type const*);
