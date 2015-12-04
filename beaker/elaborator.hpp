@@ -131,6 +131,7 @@ public:
 
   Overload* unqualified_lookup(Symbol const*);
   Overload* qualified_lookup(Scope*, Symbol const*);
+    Overload* qualified_lookup(Record_decl* , Symbol const* );
 
   // Diagnostics
   void on_call_error(Expr_seq const&, Expr_seq const&, Type_seq const&);

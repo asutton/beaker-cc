@@ -7,6 +7,7 @@
 #include "prelude.hpp"
 #include "scope.hpp"
 #include "specifier.hpp"
+#include "type.hpp"
 
 
 // Represents the declaration of a named entity.
@@ -146,8 +147,8 @@ struct Parameter_decl : Decl
 // member lookup.
 struct Record_decl : Decl
 {
-  Record_decl(Symbol const* n, Decl_seq const& f, Decl_seq const& m)
-    : Decl(n, nullptr), fields_(f), members_(m), scope_(this)
+  Record_decl(Symbol const* n, Decl_seq const& f, Decl_seq const& m, Type const* base)
+    : Decl(n, nullptr), fields_(f), members_(m), scope_(this), base_(base), base_decl(nullptr)
   { }
 
   void accept(Visitor& v) const { v.visit(this); }
@@ -162,6 +163,8 @@ struct Record_decl : Decl
   Decl_seq fields_;
   Decl_seq members_;
   Scope    scope_;
+    const Type* base_;
+     Record_decl *base_decl;
 };
 
 
@@ -177,7 +180,7 @@ struct Field_decl : Decl
 
   Record_decl const* context() const { return cast<Record_decl>(cxt_); }
 
-  int index() const;
+  std::vector<int> index() const;
 };
 
 

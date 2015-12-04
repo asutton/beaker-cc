@@ -193,5 +193,4 @@ struct Generator::Loop_sentinel
   llvm::BasicBlock* bot;  // Previos loop bottom
 };
 
-
 #endif
