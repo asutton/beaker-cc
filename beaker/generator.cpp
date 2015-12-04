@@ -293,7 +293,7 @@ Generator::gen(Literal_expr const* e)
     // avoid redunancies.
     auto iter = strings.find(s);
     if (iter == strings.end()) {
-      llvm::Value* v = build.CreateGlobalStringPtr(s);
+      llvm::Value* v = build.CreateGlobalString(s);
       iter = strings.emplace(s, v).first;
     }
     return iter->second;
