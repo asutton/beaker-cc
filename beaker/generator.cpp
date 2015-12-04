@@ -533,14 +533,20 @@ llvm::Value*
 Generator::gen(Field_expr const* e)
 {
     llvm::Value * obj;
-  for(int i = 0; i < e->field()->index().size(); i++) {
+  //for(int i = 0; i < e->field()->index().size(); i++) {
       obj = gen(e->container());
-    std::vector<llvm::Value*> args {
-      build.getInt32(0),                  // 0th element from base
-      build.getInt32(e->field()->index()[i]) // nth element in struct
-    };
+      std::vector<llvm::Value*> args {
+        build.getInt32(0),                  // 0th element from base
+        build.getInt32(e->field()->index()) // nth element in struct
+      };
+      //if has parent..do something different?
+      // std::vector<llvm::Value*> args {
+      //     build.getInt32(0),                  // 0th element from base
+      //     build.getInt32(e->field()->index()+1) // nth element in struct
+      // };
+
     obj = build.CreateGEP(obj, args);
-  }
+    //}
   return obj;
 //    llvm::Value* obj = gen(e->container());
 //    std::vector<llvm::Value*> args {

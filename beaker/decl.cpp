@@ -20,31 +20,31 @@ Function_decl::return_type() const
 }
 
 
-std::vector<int>
+int
 Field_decl::index() const
 {
 	auto current = context();
-	std::vector<int> ret;
+	int ret = 0;
 	Decl_seq const& f = current->fields();
-    int i = current->fields().size();
-	for (int i = 0; i < f.size(); ++i)
+    int j = current->fields().size();
+	for (int i = j; i < f.size(); ++i)
 		if (f[i] == this) {
-		  ret.push_back(i);
+		  ret = i;
 		  return ret;
 		}
 
-	while(current->base_decl != nullptr) {
-		current = current->base_decl;
-		ret.push_back(0);
-		Decl_seq const& f = current->fields();
-		for (int i = 0; i < f.size(); ++i)
-			if (f[i] == this) {
-		  		ret.push_back(i);
-		  		return ret;
-			}
-	}
-	//if the last element is -1, it does not exist
-	ret.push_back(-1);
+	// while(current->base_decl != nullptr) {
+	// 	current = current->base_decl;
+	// 	ret.push_back(0);
+	// 	Decl_seq const& f = current->fields();
+	// 	for (int i = 0; i < f.size(); ++i)
+	// 		if (f[i] == this) {
+	// 	  		ret.push_back(i);
+	// 	  		return ret;
+	// 		}
+	// }
+	// //if the last element is -1, it does not exist
+	// ret.push_back(-1);
 	return ret;
 }
 
