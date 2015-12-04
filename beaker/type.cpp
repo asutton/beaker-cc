@@ -47,6 +47,14 @@ Record_type::declaration() const
 }
 
 
+Scope*
+Record_type::scope() const
+{
+  return declaration()->scope();
+}
+
+
+
 // Returns the size of the array as an
 // integer value.
 int

@@ -114,4 +114,7 @@ init_symbols(Symbol_table& syms)
   // Reserved names.
   syms.put<Boolean_sym>("true", boolean_tok, true);
   syms.put<Boolean_sym>("false", boolean_tok, false);
+
+  // Common identifiers
+  syms.put<Symbol>("main", identifier_tok);
 }

@@ -1,9 +1,12 @@
+// Copyright (c) 2015 Andrew Sutton
+// All rights reserved
 
 #include "generator.hpp"
 #include "type.hpp"
 #include "expr.hpp"
 #include "stmt.hpp"
 #include "decl.hpp"
+#include "mangle.hpp"
 #include "evaluator.hpp"
 
 #include "llvm/IR/Type.h"
@@ -34,9 +37,56 @@ Generator::get_name(Decl const* d)
   if (d->is_foreign())
     return d->name()->spelling();
   else
-    return d->name()->spelling();
+    return mangle(d);
 }
 
+
+
+// -------------------------------------------------------------------------- //
+//            Helper functions
+
+
+// Attempt to insert a branch into a block
+// Will not insert anything if the block already
+// has a terminating instruction
+void
+Generator::make_branch(llvm::BasicBlock* srcBB, llvm::BasicBlock* dstBB)
+{
+  if (!srcBB->getTerminator())
+    build.CreateBr(dstBB);
+}
+
+
+// Resolve illformed blocks within an llvm function
+// These are blocks with no termination instructions.
+//
+// This can be caused by short-curcuiting if-then-stmt like:
+//
+// def foo(x : int) -> int {
+//    if (x == 1)
+//      return x;
+// }
+//
+// The block merging back into the control will have no terminators.
+// Resolve them by inserting the terminator instruction 'unreachable'
+//
+void
+Generator::resolve_illformed_blocks(llvm::Function* fn)
+{
+  // maintain the old insert block
+  auto prev = build.GetInsertBlock();
+
+  for (llvm::Function::iterator i = fn->begin(), e = fn->end(); i != e; ++i) {
+    // if no terminator inject an unreachable instruction
+    if (!i->getTerminator()) {
+      build.SetInsertPoint(i);
+      build.CreateUnreachable();
+    }
+  }
+
+  // reset the old insertion block
+  build.SetInsertPoint(prev);
+}
 
 // -------------------------------------------------------------------------- //
 // Mapping of types
@@ -157,7 +207,7 @@ Generator::get_type(Record_type const* t)
   if (!bind) {
     // Note that we have to do a 2nd lookup because
     // we don't return anything from generating
-    // declarations. 
+    // declarations.
     gen(t->declaration());
     bind = types.lookup(t->declaration());
   }
@@ -179,6 +229,7 @@ Generator::gen(Expr const* e)
     Generator& g;
     llvm::Value* operator()(Literal_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Id_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Decl_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Add_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Sub_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Mul_expr const* e) const { return g.gen(e); }
@@ -196,7 +247,9 @@ Generator::gen(Expr const* e)
     llvm::Value* operator()(Or_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Not_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Call_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Member_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Dot_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Field_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Method_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Index_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Value_conv const* e) const { return g.gen(e); }
     llvm::Value* operator()(Block_conv const* e) const { return g.gen(e); }
@@ -240,7 +293,7 @@ Generator::gen(Literal_expr const* e)
     // avoid redunancies.
     auto iter = strings.find(s);
     if (iter == strings.end()) {
-      llvm::Value* v = build.CreateGlobalString(s);
+      llvm::Value* v = build.CreateGlobalStringPtr(s);
       iter = strings.emplace(s, v).first;
     }
     return iter->second;
@@ -251,12 +304,16 @@ Generator::gen(Literal_expr const* e)
 }
 
 
-// Returns the value associated with the declaration.
-//
-// TODO: Do we need to do anything different for function
-// identifiers or not?
 llvm::Value*
 Generator::gen(Id_expr const* e)
+{
+  lingo_unreachable();
+}
+
+
+// Returns the value associated with the declaration.
+llvm::Value*
+Generator::gen(Decl_expr const* e)
 {
   auto const* bind = stack.lookup(e->declaration());
   llvm::Value* result = bind->second;
@@ -282,138 +339,173 @@ Generator::gen(Add_expr const* e)
 llvm::Value*
 Generator::gen(Sub_expr const* e)
 {
-  llvm::Value* left = gen(e->left());
-  llvm::Value* right = gen(e->right());
-  return build.CreateSub(left,right);
+  llvm::Value* l = gen(e->left());
+  llvm::Value* r = gen(e->right());
+  return build.CreateSub(l, r);
 }
 
 
 llvm::Value*
 Generator::gen(Mul_expr const* e)
 {
-  llvm::Value* left = gen(e->left());
-  llvm::Value* right = gen(e->right());
-  return build.CreateMul(left,right);
+  llvm::Value* l = gen(e->left());
+  llvm::Value* r = gen(e->right());
+  return build.CreateMul(l, r);
 }
 
 
 llvm::Value*
 Generator::gen(Div_expr const* e)
 {
-  llvm::Value* left = gen(e->left());
-  llvm::Value* right = gen(e->right());
-  return build.CreateSDiv(left,right);
+  llvm::Value* l = gen(e->left());
+  llvm::Value* r = gen(e->right());
+  return build.CreateSDiv(l, r);
 }
 
 
+// FIXME: decide on unsigned or signed remainder
+// based on types of expressions
 llvm::Value*
 Generator::gen(Rem_expr const* e)
 {
-  llvm::Value* left = gen(e->left());
-  llvm::Value* right = gen(e->right());
-  return build.CreateSRem(left,right);
+  llvm::Value* l = gen(e->left());
+  llvm::Value* r = gen(e->right());
+  return build.CreateURem(l, r);
 }
 
 
 llvm::Value*
 Generator::gen(Neg_expr const* e)
 {
-  llvm::Value* v1 = build.getInt32(0);
-  llvm::Value* v2 = gen(e->first);
-  return build.CreateSub(v1,v2);
-
+  llvm::Value* zero = build.getInt32(0);
+  llvm::Value* val = gen(e->operand());
+  return build.CreateSub(zero, val);
 }
 
 
 llvm::Value*
 Generator::gen(Pos_expr const* e)
 {
-  llvm::Value* v1 = build.getInt32(0);
-  llvm::Value* v2 = gen(e->first);
-  return build.CreateAdd(v1,v2);
+  return gen(e->operand());
 }
 
 
 llvm::Value*
 Generator::gen(Eq_expr const* e)
 {
-  llvm::Value* left = gen(e->left());
-  llvm::Value* right = gen(e->right());
-  return build.CreateICmpEQ(left,right);
+  llvm::Value* l = gen(e->left());
+  llvm::Value* r = gen(e->right());
+  return build.CreateICmpEQ(l, r);
 }
 
 
 llvm::Value*
 Generator::gen(Ne_expr const* e)
 {
-  llvm::Value* left = gen(e->left());
-  llvm::Value* right = gen(e->right());
-  return build.CreateICmpNE(left,right);
+  llvm::Value* l = gen(e->left());
+  llvm::Value* r = gen(e->right());
+  return build.CreateICmpNE(l, r);
 }
 
 
 llvm::Value*
 Generator::gen(Lt_expr const* e)
-{ 
-  llvm::Value* left = gen(e->left());
-  llvm::Value* right = gen(e->right());
-  return build.CreateICmpSLT(left,right);
+{
+  llvm::Value* l = gen(e->left());
+  llvm::Value* r = gen(e->right());
+  return build.CreateICmpSLT(l, r);
 }
 
 
 llvm::Value*
 Generator::gen(Gt_expr const* e)
 {
-  llvm::Value* left = gen(e->left());
-  llvm::Value* right = gen(e->right());
-  return build.CreateICmpSGT(left,right);
+  llvm::Value* l = gen(e->left());
+  llvm::Value* r = gen(e->right());
+  return build.CreateICmpSGT(l, r);
 }
 
 
 llvm::Value*
 Generator::gen(Le_expr const* e)
 {
-  llvm::Value* left = gen(e->left());
-  llvm::Value* right = gen(e->right());
-  return build.CreateICmpSLE(left,right);
+  llvm::Value* l = gen(e->left());
+  llvm::Value* r = gen(e->right());
+  return build.CreateICmpSLE(l, r);
 }
 
 
 llvm::Value*
 Generator::gen(Ge_expr const* e)
 {
-  llvm::Value* left = gen(e->left());
-  llvm::Value* right = gen(e->right());
-  return build.CreateICmpSGE(left,right);
+  llvm::Value* l = gen(e->left());
+  llvm::Value* r = gen(e->right());
+  return build.CreateICmpSGE(l, r);
 }
 
 
 llvm::Value*
 Generator::gen(And_expr const* e)
 {
+  llvm::BasicBlock* head_block = build.GetInsertBlock();
+  llvm::BasicBlock* tail_block = llvm::BasicBlock::Create(cxt, "", fn, head_block->getNextNode());
+  llvm::BasicBlock* then_block = llvm::BasicBlock::Create(cxt, "", fn, tail_block);
+
+  // Generate code for the left operand.
   llvm::Value* left = gen(e->left());
+  build.CreateCondBr(left, then_block, tail_block);
+  build.SetInsertPoint(then_block);
+
+  // Generate code for the right operand.
   llvm::Value* right = gen(e->right());
-  return build.CreateAnd(left,right);
+  build.CreateBr(tail_block);
+  build.SetInsertPoint(tail_block);
+
+  llvm::PHINode* phi_inst = build.CreatePHI(build.getInt1Ty(), 2);
+  phi_inst->addIncoming(build.getFalse(), head_block);
+  phi_inst->addIncoming(right, then_block);
+  return phi_inst;
 }
 
 
 llvm::Value*
 Generator::gen(Or_expr const* e)
 {
+  llvm::BasicBlock* head_block = build.GetInsertBlock();
+  llvm::BasicBlock* tail_block = llvm::BasicBlock::Create(cxt, "", fn, head_block->getNextNode());
+  llvm::BasicBlock* then_block = llvm::BasicBlock::Create(cxt, "", fn, tail_block);
+
+  // Generate code for the left operand.
   llvm::Value* left = gen(e->left());
+  build.CreateCondBr(left, tail_block, then_block);
+  build.SetInsertPoint(then_block);
+
+  // Generate code for the right operand.
   llvm::Value* right = gen(e->right());
-  return build.CreateOr(left,right);
+  build.CreateBr(tail_block);
+  build.SetInsertPoint(tail_block);
+
+  llvm::PHINode* phi_inst = build.CreatePHI(build.getInt1Ty(), 2);
+  phi_inst->addIncoming(build.getTrue(), head_block);
+  phi_inst->addIncoming(right, then_block);
+  return phi_inst;
 }
 
 
+// Logical not is a simple XOR with the value true
+// 1 xor 1 = 0
+// 0 xor 1 = 1
 llvm::Value*
 Generator::gen(Not_expr const* e)
 {
-  llvm::Value* op = gen(e->operand());
-  return build.CreateNot(op);
+  llvm::Value* one = build.getTrue();
+  llvm::Value* operand = gen(e->operand());
+  return build.CreateXor(one, operand);
 }
 
 
+// Note that method calls have been explicitly
+// rewritten to free function calls.
 llvm::Value*
 Generator::gen(Call_expr const* e)
 {
@@ -430,14 +522,30 @@ Generator::gen(Call_expr const* e)
 // instruction. We don't have to do anything more
 // complex than this.
 llvm::Value*
-Generator::gen(Member_expr const* e)
+Generator::gen(Dot_expr const* e)
 {
-  llvm::Value* obj = gen(e->scope());
+  lingo_unreachable();
+}
+
+
+llvm::Value*
+Generator::gen(Field_expr const* e)
+{
+  llvm::Value* obj = gen(e->container());
   std::vector<llvm::Value*> args {
-    build.getInt32(0),            // 0th element from base
-    build.getInt32(e->position()) // nth element in struct
+    build.getInt32(0),                  // 0th element from base
+    build.getInt32(e->field()->index()) // nth element in struct
   };
   return build.CreateGEP(obj, args);
+}
+
+
+// Just generate the base object. This will be used
+// as the argument for the method call.
+llvm::Value*
+Generator::gen(Method_expr const* e)
+{
+  return gen(e->container());
 }
 
 
@@ -554,7 +662,7 @@ Generator::makeBranch(llvm::BasicBlock* dest, llvm::BasicBlock* src) {
 void
 Generator::gen(Empty_stmt const* s)
 {
-  //empty?
+  // Do nothing.
 }
 
 
@@ -590,9 +698,8 @@ void
 Generator::gen(Return_stmt const* s)
 {
   llvm::Value* v = gen(s->value());
-  
   build.CreateStore(v, ret);
-  makeBranch(retBB, build.GetInsertBlock());
+  build.CreateBr(exit);
 }
 
 
@@ -600,28 +707,20 @@ void
 Generator::gen(If_then_stmt const* s)
 {
   llvm::Value* cond = gen(s->condition());
-  if(!cond) {
-    throw std::runtime_error("err:cond");
-  }
-  
-  llvm::Function* theFunc = build.GetInsertBlock()->getParent();
-  llvm::BasicBlock* thenBB = 
-    llvm::BasicBlock::Create(cxt, "then", theFunc);
-  llvm::BasicBlock* mergeBB =
-    llvm::BasicBlock::Create(cxt, "merge");
 
-  build.CreateCondBr(cond, thenBB, mergeBB);
+  llvm::BasicBlock* then = llvm::BasicBlock::Create(cxt, "if.then", fn);
+  llvm::BasicBlock* done = llvm::BasicBlock::Create(cxt, "if.done", fn);
+  build.CreateCondBr(cond, then, done);
 
-  //if true
-  build.SetInsertPoint(thenBB);
+  // Emit the 'then' block
+  build.SetInsertPoint(then);
   gen(s->body());
-  makeBranch(mergeBB, build.GetInsertBlock());
+  then = build.GetInsertBlock();
+  if (!then->getTerminator())
+    build.CreateBr(done);
 
-  //merge
-  //getUniquePred???
-  theFunc->getBasicBlockList().push_back(mergeBB);
-  build.SetInsertPoint(mergeBB);
-
+  // Emit the merge point.
+  build.SetInsertPoint(done);
 }
 
 
@@ -629,92 +728,74 @@ void
 Generator::gen(If_else_stmt const* s)
 {
   llvm::Value* cond = gen(s->condition());
-  if(!cond) {
-    throw std::runtime_error("err:cond");
-  }
-  
-  llvm::Function* theFunc = build.GetInsertBlock()->getParent();
-  llvm::BasicBlock* thenBB = 
-    llvm::BasicBlock::Create(cxt, "then", theFunc);
-  llvm::BasicBlock* elseBB =
-    llvm::BasicBlock::Create(cxt, "else");
-  llvm::BasicBlock* mergeBB =
-    llvm::BasicBlock::Create(cxt, "merge");
 
-  build.CreateCondBr(cond, thenBB, elseBB);
+  llvm::BasicBlock* then = llvm::BasicBlock::Create(cxt, "if.then", fn);
+  llvm::BasicBlock* other = llvm::BasicBlock::Create(cxt, "if.else", fn);
+  llvm::BasicBlock* done = llvm::BasicBlock::Create(cxt, "if.done", fn);
+  build.CreateCondBr(cond, then, other);
 
-  //if true
-  build.SetInsertPoint(thenBB);
+  // Emit the then block.
+  build.SetInsertPoint(then);
   gen(s->true_branch());
-  makeBranch(mergeBB, build.GetInsertBlock());
+  then = build.GetInsertBlock();
+  if (!then->getTerminator())
+    build.CreateBr(done);
 
-  //else false
-  theFunc->getBasicBlockList().push_back(elseBB);
-  build.SetInsertPoint(elseBB);
+  // Emit the else block.
+  build.SetInsertPoint(other);
   gen(s->false_branch());
-  makeBranch(mergeBB, build.GetInsertBlock());
+  other = build.GetInsertBlock();
+  if (!other->getTerminator())
+    build.CreateBr(done);
 
-  //merge
-  //getUniquePred??
-  // if(build.GetInsertBlock()->getSinglePredecessor()) {
-    theFunc->getBasicBlockList().push_back(mergeBB);
-    build.SetInsertPoint(mergeBB);
-  // }
-
+  // Emit the done block.
+  build.SetInsertPoint(done);
 }
 
 
 void
 Generator::gen(While_stmt const* s)
 {
+  // Save the current loop information, to be restored
+  // on scope exit.
+  Loop_sentinel loop(*this);
 
-  llvm::Function* theFunc = build.GetInsertBlock()->getParent();
-  llvm::BasicBlock* condBB =
-    llvm::BasicBlock::Create(cxt, "cond", theFunc);
-  llvm::BasicBlock* loopBB =
-    llvm::BasicBlock::Create(cxt, "loop");
-  llvm::BasicBlock* endBB =
-    llvm::BasicBlock::Create(cxt, "endloop");
+  // Create the new loop blocks.
+  top = llvm::BasicBlock::Create(cxt, "while.top", fn);
+  bottom = llvm::BasicBlock::Create(cxt, "while.bottom", fn);
+  llvm::BasicBlock* body = llvm::BasicBlock::Create(cxt, "while.body", fn, bottom);
+  build.CreateBr(top);
 
-  loop_entry.push(condBB);
-  loop_exit.push(endBB);
-
-
-  // build.CreateBr(condBB);
-  makeBranch(condBB, build.GetInsertBlock());
-  build.SetInsertPoint(condBB);
-
+  // Emit the condition test.
+  build.SetInsertPoint(top);
   llvm::Value* cond = gen(s->condition());
-  if(!cond) {
-    throw std::runtime_error("while: condition errror");
-  }
-  build.CreateCondBr(cond, loopBB, endBB);
+  build.CreateCondBr(cond, body, bottom);
 
-  theFunc->getBasicBlockList().push_back(loopBB);  
-  build.SetInsertPoint(loopBB);
+  // Emit the loop body.
+  build.SetInsertPoint(body);
   gen(s->body());
-  makeBranch(condBB, build.GetInsertBlock());
+  body = build.GetInsertBlock();
+  if (!body->getTerminator())
+    build.CreateBr(top);
 
-
-  //after exit loop
-  theFunc->getBasicBlockList().push_back(endBB);
-  build.SetInsertPoint(endBB);
+  // Emit the bottom block.
+  build.SetInsertPoint(bottom);
 }
 
 
+// Branch to the bottom of the current loop.
 void
 Generator::gen(Break_stmt const* s)
 {
-  makeBranch(loop_exit.top(), build.GetInsertBlock());
-  loop_exit.pop();
+  build.CreateBr(bottom);
 }
 
 
+// Branch to the top of the current loop.
 void
 Generator::gen(Continue_stmt const* s)
 {
-  makeBranch(loop_entry.top(), build.GetInsertBlock());
-  // loop_entry.pop();
+  build.CreateBr(top);
 }
 
 
@@ -783,7 +864,7 @@ Generator::gen_local(Variable_decl const* d)
 
   // Generate the initializer.
   llvm::Value* init = gen(d->init());
-  
+
   // Store the result in the object.
   build.CreateStore(init, ptr);
 }
@@ -796,20 +877,13 @@ Generator::gen_global(Variable_decl const* d)
   llvm::Type* type = get_type(d->type());
 
   // Try to generate a constant initializer.
+  //
+  // FIXME: If the initializer can be reduced to a value,
+  // then generate that constant. If not, we need dynamic
+  // initialization of global variables.
   llvm::Constant* init = nullptr;
-  if (!d->is_foreign()) {
-
-    // FIXME: If the initializer can be reduced to a value,
-    // then generate that constant. If not, we need dynamic
-    // initialization of global variables.
-
+  if (!d->is_foreign())
     init = llvm::Constant::getNullValue(type);
-
-    // llvm::Value* val = gen(d->init());
-    // if (llvm::Constant* c = llvm::dyn_cast<llvm::Constant>(val)) {
-    //   init = c;
-    // } 
-  }
 
 
   // Note that the aggregate 0 only applies to aggregate
@@ -893,40 +967,27 @@ Generator::gen(Function_decl const* d)
     }
   }
 
-  // Build the entry point for the function
-  // and make that the insertion point.
-  llvm::BasicBlock* b = llvm::BasicBlock::Create(cxt, "entry", fn);
-  build.SetInsertPoint(b);
+  // Build the entry and exit blocks for the function.
+  entry = llvm::BasicBlock::Create(cxt, "entry", fn);
+  exit = llvm::BasicBlock::Create(cxt, "exit");
+  build.SetInsertPoint(entry);
 
-  // TODO: Create a local variable for the return value.
-  // Return statements will write here.
+  // Build the return value.
   ret = build.CreateAlloca(fn->getReturnType());
 
   // Generate a local variable for each of the variables.
   for (Decl const* p : d->parameters())
     gen(p);
-
-  retBB = llvm::BasicBlock::Create(cxt, "ret");
-
-  // Generate the body of the function.
   gen(d->body());
+  entry = build.GetInsertBlock();
+  if (!entry->getTerminator())
+    build.CreateBr(exit);
 
-  for(auto block = fn->getBasicBlockList().begin(); block != fn->getBasicBlockList().end(); block++) {
-    if(!block->getTerminator())
-      build.CreateUnreachable();
-  }
-
-
-
-  // TODO: Create an exit block and allow code to
-  // jump directly to that block after storing
-  // the return value.
-  fn->getBasicBlockList().push_back(retBB);  
-  build.SetInsertPoint(retBB);
-
-  //load return at end of function
-  llvm::Value* loadret = build.CreateLoad(ret);
-  build.CreateRet(loadret);
+  // Insert the exit block and generate the actual
+  // return statement,
+  fn->getBasicBlockList().push_back(exit);
+  build.SetInsertPoint(exit);
+  build.CreateRet(build.CreateLoad(ret));
 
   // Reset stateful info.
   ret = nullptr;
@@ -967,14 +1028,17 @@ Generator::gen(Record_decl const* d)
   } else {
     // Construct the type over only the fields.
     for (Decl const* f : d->fields())
-      if (Field_decl const* f1 = as<Field_decl>(f))
-        ts.push_back(get_type(f1->type()));
+      ts.push_back(get_type(f->type()));
   }
 
   // This will automatically be added to the module,
   // but if it's not used, then it won't be generated.
   llvm::Type* t = llvm::StructType::create(cxt, ts, d->name()->spelling());
   types.bind(d, t);
+
+  // Now, generate code for all other members.
+  for (Decl const* m : d->members())
+    gen(m);
 }
 
 
@@ -982,17 +1046,17 @@ void
 Generator::gen(Field_decl const* d)
 {
   // NOTE: We should never actually get here.
+  lingo_unreachable();
 }
 
 
 
-// This is just like generating a function except that
-// the name must be mangled to include the name of the
-// class. Or something like that...
+// Just call out to the function generator. Name
+// mangling is handled in get_name().
 void
 Generator::gen(Method_decl const* d)
 {
-  lingo_unimplemented();
+  gen(cast<Function_decl>(d));
 }
 
 

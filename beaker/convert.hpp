@@ -8,7 +8,11 @@
 #include "prelude.hpp"
 
 
-Expr* convert(Expr*, Type const*);
+class Elaborator;
+
+Expr*    convert(Expr*, Type const*);
+Expr_seq convert(Expr_seq const&, Type_seq const&);
+
 Expr* convert_to_value(Expr*);
 
 

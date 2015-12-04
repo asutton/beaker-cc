@@ -120,6 +120,7 @@ operator<<(std::ostream& os, Expr const& e)
 
     void operator()(Literal_expr const* e) { os << *e; }
     void operator()(Id_expr const* e) { os << *e; }
+    void operator()(Decl_expr const* e) { os << *e; }
     void operator()(Add_expr const* e) { os << *e; }
     void operator()(Sub_expr const* e) { os << *e; }
     void operator()(Mul_expr const* e) { os << *e; }
@@ -137,7 +138,9 @@ operator<<(std::ostream& os, Expr const& e)
     void operator()(Or_expr const* e) { os << *e; }
     void operator()(Not_expr const* e) { os << *e; }
     void operator()(Call_expr const* e) { os << *e; }
-    void operator()(Member_expr const* e) { os << *e; }
+    void operator()(Dot_expr const* e) { os << *e; }
+    void operator()(Field_expr const* e) { os << *e; }
+    void operator()(Method_expr const* e) { os << *e; }
     void operator()(Index_expr const* e) { os << *e; }
     void operator()(Value_conv const* e) { os << *e; }
     void operator()(Block_conv const* e) { os << *e; }
@@ -160,7 +163,15 @@ operator<<(std::ostream& os, Literal_expr const& e)
 std::ostream&
 operator<<(std::ostream& os, Id_expr const& e)
 {
-  return os << e.spelling();
+  return os << *e.symbol();
+}
+
+
+// TODO: Write out a qualified name?
+std::ostream&
+operator<<(std::ostream& os, Decl_expr const& e)
+{
+  return os << *e.symbol();
 }
 
 
@@ -284,9 +295,23 @@ operator<<(std::ostream& os, Call_expr const&)
 
 
 std::ostream&
-operator<<(std::ostream& os, Member_expr const& e)
+operator<<(std::ostream& os, Dot_expr const& e)
 {
-  return os << *e.scope() << '.' << *e.member();
+  return os << *e.container() << '.' << *e.member();
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Field_expr const& e)
+{
+  return os << *e.record()->name() << '.' << *e.field()->name();
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Method_expr const& e)
+{
+  return os << *e.record()->name() << '.' << *e.method()->name();
 }
 
 
@@ -334,3 +359,88 @@ operator<<(std::ostream& os, Reference_init const& e)
 {
   return os << "__ref_init(" << *e.type() << ',' << *e.object() << ")";
 }
+
+
+// -------------------------------------------------------------------------- //
+// Pretty printing of declarations
+//
+// Note that we only print the declared part, not the
+// definitions.
+
+// FIXME: Actually implement this.
+std::ostream& 
+operator<<(std::ostream& os, Decl const& d)
+{
+  /*
+  struct Fn
+  {
+    std::ostream& os;
+
+    void operator()(Variable_decl const& d) { os << d; }
+    void operator()(Function_decl const& d) { os << d; }
+    void operator()(Parameter_decl const& d) { os << d; }
+    void operator()(Record_decl const& d) { os << d; }
+    void operator()(Field_decl const& d) { os << d; }
+    void operator()(Method_decl const& d) { os << d; }
+    void operator()(Module_decl const& d) { os << d; }
+  };
+  apply(d, Fn{os});
+  */
+
+  // Write everything in declared object format.
+  os << *d.name() << " : " << *d.type();
+
+  return os;
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Variable_decl const& d)
+{
+  return os;
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Function_decl const& d)
+{
+  return os;
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Parameter_decl const& d)
+{
+  return os;
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Record_decl const& d)
+{
+  return os;
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Field_decl const& d)
+{
+  return os;
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Method_decl const& d)
+{
+  return os;
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Module_decl const& d)
+{
+  return os;
+}
+
+
+

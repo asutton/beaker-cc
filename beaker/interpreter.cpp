@@ -3,6 +3,7 @@
 
 #include "lexer.hpp"
 #include "parser.hpp"
+#include "decl.hpp"
 #include "elaborator.hpp"
 #include "evaluator.hpp"
 #include "generator.hpp"
@@ -27,6 +28,8 @@ main(int argc, char* argv[])
   Symbol_table syms;
   init_symbols(syms);
 
+  Module_decl mod;
+
   // Prepare the input buffer.
   File src = argv[1];
   Input_buffer in = src;
@@ -46,15 +49,14 @@ main(int argc, char* argv[])
     // used to diagnose elaboration errors.
     Location_map locs;
     Parser parse(syms, ts, locs);
-    Decl* m = parse.module();
-    if (!parse)
+    if (!parse.module(&mod))
       return -1;
 
     // Perform semantic analysis.
     //
     // TODO: Implement a parse-only phase.
     Elaborator elab(locs, syms);
-    elab.elaborate(m);
+    elab.elaborate(&mod);
 
     // Find an entry point for evaluation.
     //

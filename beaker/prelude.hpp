@@ -4,6 +4,8 @@
 #ifndef BEAKER_PRELUDE_HPP
 #define BEAKER_PRELUDE_HPP
 
+#include "config.hpp"
+
 #include "lingo/assert.hpp"
 #include "lingo/string.hpp"
 #include "lingo/node.hpp"
@@ -30,6 +32,8 @@ using lingo::cast;
 struct Expr;
 struct Literal_expr;
 struct Id_expr;
+struct Decl_expr;
+struct Overload_expr;
 struct Add_expr;
 struct Sub_expr;
 struct Mul_expr;
@@ -47,7 +51,9 @@ struct And_expr;
 struct Or_expr;
 struct Not_expr;
 struct Call_expr;
-struct Member_expr;
+struct Dot_expr;
+struct Field_expr;
+struct Method_expr;
 struct Index_expr;
 struct Conv;
 struct Value_conv;

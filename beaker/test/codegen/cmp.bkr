@@ -1,0 +1,31 @@
+def main() -> int 
+{
+	var a : int = 1;
+	var b : int = 2;
+
+	var c : int = a + b;
+	var d : int = a - b;
+	var e : int = a * b;
+	var f : int = a / b;
+	var g : int = a % b;
+
+	if (a < b)
+		a = b;
+
+	if (c > d)
+		c = d;
+
+	if (e <= f)
+		e = f;
+
+	if (f >= g)
+		f = g;
+
+	if (a == b)
+		a = c;
+
+	if (a != b)
+		a = b;
+
+	return 0;	
+}
