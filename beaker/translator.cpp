@@ -1,13 +1,13 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
-#include "options.hpp"
-#include "job.hpp"
-#include "lexer.hpp"
-#include "parser.hpp"
-#include "elaborator.hpp"
-#include "generator.hpp"
-#include "error.hpp"
+#include "beaker/options.hpp"
+#include "beaker/job.hpp"
+#include "beaker/lexer.hpp"
+#include "beaker/parser.hpp"
+#include "beaker/elaborator.hpp"
+#include "beaker/generator.hpp"
+#include "beaker/error.hpp"
 
 #include <iostream>
 #include <fstream>

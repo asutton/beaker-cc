@@ -7,9 +7,9 @@
 // Represents jobs that are executed as part of the
 // compilation process.
 
-#include "file.hpp"
+#include <beaker/file.hpp>
 
-#include "lingo/string.hpp"
+#include <lingo/string.hpp>
 
 
 // A job is a program that is executed to translate an

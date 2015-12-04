@@ -3,8 +3,7 @@
 
 # Generate a static configuration header in the
 # build directory.
-configure_file("config.hpp.in" "config.hpp")
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
+configure_file(config.hpp.in config.hpp)
 
 # Add the core Beaker library.
 add_library(beaker
@@ -37,7 +36,7 @@ target_compile_definitions(beaker PUBLIC ${LLVM_DEFINITIONS})
 target_include_directories(
   beaker
     PUBLIC
-      $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
+      "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR};${PROJECT_BINARY_DIR}>"
       ${Boost_INCLUDE_DIRS}
       ${LLVM_INCLUDE_DIRS}
 )
