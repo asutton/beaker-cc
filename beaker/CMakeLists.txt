@@ -55,7 +55,6 @@ target_link_libraries(
 add_executable(beaker-compile driver.cpp compiler.cpp)
 target_link_libraries(beaker-compile beaker)
 
-
 # The runtime interpreter executes a parsed beaker
 # program without compiling to native code.
 add_executable(beaker-interpret interpreter.cpp)

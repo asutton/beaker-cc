@@ -1,5 +1,4 @@
 var a : int[10][10];
-
 var z : int;
 
 def f() -> int

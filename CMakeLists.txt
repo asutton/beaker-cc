@@ -7,17 +7,16 @@ project(beaker C CXX)
 enable_testing()
 
 # Boost dependencies
-find_package(Boost 1.55.0 REQUIRED
-  COMPONENTS system filesystem program_options)
+find_package(Boost 1.55.0 REQUIRED COMPONENTS system filesystem program_options)
 
 # LLVM dependencies
 find_package(LLVM 3.6 REQUIRED CONFIG)
 llvm_map_components_to_libnames(LLVM_LIBRARIES core)
 
-# FIXME: The discovery of additional tools should probably 
-# be a runtime configuration issue. That is, we should use 
+# FIXME: The discovery of additional tools should probably
+# be a runtime configuration issue. That is, we should use
 # the environment or a configuration library to register the
-# availability of tools and then select among those based 
+# availability of tools and then select among those based
 # on the requested compilation task.
 #
 # For now this is probably fine.
