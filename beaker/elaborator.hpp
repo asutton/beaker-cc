@@ -17,15 +17,28 @@
 #include "location.hpp"
 #include "scope.hpp"
 
+#include <unordered_set>
+
+
+// Track defined declarations.
+using Decl_set = std::unordered_set<Decl*>;
+
+
+// Track recursive definitions of records.
+using Decl_stack = std::vector<Decl*>;
+
 
 // The elaborator is responsible for the annotation of
 // an AST with type and other information.
 class Elaborator
 {
   struct Scope_sentinel;
+  struct Defining_sentinel;
 public:
   Elaborator(Location_map&, Symbol_table&);
 
+  Type const* elaborate_type(Type const*);
+  Type const* elaborate_def(Type const*);
   Type const* elaborate(Type const*);
   Type const* elaborate(Id_type const*);
   Type const* elaborate(Boolean_type const*);
@@ -79,12 +92,22 @@ public:
 
   // Support for two-phase elaboration.
   Decl* elaborate_decl(Decl*);
+  Decl* elaborate_decl(Variable_decl*);
+  Decl* elaborate_decl(Function_decl*);
+  Decl* elaborate_decl(Parameter_decl*);
+  Decl* elaborate_decl(Record_decl*);
   Decl* elaborate_decl(Field_decl*);
   Decl* elaborate_decl(Method_decl*);
+  Decl* elaborate_decl(Module_decl*);
 
   Decl* elaborate_def(Decl*);
+  Decl* elaborate_def(Variable_decl*);
+  Decl* elaborate_def(Function_decl*);
+  Decl* elaborate_def(Parameter_decl*);
+  Decl* elaborate_def(Record_decl*);
   Decl* elaborate_def(Field_decl*);
   Decl* elaborate_def(Method_decl*);
+  Decl* elaborate_def(Module_decl*);
 
   Stmt* elaborate(Stmt*);
   Stmt* elaborate(Empty_stmt*);
@@ -108,11 +131,14 @@ public:
 
   Overload* unqualified_lookup(Symbol const*);
   Overload* qualified_lookup(Scope*, Symbol const*);
+    Overload* qualified_lookup(Record_decl* , Symbol const* );
 
   // Diagnostics
   void on_call_error(Expr_seq const&, Expr_seq const&, Type_seq const&);
   void locate(void const*, Location);
   Location locate(void const*);
+
+  bool is_defining(Decl const*) const;
 
   // Found symbols.
   Function_decl* main = nullptr;
@@ -120,7 +146,9 @@ public:
 private:
   Location_map& locs;
   Symbol_table& syms;
-  Scope_stack  stack;
+  Scope_stack   stack;
+  Decl_set      defined;
+  Decl_stack    defining;
 };
 
 
@@ -130,14 +158,14 @@ Elaborator::Elaborator(Location_map& loc, Symbol_table& s)
 { }
 
 
-inline void 
+inline void
 Elaborator::locate(void const* p, Location l)
 {
   locs.emplace(p, l);
 }
 
 
-inline Location 
+inline Location
 Elaborator::locate(void const* p)
 {
   auto iter = locs.find(p);
@@ -148,18 +176,52 @@ Elaborator::locate(void const* p)
 }
 
 
-
+// An RAII class that helps manage the scope stack.
+// When constructed, a new scope is pushed on to
+// the stack. On exit, that scope is removed.
 struct Elaborator::Scope_sentinel
 {
+  // Initialize the new scope sentinel. A declaration
+  // `d` can be associated with the new scope.
   Scope_sentinel(Elaborator& e, Decl* d = nullptr)
-    : elab(e)
+    : elab(e), take(false)
   {
     elab.stack.push(d);
   }
 
+  // Push an existing scope onto the stack. Note that
+  // this is not destroyed when the sentinel goes out
+  // of scope.
+  Scope_sentinel(Elaborator& e, Scope* s)
+    : elab(e), take(true)
+  {
+    elab.stack.push(s);
+  }
+
   ~Scope_sentinel()
   {
-    elab.stack.pop();
+    if (take)
+      elab.stack.take();
+    else
+      elab.stack.pop();
+  }
+
+  Elaborator& elab;
+  bool        take;
+};
+
+
+struct Elaborator::Defining_sentinel
+{
+  Defining_sentinel(Elaborator& e, Decl* d)
+    : elab(e)
+  {
+    elab.defining.push_back(d);
+  }
+
+  ~Defining_sentinel()
+  {
+    elab.defining.pop_back();
   }
 
   Elaborator& elab;

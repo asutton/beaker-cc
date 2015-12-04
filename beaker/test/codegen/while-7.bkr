@@ -1,0 +1,16 @@
+def main() -> int
+{
+	var x : int = 0;
+	while (x < 5) {
+		var z : int = 0;
+		while (z < 5) {
+			z = z + 1;
+			if (z < 3)
+				continue;
+			x = x + 1;
+		}
+		x = x + 1;
+	}
+
+	return x;
+}

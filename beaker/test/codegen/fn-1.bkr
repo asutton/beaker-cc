@@ -1,0 +1,17 @@
+def foo(x : int) -> int {
+	var y : int = x;
+	var z : int = y;
+	return x;
+}
+
+def main() -> int
+{
+	var x : int = 0;
+	var y : int = x;
+	var z : bool = true;
+
+	if (z)
+		return foo(x);
+
+	return 0;
+}

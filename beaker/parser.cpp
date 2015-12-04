@@ -515,6 +515,12 @@ Parser::record_decl(Specifier spec)
 {
   require(struct_kw);
   Token n = match(identifier_tok);
+  const Type* t = nullptr;
+  // Determine if it is inheriting from a base class
+  if(match_if(colon_tok)){
+    // We have a base class
+    t = type();
+  }
 
   // record-body and field-seq
   require(lbrace_tok);
@@ -532,7 +538,9 @@ Parser::record_decl(Specifier spec)
     }
   }
   match(rbrace_tok);
-  return on_record(spec, n, fs, ms);
+
+  // Need to replace nullptr with base record
+  return on_record(spec, n, fs, ms, t);
 }
 
 
@@ -851,7 +859,7 @@ Parser::stmt()
 //
 // TODO: Return an empty module.
 Decl*
-Parser::module()
+Parser::module(Module_decl* m)
 {
   Decl_seq decls;
   while (!ts_.eof()) {
@@ -863,7 +871,7 @@ Parser::module()
       consume_thru(term_);
     }
   }
-  return on_module(decls);
+  return on_module(m, decls);
 }
 
 
@@ -1258,9 +1266,9 @@ Parser::on_function(Specifier spec, Token tok, Decl_seq const& p, Type const* t,
 
 
 Decl*
-Parser::on_record(Specifier spec, Token n, Decl_seq const& fs, Decl_seq const& ms)
+Parser::on_record(Specifier spec, Token n, Decl_seq const& fs, Decl_seq const& ms, Type const* base)
 {
-  Decl* decl = new Record_decl(n.symbol(), fs, ms);
+  Decl* decl = new Record_decl(n.symbol(), fs, ms, base);
   locate(decl, n.location());
   return decl;
 }
@@ -1285,13 +1293,14 @@ Parser::on_field(Specifier spec, Token n, Type const* t)
 }
 
 
-// FIXME: The name of the module should be the name of the
-// file, or maybe even the absolute path of the file.
+// Append the parsed declarations to the module.
+// This returns the module m.
 Decl*
-Parser::on_module(Decl_seq const& d)
+Parser::on_module(Module_decl* m, Decl_seq const& d)
 {
-  Symbol const* sym = syms_.get("<input>");
-  return new Module_decl(sym, d);
+  Decl_seq& d0 = m->decls_;
+  d0.insert(d0.end(), d.begin(), d.end());
+  return m;
 }
 
 

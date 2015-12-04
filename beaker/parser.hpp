@@ -7,6 +7,7 @@
 #include "prelude.hpp"
 #include "token.hpp"
 #include "specifier.hpp"
+#include "decl.hpp"
 
 
 class Input_buffer;
@@ -61,7 +62,7 @@ public:
   Stmt* expression_stmt();
 
   // Top-level.
-  Decl* module();
+  Decl* module(Module_decl*);
 
   // Parse state
   bool ok() const { return errs_ == 0; }
@@ -107,10 +108,10 @@ private:
   Decl* on_parameter(Specifier, Token, Type const*);
   Decl* on_function(Specifier, Token, Decl_seq const&, Type const*);
   Decl* on_function(Specifier, Token, Decl_seq const&, Type const*, Stmt*);
-  Decl* on_record(Specifier, Token, Decl_seq const&, Decl_seq const&);
+  Decl* on_record(Specifier, Token, Decl_seq const&, Decl_seq const&, Type const*);
   Decl* on_field(Specifier, Token, Type const*);
   Decl* on_method(Specifier, Token, Decl_seq const&, Type const*, Stmt*);
-  Decl* on_module(Decl_seq const&);
+  Decl* on_module(Module_decl*, Decl_seq const&);
 
   // FIXME: Remove _stmt from handlers.
   Stmt* on_empty();
@@ -189,9 +190,9 @@ Parser::lookahead(int n) const
 
 
 // Save the location of the declaratio.
-inline void 
+inline void
 Parser::locate(void* p, Location l)
-{ 
+{
   locs_->emplace(p, l);
 }
 

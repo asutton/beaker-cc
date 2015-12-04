@@ -417,6 +417,10 @@ struct Dot_expr : Expr
     : Expr(e2->type()), first(e1), second(e2)
   { }
 
+  Dot_expr(Type const* t, Expr* e1, Expr* e2)
+    : Expr(t), first(e1), second(e2)
+  { }
+
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
 
@@ -446,8 +450,8 @@ struct Dot_expr : Expr
 // inherit members.
 struct Field_expr : Dot_expr
 {
-  Field_expr(Expr* e1, Expr* e2, Decl* v)
-    : Dot_expr(e1, e2), var(v)
+  Field_expr(Type const* t, Expr* e1, Expr* e2, Decl* v)
+    : Dot_expr(t, e1, e2), var(v)
   { }
 
   void accept(Visitor& v) const { v.visit(this); }
@@ -455,7 +459,7 @@ struct Field_expr : Dot_expr
 
   Record_decl* record() const;
   Field_decl*  field() const;
-  int          index() const;
+  std::vector<int>  index() const; // Offset in record, modify qualified lookup get decl gen path 2 phase
 
   Decl* var;
 };

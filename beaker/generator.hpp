@@ -11,7 +11,6 @@
 
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/IRBuilder.h>
-
 #include <stack>
 
 
@@ -50,12 +49,6 @@ struct Generator
 
   String get_name(Decl const*);
 
-  // these will be used to keep track of the current
-  // loop's condition and next blocks to be used
-  // for break and continue
-  std::stack<llvm::BasicBlock*> loop_conditions;
-  std::stack<llvm::BasicBlock*> loop_nexts;
-    
   llvm::Type* get_type(Type const*);
   llvm::Type* get_type(Id_type const*);
   llvm::Type* get_type(Boolean_type const*);
@@ -123,17 +116,34 @@ struct Generator
   void gen_local(Variable_decl const*);
   void gen_global(Variable_decl const*);
 
+  // Helper functions for determining where
+  // breaks and continues should go to
+  void make_branch(llvm::BasicBlock*, llvm::BasicBlock*);
+  void resolve_illformed_blocks(llvm::Function*);
+
+
   llvm::LLVMContext cxt;
   llvm::IRBuilder<> build;
+
+  // Current module.
   llvm::Module*     mod;
+
+  // Current function.
   llvm::Function*   fn;
   llvm::Value*      ret;
+  llvm::BasicBlock* entry;  // Function entry
+  llvm::BasicBlock* exit;   // Function exit
+  llvm::BasicBlock* top;    // Loop top
+  llvm::BasicBlock* bottom; // Loop bottom
 
+
+  // Environment.
   Symbol_stack      stack;
   Type_env          types;
   String_env        strings;
 
   struct Symbol_sentinel;
+  struct Loop_sentinel;
 };
 
 
@@ -162,6 +172,25 @@ struct Generator::Symbol_sentinel
 };
 
 
+// An RAII class that manages the top and bottom
+// blocks of loops. These are the current jump
+// targets for the break and continue statements.
+struct Generator::Loop_sentinel
+{
+  Loop_sentinel(Generator& g)
+    : gen(g), top(gen.top), bot(gen.bottom)
+  {
+  }
 
+  ~Loop_sentinel()
+  {
+    gen.top = top;
+    gen.bottom = bot;
+  }
+
+  Generator& gen;
+  llvm::BasicBlock* top;  // Pevious loop top
+  llvm::BasicBlock* bot;  // Previos loop bottom
+};
 
 #endif
