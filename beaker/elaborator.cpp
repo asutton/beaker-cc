@@ -17,6 +17,20 @@
 // -------------------------------------------------------------------------- //
 // Declaration of entities
 
+Overload*
+Elaborator::qualified_lookup(Record_decl* r, Symbol const* sym)
+{
+    auto s = r->scope();
+    auto temp = r;
+    if (Scope::Binding* bind = s->lookup(sym))
+        return &bind->second;
+    else
+        while(temp = temp->base_decl)
+        if (Scope::Binding* bind = temp->scope()->lookup(sym)) {
+            return &bind->second;
+        }
+        return nullptr;
+}
 
 // Determine if d can be overloaded with the existing
 // elements in the set.
@@ -943,7 +957,6 @@ Elaborator::elaborate(Dot_expr* e)
     ss << "object does not have record type";
     throw Type_error({}, ss.str());
   }
-
   // We expect the member to be an unresolved id expression.
   // If it isn't, there's not much we can do with it.
   //
@@ -959,7 +972,7 @@ Elaborator::elaborate(Dot_expr* e)
   Id_expr* id = cast<Id_expr>(e2);
 
   // Perform qualified lookup on the member.
-  Overload* ovl = qualified_lookup(t->scope(), id->symbol());
+  Overload* ovl = qualified_lookup(t->declaration(), id->symbol());
   if (!ovl) {
     String msg = format("no member matching '{}'", *id);
     throw Lookup_error(locate(id), msg);
@@ -1510,8 +1523,8 @@ Elaborator::elaborate_def(Record_decl* d)
     }
     throw Type_error(locate(d), format("cyclic definition of '{}'", *d->name()));
   }
-  Defining_sentinel def(*this, d);
 
+  Defining_sentinel def(*this, d);
   // Elaborate fields and then method declarations.
   //
   // TODO: What are the lookup rules for default
@@ -1533,7 +1546,13 @@ Elaborator::elaborate_def(Record_decl* d)
   //
   // If we allow the 2nd, then we need to do two
   // phase elaboration.
-  Scope_sentinel scope(*this, d->scope());
+    // Elaborate parent
+    Scope_sentinel scope(*this, d->scope());
+    if(d->base_ != nullptr) {
+        Record_type const *base = cast<Record_type>(elaborate(d->base_));
+        d->base_decl = base->declaration();
+    }
+
   for (Decl*& f : d->fields_)
     f = elaborate_decl(f);
   for (Decl*& m : d->members_)

@@ -8,8 +8,6 @@
 
 #include "prelude.hpp"
 #include "environment.hpp"
-#include <stack>
-#include <iostream>
 
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/IRBuilder.h>
@@ -133,7 +131,6 @@ struct Generator
   // Current function.
   llvm::Function*   fn;
   llvm::Value*      ret;
-
   llvm::BasicBlock* entry;  // Function entry
   llvm::BasicBlock* exit;   // Function exit
   llvm::BasicBlock* top;    // Loop top
@@ -195,6 +192,5 @@ struct Generator::Loop_sentinel
   llvm::BasicBlock* top;  // Pevious loop top
   llvm::BasicBlock* bot;  // Previos loop bottom
 };
-
 
 #endif

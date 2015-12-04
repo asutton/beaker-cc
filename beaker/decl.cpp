@@ -1,6 +1,7 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
+#include <iostream>
 #include "decl.hpp"
 #include "type.hpp"
 
@@ -19,14 +20,32 @@ Function_decl::return_type() const
 }
 
 
-int
+std::vector<int>
 Field_decl::index() const
 {
-  Decl_seq const& f = context()->fields();
-  for (std::size_t i = 0; i < f.size(); ++i)
-    if (f[i] == this)
-      return i;
-  return -1;
+	auto current = context();
+	std::vector<int> ret;
+	Decl_seq const& f = current->fields();
+    int i = current->fields().size();
+	for (int i = 0; i < f.size(); ++i)
+		if (f[i] == this) {
+		  ret.push_back(i);
+		  return ret;
+		}
+
+	while(current->base_decl != nullptr) {
+		current = current->base_decl;
+		ret.push_back(0);
+		Decl_seq const& f = current->fields();
+		for (int i = 0; i < f.size(); ++i)
+			if (f[i] == this) {
+		  		ret.push_back(i);
+		  		return ret;
+			}
+	}
+	//if the last element is -1, it does not exist
+	ret.push_back(-1);
+	return ret;
 }
 
 
