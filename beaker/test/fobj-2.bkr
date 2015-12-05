@@ -1,5 +1,3 @@
-
-
 def lt(a : int, b : int) -> bool { return a < b; }
 def gt(a : int, b : int) -> bool { return a > b; }
 

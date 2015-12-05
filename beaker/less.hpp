@@ -4,7 +4,7 @@
 #ifndef BEAKER_LESS_HPP
 #define BEAKER_LESS_HPP
 
-#include "prelude.hpp"
+#include <beaker/prelude.hpp>
 
 
 bool is_less(Type const*, Type const*);

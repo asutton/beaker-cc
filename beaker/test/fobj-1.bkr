@@ -1,6 +1,4 @@
-
 def f(x : int) -> int { return x + 1; }
-
 var g : (int) -> int = f;
 
 def main() -> int {

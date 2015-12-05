@@ -4,13 +4,13 @@
 #ifndef BEAKER_ERROR_HPP
 #define BEAKER_ERROR_HPP
 
-#include "prelude.hpp"
-#include "location.hpp"
+#include <beaker/prelude.hpp>
+#include <beaker/location.hpp>
 
 #include <stdexcept>
 
 
-// A translation error is a general class of runtime 
+// A translation error is a general class of runtime
 // errors that occur at a particular point in the
 // input source.
 class Translation_error : public std::runtime_error

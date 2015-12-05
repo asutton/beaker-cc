@@ -4,13 +4,13 @@
 #ifndef BEAKER_PRELUDE_HPP
 #define BEAKER_PRELUDE_HPP
 
-#include "config.hpp"
+#include <beaker/config.hpp>
 
-#include "lingo/assert.hpp"
-#include "lingo/string.hpp"
-#include "lingo/node.hpp"
-#include "lingo/print.hpp"
-#include "lingo/io.hpp"
+#include <lingo/assert.hpp>
+#include <lingo/string.hpp>
+#include <lingo/node.hpp>
+#include <lingo/print.hpp>
+#include <lingo/io.hpp>
 
 #include <iosfwd>
 #include <vector>
@@ -103,7 +103,7 @@ using Decl_seq = std::vector<Decl*>;
 using Stmt_seq = std::vector<Stmt*>;
 
 
-#include "symbol.hpp" // TODO: Do I need this?
-#include "print.hpp"
+#include <beaker/symbol.hpp> // TODO: Do I need this?
+#include <beaker/print.hpp>
 
 #endif

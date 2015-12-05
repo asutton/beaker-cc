@@ -1,4 +1,3 @@
-
 struct S0
 {
   x : S1;

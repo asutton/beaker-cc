@@ -9,7 +9,7 @@
 //
 // TODO: Make a visitor for values.
 
-#include "prelude.hpp"
+#include <beaker/prelude.hpp>
 
 
 struct Value;

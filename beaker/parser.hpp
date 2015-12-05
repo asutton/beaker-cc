@@ -4,10 +4,10 @@
 #ifndef BEAKER_PARSER_HPP
 #define BEAKER_PARSER_HPP
 
-#include "prelude.hpp"
-#include "token.hpp"
-#include "specifier.hpp"
-#include "decl.hpp"
+#include <beaker/prelude.hpp>
+#include <beaker/decl.hpp>
+#include <beaker/specifier.hpp>
+#include <beaker/token.hpp>
 
 
 class Input_buffer;

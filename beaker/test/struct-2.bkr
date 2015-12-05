@@ -1,4 +1,3 @@
-
 struct S {
   s : bool;
   z : int;

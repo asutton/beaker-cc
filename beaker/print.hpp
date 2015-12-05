@@ -4,7 +4,7 @@
 #ifndef BEAKER_PRINT_HPP
 #define BEAKER_PRINT_HPP
 
-#include "prelude.hpp"
+#include <beaker/prelude.hpp>
 
 #include <iosfwd>
 
@@ -58,6 +58,5 @@ std::ostream& operator<<(std::ostream&, Record_decl const&);
 std::ostream& operator<<(std::ostream&, Field_decl const&);
 std::ostream& operator<<(std::ostream&, Method_decl const&);
 std::ostream& operator<<(std::ostream&, Module_decl const&);
-
 
 #endif

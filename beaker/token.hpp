@@ -4,9 +4,9 @@
 #ifndef BEAKER_TOKEN_HPP
 #define BEAKER_TOKEN_HPP
 
-#include "prelude.hpp"
-#include "symbol.hpp"
-#include "location.hpp"
+#include <beaker/prelude.hpp>
+#include <beaker/symbol.hpp>
+#include <beaker/location.hpp>
 
 #include <list>
 
