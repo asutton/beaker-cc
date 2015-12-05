@@ -5,9 +5,9 @@
 #define BEAKER_PARSER_HPP
 
 #include <beaker/prelude.hpp>
-#include <beaker/token.hpp>
+#include <beaker/decl.hpp>
 #include <beaker/specifier.hpp>
-#include "decl.hpp"
+#include <beaker/token.hpp>
 
 
 class Input_buffer;

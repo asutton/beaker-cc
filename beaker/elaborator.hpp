@@ -34,6 +34,7 @@ class Elaborator
 {
   struct Scope_sentinel;
   struct Defining_sentinel;
+
 public:
   Elaborator(Location_map&, Symbol_table&);
 
@@ -131,7 +132,7 @@ public:
 
   Overload* unqualified_lookup(Symbol const*);
   Overload* qualified_lookup(Scope*, Symbol const*);
-    Overload* qualified_lookup(Record_decl* , Symbol const* );
+  Overload* qualified_lookup(Record_decl*, Symbol const*);
 
   // Diagnostics
   void on_call_error(Expr_seq const&, Expr_seq const&, Type_seq const&);

@@ -23,13 +23,11 @@ Elaborator::qualified_lookup(Record_decl* r, Symbol const* sym)
     auto s = r->scope();
     auto temp = r;
     if (Scope::Binding* bind = s->lookup(sym))
+      return &bind->second;
+    while (temp = temp->base_decl)
+      if (Scope::Binding* bind = temp->scope()->lookup(sym))
         return &bind->second;
-    else
-        while(temp = temp->base_decl)
-        if (Scope::Binding* bind = temp->scope()->lookup(sym)) {
-            return &bind->second;
-        }
-        return nullptr;
+    return nullptr;
 }
 
 // Determine if d can be overloaded with the existing
@@ -1548,7 +1546,7 @@ Elaborator::elaborate_def(Record_decl* d)
   // phase elaboration.
     // Elaborate parent
     Scope_sentinel scope(*this, d->scope());
-    if(d->base_ != nullptr) {
+    if (d->base_ != nullptr) {
         Record_type const *base = cast<Record_type>(elaborate(d->base_));
         d->base_decl = base->declaration();
     }

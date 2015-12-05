@@ -517,7 +517,7 @@ Parser::record_decl(Specifier spec)
   Token n = match(identifier_tok);
   const Type* t = nullptr;
   // Determine if it is inheriting from a base class
-  if(match_if(colon_tok)){
+  if (match_if(colon_tok)) {
     // We have a base class
     t = type();
   }
@@ -530,7 +530,7 @@ Parser::record_decl(Specifier spec)
     if (lookahead() == def_kw) {
       Decl* m = method_decl(spec);
       ms.push_back(m);
-    } else if(lookahead() == identifier_tok) {
+    } else if (lookahead() == identifier_tok) {
       Decl* f = field_decl(spec);
       fs.push_back(f);
     } else {

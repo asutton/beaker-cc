@@ -591,7 +591,7 @@ Control
 Evaluator::eval(Block_stmt const* s, Value& r)
 {
   Store_sentinel store(*this);
-  for(Stmt const* s1 : s->statements()) {
+  for (Stmt const* s1 : s->statements()) {
 
     // Evaluate each statement in turn. If the
     Control ctl = eval(s1, r);

@@ -7,7 +7,7 @@
 #include <beaker/prelude.hpp>
 #include <beaker/scope.hpp>
 #include <beaker/specifier.hpp>
-#include "type.hpp"
+#include <beaker/type.hpp>
 
 
 // Represents the declaration of a named entity.
