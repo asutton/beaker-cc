@@ -20,10 +20,10 @@ llvm_map_components_to_libnames(LLVM_LIBRARIES core)
 # on the requested compilation task.
 #
 # For now this is probably fine.
-find_program(LLVM_IR_COMPILER llc PATHS ${LLVM_TOOLS_BINARY_DIR} NO_DEFAULT_PATH)
+find_program(LLVM_IR_COMPILER llc HINTS ${LLVM_TOOLS_BINARY_DIR} NO_DEFAULT_PATH)
 
 # Use the discovered or configured build tools
-# within beaker. Note that the native compiler is
+# within Beaker. Note that the native compiler is
 # also used as the frontend to the native linker
 # since that will guarantee that we get the C
 # runtime in the output.
