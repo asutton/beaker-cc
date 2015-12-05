@@ -1,13 +1,13 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
-#include "generator.hpp"
-#include "type.hpp"
-#include "expr.hpp"
-#include "stmt.hpp"
-#include "decl.hpp"
-#include "mangle.hpp"
-#include "evaluator.hpp"
+#include "beaker/generator.hpp"
+#include "beaker/type.hpp"
+#include "beaker/expr.hpp"
+#include "beaker/stmt.hpp"
+#include "beaker/decl.hpp"
+#include "beaker/mangle.hpp"
+#include "beaker/evaluator.hpp"
 
 #include "llvm/IR/Type.h"
 #include "llvm/IR/GlobalVariable.h"
@@ -39,7 +39,6 @@ Generator::get_name(Decl const* d)
   else
     return mangle(d);
 }
-
 
 
 // -------------------------------------------------------------------------- //
@@ -318,7 +317,6 @@ Generator::gen(Decl_expr const* e)
   auto const* bind = stack.lookup(e->declaration());
   llvm::Value* result = bind->second;
 
-
   // Fetch the value from a reference declaration.
   Decl const* decl = bind->first;
   if (is_reference(decl))
@@ -532,22 +530,22 @@ Generator::gen(Dot_expr const* e)
 llvm::Value*
 Generator::gen(Field_expr const* e)
 {
-    llvm::Value * obj;
-  for(int i = 0; i < e->field()->index().size(); i++) {
-      obj = gen(e->container());
+  llvm::Value* obj;
+  for (std::size_t i = 0; i < e->field()->index().size(); i++) {
+    obj = gen(e->container());
     std::vector<llvm::Value*> args {
-      build.getInt32(0),                  // 0th element from base
+      build.getInt32(0),                     // 0th element from base
       build.getInt32(e->field()->index()[i]) // nth element in struct
     };
     obj = build.CreateGEP(obj, args);
   }
   return obj;
-//    llvm::Value* obj = gen(e->container());
-//    std::vector<llvm::Value*> args {
-//            build.getInt32(0),                  // 0th element from base
-//            build.getInt32(e->field()->index()[0]) // nth element in struct
-//    };
-//    return build.CreateGEP(obj, args);
+  // llvm::Value* obj = gen(e->container());
+  // std::vector<llvm::Value*> args {
+  //   build.getInt32(0),                     // 0th element from base
+  //   build.getInt32(e->field()->index()[0]) // nth element in struct
+  // };
+  // return build.CreateGEP(obj, args);
 }
 
 
@@ -1026,7 +1024,7 @@ Generator::gen(Record_decl const* d)
   // mixing methods and fields in the same thing.
   // They need to be separate.
   std::vector<llvm::Type*> ts;
-  if(types.lookup(d->base_decl)) {
+  if (types.lookup(d->base_decl)) {
     auto i = types.get(d->base_decl);
     ts.push_back(i.second);
   }

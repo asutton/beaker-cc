@@ -1,4 +1,3 @@
-
 foreign def putchar(int) -> int;
 foreign def puts(char[]) -> int;
 

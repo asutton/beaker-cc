@@ -1,11 +1,11 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
-#include "location.hpp"
-#include "file.hpp"
+#include "beaker/location.hpp"
+#include "beaker/file.hpp"
 
 
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, Location const& l)
 {
   if (l.file())

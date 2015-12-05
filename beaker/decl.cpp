@@ -1,9 +1,9 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
+#include "beaker/decl.hpp"
+
 #include <iostream>
-#include "decl.hpp"
-#include "type.hpp"
 
 
 Function_type const*

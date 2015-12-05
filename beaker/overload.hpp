@@ -4,7 +4,7 @@
 #ifndef BEAKER_OVERLOAD_HPP
 #define BEAKER_OVERLOAD_HPP
 
-#include "prelude.hpp"
+#include <beaker/prelude.hpp>
 
 
 // Represents a set of overloaded declarations. All

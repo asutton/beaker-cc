@@ -4,10 +4,10 @@
 #ifndef BEAKER_DECL_HPP
 #define BEAKER_DECL_HPP
 
-#include "prelude.hpp"
-#include "scope.hpp"
-#include "specifier.hpp"
-#include "type.hpp"
+#include <beaker/prelude.hpp>
+#include <beaker/scope.hpp>
+#include <beaker/specifier.hpp>
+#include <beaker/type.hpp>
 
 
 // Represents the declaration of a named entity.

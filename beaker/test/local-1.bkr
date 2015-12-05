@@ -1,4 +1,3 @@
-
 def main() -> bool
 {
   var x : int = 0;

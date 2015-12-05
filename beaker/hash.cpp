@@ -1,13 +1,13 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
-#include "hash.hpp"
-#include "type.hpp"
+#include "beaker/hash.hpp"
+#include "beaker/type.hpp"
 
 #include <iostream>
 
 
-std::size_t 
+std::size_t
 hash_value(Type const* t)
 {
   struct Fn

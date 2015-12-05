@@ -4,11 +4,11 @@
 #ifndef BEAKER_LEXER_HPP
 #define BEAKER_LEXER_HPP
 
-#include "prelude.hpp"
-#include "file.hpp"
-#include "line.hpp"
-#include "symbol.hpp"
-#include "token.hpp"
+#include <beaker/prelude.hpp>
+#include <beaker/file.hpp>
+#include <beaker/line.hpp>
+#include <beaker/symbol.hpp>
+#include <beaker/token.hpp>
 
 #include <cassert>
 #include <cctype>
@@ -553,7 +553,6 @@ Lexer::ignore()
 {
   in_.get();
 }
-
 
 
 #endif
