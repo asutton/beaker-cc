@@ -4,7 +4,7 @@
 #ifndef BEAKER_SYMBOL_HPP
 #define BEAKER_SYMBOL_HPP
 
-#include "prelude.hpp"
+#include <beaker/prelude.hpp>
 
 #include <unordered_map>
 #include <typeinfo>

@@ -1,7 +1,4 @@
-
-
 def f1(x : int) -> int { return x; }
-
 def main() -> int
 {
   var v : int = 0;

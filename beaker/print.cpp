@@ -1,10 +1,10 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
-#include "print.hpp"
-#include "expr.hpp"
-#include "decl.hpp"
-#include "type.hpp"
+#include "beaker/print.hpp"
+#include "beaker/expr.hpp"
+#include "beaker/decl.hpp"
+#include "beaker/type.hpp"
 
 #include <iostream>
 
@@ -368,7 +368,7 @@ operator<<(std::ostream& os, Reference_init const& e)
 // definitions.
 
 // FIXME: Actually implement this.
-std::ostream& 
+std::ostream&
 operator<<(std::ostream& os, Decl const& d)
 {
   /*
@@ -441,6 +441,4 @@ operator<<(std::ostream& os, Module_decl const& d)
 {
   return os;
 }
-
-
 

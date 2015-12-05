@@ -1,8 +1,8 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
-#include "scope.hpp"
-#include "decl.hpp"
+#include "beaker/scope.hpp"
+#include "beaker/decl.hpp"
 
 
 // Returns the innermost declaration context.
@@ -58,12 +58,10 @@ Scope_stack::record() const
 
 auto
 Record_scope::lookup(Symbol const* sym) -> Binding* {
-  //TODO: check decl if it's a record?
-  //perform record lookup?
-  if(Record_decl* fn = as<Record_decl>(this->decl)) {
-    if(Binding* bind = Environment::lookup(sym)){
+  // TODO: check decl if it's a record?
+  // perform record lookup?
+  if (as<Record_decl>(this->decl))
+    if (Binding* bind = Environment::lookup(sym))
       return bind;
-    }
-  }
   return nullptr;
 }

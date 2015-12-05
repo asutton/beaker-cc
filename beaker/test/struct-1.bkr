@@ -1,6 +1,4 @@
-
 struct S0 { }
-
 struct S1 {
   x : int;
   y : int;

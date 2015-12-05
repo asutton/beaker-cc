@@ -1,4 +1,3 @@
-
 // Guarantee that string literals are unified
 // in the code generator.
 

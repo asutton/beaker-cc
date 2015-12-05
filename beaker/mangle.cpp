@@ -1,9 +1,9 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
-#include "mangle.hpp"
-#include "type.hpp"
-#include "decl.hpp"
+#include "beaker/mangle.hpp"
+#include "beaker/type.hpp"
+#include "beaker/decl.hpp"
 
 #include <iostream>
 
@@ -12,7 +12,7 @@
 void
 mangle(std::ostream& os, Symbol const* sym)
 {
-  os << sym->spelling();  
+  os << sym->spelling();
 }
 
 
@@ -126,7 +126,7 @@ mangle(std::ostream& os, Type const* t)
 }
 
 
-String 
+String
 mangle(Type const* t)
 {
   std::stringstream ss;

@@ -12,7 +12,6 @@
 
 #define BEAKER_NATIVE_AR          "@CMAKE_AR@"
 
-
 // File properties.
 #define BEAKER_OBJECT_EXT     "@CMAKE_C_OUTPUT_EXTENSION@"
 #define BEAKER_EXECUTABLE_EXT "@CMAKE_EXECUTABLE_SUFFIX@"
@@ -86,4 +85,3 @@ archive_extension()
 
 
 #endif
-

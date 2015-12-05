@@ -6,8 +6,8 @@
 
 // The LLVM IR generator.
 
-#include "prelude.hpp"
-#include "environment.hpp"
+#include <beaker/prelude.hpp>
+#include <beaker/environment.hpp>
 
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/IRBuilder.h>

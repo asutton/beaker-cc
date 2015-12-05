@@ -1,11 +1,11 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
-#include "type.hpp"
-#include "decl.hpp"
-#include "less.hpp"
-#include "value.hpp"
-#include "evaluator.hpp"
+#include "beaker/type.hpp"
+#include "beaker/decl.hpp"
+#include "beaker/less.hpp"
+#include "beaker/value.hpp"
+#include "beaker/evaluator.hpp"
 
 #include <set>
 
