@@ -48,6 +48,14 @@ struct Type::Visitor
   virtual void visit(Boolean_type const*) = 0;
   virtual void visit(Character_type const*) = 0;
   virtual void visit(Integer_type const*) = 0;
+  virtual void visit(Short_Integer_type const*) = 0;
+  virtual void visit(Long_Integer_type const*) = 0;
+  virtual void visit(Integer16_type const*) = 0;
+  virtual void visit(Integer32_type const*) = 0;
+  virtual void visit(Integer64_type const*) = 0;
+  virtual void visit(Integer128_type const*) = 0;
+  virtual void visit(Float_type const*) = 0;
+  virtual void visit(Double_type const*) = 0;
   virtual void visit(Function_type const*) = 0;
   virtual void visit(Array_type const*) = 0;
   virtual void visit(Block_type const*) = 0;
@@ -89,9 +97,81 @@ struct Character_type : Type
 // The type int.
 struct Integer_type : Type
 {
+  Integer_type(): _signed(true) { }
+  Integer_type(bool s): _signed(s) { }
+    
+  void accept(Visitor& v) const { v.visit(this); };
+    
+  bool is_signed() const { return _signed; }
+    
+  bool _signed;
+};
+
+// The type short int.
+struct Short_Integer_type : Integer_type
+{
+  Short_Integer_type(): Integer_type() {}
+  Short_Integer_type(bool s): Integer_type(s) {}
+    
   void accept(Visitor& v) const { v.visit(this); };
 };
 
+// The type long int.
+struct Long_Integer_type : Integer_type
+{
+  Long_Integer_type(): Integer_type() {}
+  Long_Integer_type(bool s): Integer_type(s) {}
+    
+  void accept(Visitor& v) const { v.visit(this); };
+};
+
+// The type int16.
+struct Integer16_type : Integer_type
+{
+  Integer16_type(): Integer_type() {}
+  Integer16_type(bool s): Integer_type(s) {}
+    
+  void accept(Visitor& v) const { v.visit(this); };
+};
+
+// The type int32.
+struct Integer32_type : Integer_type
+{
+  Integer32_type(): Integer_type() {}
+  Integer32_type(bool s): Integer_type(s) {}
+    
+  void accept(Visitor& v) const { v.visit(this); };
+};
+
+// The type int64.
+struct Integer64_type : Integer_type
+{
+  Integer64_type(): Integer_type() {}
+  Integer64_type(bool s): Integer_type(s) {}
+    
+  void accept(Visitor& v) const { v.visit(this); };
+};
+
+// The type int128.
+struct Integer128_type : Integer_type
+{
+  Integer128_type(): Integer_type() {}
+  Integer128_type(bool s): Integer_type(s) {}
+    
+  void accept(Visitor& v) const { v.visit(this); };
+};
+
+// The type float.
+struct Float_type : Type
+{   
+  void accept(Visitor& v) const { v.visit(this); };
+};
+
+// The type double.
+struct Double_type : Type
+{   
+  void accept(Visitor& v) const { v.visit(this); };
+};
 
 // Represents function types (t1, ..., tn) -> t.
 struct Function_type : Type
@@ -194,7 +274,15 @@ Type const* get_type_kind();
 Type const* get_id_type(Symbol const*);
 Type const* get_boolean_type();
 Type const* get_character_type();
-Type const* get_integer_type();
+Type const* get_integer_type(bool = true);
+Type const* get_short_integer_type(bool = true);
+Type const* get_long_integer_type(bool = true);
+Type const* get_integer16_type(bool = true);
+Type const* get_integer32_type(bool = true);
+Type const* get_integer64_type(bool = true);
+Type const* get_integer128_type(bool = true);
+Type const* get_float_type();
+Type const* get_double_type();
 Type const* get_function_type(Type_seq const&, Type const*);
 Type const* get_function_type(Decl_seq const&, Type const*);
 Type const* get_array_type(Type const*, Expr*);
@@ -255,6 +343,14 @@ struct Generic_type_visitor : Type::Visitor, lingo::Generic_visitor<F, T>
   void visit(Boolean_type const* t) { this->invoke(t); }
   void visit(Character_type const* t) { this->invoke(t); }
   void visit(Integer_type const* t) { this->invoke(t); }
+  void visit(Short_Integer_type const* t) { this->invoke(t); }
+  void visit(Long_Integer_type const* t) { this->invoke(t); }
+  void visit(Integer16_type const* t) { this->invoke(t); }
+  void visit(Integer32_type const* t) { this->invoke(t); }
+  void visit(Integer64_type const* t) { this->invoke(t); }
+  void visit(Integer128_type const* t) { this->invoke(t); }
+  void visit(Float_type const* t) { this->invoke(t); }
+  void visit(Double_type const* t) { this->invoke(t); }
   void visit(Function_type const* t) { this->invoke(t); }
   void visit(Array_type const* t) { this->invoke(t); }
   void visit(Block_type const* t) { this->invoke(t); }
