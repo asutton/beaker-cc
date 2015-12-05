@@ -23,35 +23,34 @@ Function_decl::return_type() const
 std::vector<int>
 Field_decl::index() const
 {
-  std::vector<int> path;
+	auto current = context();
+	std::vector<int> ret;
+	Decl_seq const& f = current->fields();
+  int i = current->fields().size();
 
-  // Find the index of this field within the record.
-  //
-  // FIXME: Why isn't this set in the constructor or
-  // during elaboration.
-  Decl_seq const& f = context()->fields();
-  for (std::size_t i = 0; i < f.size(); ++i)
-    if (f[i] == this) {
-      path.push_back(i);
-      return path;
-    }
+	for (std::size_t i = 0; i < f.size(); ++i) {
+		if (f[i] == this) {
+		  ret.push_back(i);
+		  return ret;
+		}
+	}
 
+	while (current->base_decl != nullptr) {
+		current = current->base_decl;
+		ret.push_back(0);
+		Decl_seq const& f = current->fields();
 
-  Record_decl const* decl;
-  while (decl->base_decl != nullptr) {
-    decl = decl->base_decl;
-    path.push_back(0);
-    Decl_seq const& f = decl->fields();
-    for (std::size_t i = 0; i < f.size(); ++i)
-      if (f[i] == this) {
-          path.push_back(i);
-          return path;
-      }
-  }
-  
-  // If the last element is -1, it does not exist.
-  path.push_back(-1);
-  return path;
+		for (std::size_t i = 0; i < f.size(); ++i) {
+			if (f[i] == this) {
+		  		ret.push_back(i);
+		  		return ret;
+			}
+		}
+	}
+
+	//if the last element is -1, it does not exist
+	ret.push_back(-1);
+	return ret;
 }
 
 

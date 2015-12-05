@@ -40,8 +40,5 @@ if(NOT TARGET check)
   add_custom_target(check COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target test)
 endif()
 
-
-include_directories(lingo)
-
 add_subdirectory(lingo)
 add_subdirectory(beaker)

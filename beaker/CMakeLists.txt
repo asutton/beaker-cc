@@ -37,7 +37,6 @@ target_include_directories(
   beaker
     PUBLIC
       "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR};${PROJECT_BINARY_DIR}>"
-      lingo
       ${Boost_INCLUDE_DIRS}
       ${LLVM_INCLUDE_DIRS}
 )
