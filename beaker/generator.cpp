@@ -293,7 +293,7 @@ Generator::gen(Literal_expr const* e)
     // avoid redunancies.
     auto iter = strings.find(s);
     if (iter == strings.end()) {
-      llvm::Value* v = build.CreateGlobalStringPtr(s);
+      llvm::Value* v = build.CreateGlobalString(s);
       iter = strings.emplace(s, v).first;
     }
     return iter->second;
@@ -317,6 +317,7 @@ Generator::gen(Decl_expr const* e)
 {
   auto const* bind = stack.lookup(e->declaration());
   llvm::Value* result = bind->second;
+
 
   // Fetch the value from a reference declaration.
   Decl const* decl = bind->first;
@@ -531,12 +532,22 @@ Generator::gen(Dot_expr const* e)
 llvm::Value*
 Generator::gen(Field_expr const* e)
 {
-  llvm::Value* obj = gen(e->container());
-  std::vector<llvm::Value*> args {
-    build.getInt32(0),                  // 0th element from base
-    build.getInt32(e->field()->index()) // nth element in struct
-  };
-  return build.CreateGEP(obj, args);
+    llvm::Value * obj;
+  for(int i = 0; i < e->field()->index().size(); i++) {
+      obj = gen(e->container());
+    std::vector<llvm::Value*> args {
+      build.getInt32(0),                  // 0th element from base
+      build.getInt32(e->field()->index()[i]) // nth element in struct
+    };
+    obj = build.CreateGEP(obj, args);
+  }
+  return obj;
+//    llvm::Value* obj = gen(e->container());
+//    std::vector<llvm::Value*> args {
+//            build.getInt32(0),                  // 0th element from base
+//            build.getInt32(e->field()->index()[0]) // nth element in struct
+//    };
+//    return build.CreateGEP(obj, args);
 }
 
 
@@ -1015,6 +1026,12 @@ Generator::gen(Record_decl const* d)
   // mixing methods and fields in the same thing.
   // They need to be separate.
   std::vector<llvm::Type*> ts;
+  if(types.lookup(d->base_decl)) {
+    auto i = types.get(d->base_decl);
+    ts.push_back(i.second);
+  }
+
+
   if (d->fields().empty()) {
     ts.push_back(build.getInt8Ty());
   } else {

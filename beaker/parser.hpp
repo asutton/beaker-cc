@@ -7,6 +7,7 @@
 #include <beaker/prelude.hpp>
 #include <beaker/token.hpp>
 #include <beaker/specifier.hpp>
+#include "decl.hpp"
 
 
 class Input_buffer;
@@ -107,7 +108,7 @@ private:
   Decl* on_parameter(Specifier, Token, Type const*);
   Decl* on_function(Specifier, Token, Decl_seq const&, Type const*);
   Decl* on_function(Specifier, Token, Decl_seq const&, Type const*, Stmt*);
-  Decl* on_record(Specifier, Token, Decl_seq const&, Decl_seq const&);
+  Decl* on_record(Specifier, Token, Decl_seq const&, Decl_seq const&, Type const*);
   Decl* on_field(Specifier, Token, Type const*);
   Decl* on_method(Specifier, Token, Decl_seq const&, Type const*, Stmt*);
   Decl* on_module(Module_decl*, Decl_seq const&);
