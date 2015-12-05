@@ -28,7 +28,7 @@ Field_decl::index() const
 	Decl_seq const& f = current->fields();
   int i = current->fields().size();
 
-	for (int i = 0; i < f.size(); ++i) {
+	for (std::size_t i = 0; i < f.size(); ++i) {
 		if (f[i] == this) {
 		  ret.push_back(i);
 		  return ret;
@@ -40,7 +40,7 @@ Field_decl::index() const
 		ret.push_back(0);
 		Decl_seq const& f = current->fields();
 
-		for (int i = 0; i < f.size(); ++i) {
+		for (std::size_t i = 0; i < f.size(); ++i) {
 			if (f[i] == this) {
 		  		ret.push_back(i);
 		  		return ret;

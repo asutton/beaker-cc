@@ -24,7 +24,7 @@ Elaborator::qualified_lookup(Record_decl* r, Symbol const* sym)
     auto temp = r;
     if (Scope::Binding* bind = s->lookup(sym))
       return &bind->second;
-    while (temp = temp->base_decl)
+    while ((temp = temp->base_decl))
       if (Scope::Binding* bind = temp->scope()->lookup(sym))
         return &bind->second;
     return nullptr;
