@@ -47,9 +47,56 @@ mangle(std::ostream& os, Character_type const* t)
 void
 mangle(std::ostream& os, Integer_type const* t)
 {
-  os << 'i';
+  os << (t->is_signed()?'s':'u') << 'i';
 }
 
+void
+mangle(std::ostream& os, Short_Integer_type const* t)
+{
+  os << (t->is_signed()?'s':'u') << "si";
+}
+
+void
+mangle(std::ostream& os, Long_Integer_type const* t)
+{
+  os << (t->is_signed()?'s':'u') << "li";
+}
+
+void
+mangle(std::ostream& os, Integer16_type const* t)
+{
+  os << (t->is_signed()?'s':'u') << "i16";
+}
+
+void
+mangle(std::ostream& os, Integer32_type const* t)
+{
+  os << (t->is_signed()?'s':'u') << "i32";
+}
+
+void
+mangle(std::ostream& os, Integer64_type const* t)
+{
+  os << (t->is_signed()?'s':'u') << "i64";
+}
+
+void
+mangle(std::ostream& os, Integer128_type const* t)
+{
+  os << (t->is_signed()?'s':'u') << "i128";
+}
+
+void
+mangle(std::ostream& os, Float_type const* t)
+{
+  os << 'f';
+}
+
+void
+mangle(std::ostream& os, Double_type const* t)
+{
+  os << 'd';
+}
 
 // 'F' p* r
 //
@@ -116,6 +163,14 @@ mangle(std::ostream& os, Type const* t)
     void operator()(Boolean_type const* t) { return mangle(os, t); }
     void operator()(Character_type const* t) { return mangle(os, t); }
     void operator()(Integer_type const* t) { return mangle(os, t); }
+    void operator()(Short_Integer_type const* t) { return mangle(os, t); }
+    void operator()(Long_Integer_type const* t) { return mangle(os, t); }
+    void operator()(Integer16_type const* t) { return mangle(os, t); }
+    void operator()(Integer32_type const* t) { return mangle(os, t); }
+    void operator()(Integer64_type const* t) { return mangle(os, t); }
+    void operator()(Integer128_type const* t) { return mangle(os, t); }
+    void operator()(Float_type const* t) { return mangle(os, t); }
+    void operator()(Double_type const* t) { return mangle(os, t); }
     void operator()(Function_type const* t) { return mangle(os, t); }
     void operator()(Array_type const* t) { return mangle(os, t); }
     void operator()(Block_type const* t) { return mangle(os, t); }

@@ -54,6 +54,17 @@ spelling(Token_kind k)
     case this_kw: return "this";
     case var_kw: return "var";
     case while_kw: return "while";
+    case signed_kw: return "signed";
+    case unsigned_kw: return "unsigned";
+    case short_kw: return "short";
+    case long_kw: return "long";
+    case int16_kw: return "int16";
+    case int32_kw: return "int32";
+    case int64_kw: return "int64";
+    case int128_kw: return "int128";
+    case float_kw: return "float";
+    case double_kw: return "double";
+
 
     default: return "<unspecified>";
   }
@@ -110,6 +121,16 @@ init_symbols(Symbol_table& syms)
   syms.put<Symbol>("struct", struct_kw);
   syms.put<Symbol>("this", this_kw);
   syms.put<Symbol>("var", var_kw);
+  syms.put<Symbol>("signed", signed_kw);
+  syms.put<Symbol>("unsigned", unsigned_kw);
+  syms.put<Symbol>("short", short_kw);
+  syms.put<Symbol>("long", long_kw);
+  syms.put<Symbol>("int16", int16_kw);
+  syms.put<Symbol>("int32", int32_kw);
+  syms.put<Symbol>("int64", int64_kw);
+  syms.put<Symbol>("int128", int128_kw);
+  syms.put<Symbol>("float", float_kw);
+  syms.put<Symbol>("double", double_kw);
 
   // Reserved names.
   syms.put<Boolean_sym>("true", boolean_tok, true);

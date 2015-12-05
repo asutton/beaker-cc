@@ -67,6 +67,16 @@ enum Token_kind
   this_kw,
   var_kw,
   while_kw,
+  signed_kw,
+  unsigned_kw,
+  short_kw,
+  long_kw,
+  int16_kw,
+  int32_kw,
+  int64_kw,
+  int128_kw,
+  float_kw,
+  double_kw,
 
   // Multi-valued tokens
   boolean_tok,      // true | false

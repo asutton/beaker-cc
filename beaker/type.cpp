@@ -109,12 +109,102 @@ get_character_type()
 
 
 Type const*
-get_integer_type()
+get_integer_type(bool is_signed)
 {
-  static Integer_type t;
+  static Integer_type st;
+  static Integer_type ut(false);
+    
+  if (is_signed)
+    return &st;
+  else
+    return &ut;
+}
+
+Type const*
+get_short_integer_type(bool is_signed)
+{
+  static Short_Integer_type st;
+  static Short_Integer_type ut(false);
+    
+  if (is_signed)
+    return &st;
+  else
+    return &ut;
+}
+
+Type const*
+get_long_integer_type(bool is_signed)
+{
+  static Long_Integer_type st;
+  static Long_Integer_type ut(false);
+    
+  if (is_signed)
+    return &st;
+  else
+    return &ut;
+}
+
+Type const*
+get_integer16_type(bool is_signed)
+{
+  static Integer16_type st;
+  static Integer16_type ut(false);
+    
+  if (is_signed)
+    return &st;
+  else
+    return &ut;
+}
+
+Type const*
+get_integer32_type(bool is_signed)
+{
+  static Integer32_type st;
+  static Integer32_type ut(false);
+    
+  if (is_signed)
+    return &st;
+  else
+    return &ut;
+}
+
+Type const*
+get_integer64_type(bool is_signed)
+{
+  static Integer64_type st;
+  static Integer64_type ut(false);
+    
+  if (is_signed)
+    return &st;
+  else
+    return &ut;
+}
+
+Type const*
+get_integer128_type(bool is_signed)
+{
+  static Integer128_type st;
+  static Integer128_type ut(false);
+    
+  if (is_signed)
+    return &st;
+  else
+    return &ut;
+}
+
+Type const*
+get_float_type()
+{
+  static Float_type t;
   return &t;
 }
 
+Type const*
+get_double_type()
+{
+  static Double_type t;
+  return &t;
+}
 
 Type const*
 get_function_type(Type_seq const& t, Type const* r)
