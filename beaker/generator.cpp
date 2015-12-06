@@ -532,28 +532,32 @@ Generator::gen(Dot_expr const* e)
 llvm::Value*
 Generator::gen(Field_expr const* e)
 {
-    llvm::Value * obj;
-  //for(int i = 0; i < e->field()->index().size(); i++) {
-      obj = gen(e->container());
-      std::vector<llvm::Value*> args {
-        build.getInt32(0),                  // 0th element from base
-        build.getInt32(e->field()->index()) // nth element in struct
-      };
-      //if has parent..do something different?
-      // std::vector<llvm::Value*> args {
-      //     build.getInt32(0),                  // 0th element from base
-      //     build.getInt32(e->field()->index()+1) // nth element in struct
-      // };
+  llvm::Value * obj;
+  obj = gen(e->container());
 
-    obj = build.CreateGEP(obj, args);
-    //}
+  std::vector<llvm::Value*> args {
+    build.getInt32(0),                  // 0th element from base
+    build.getInt32(e->field()->index()) // nth element in struct
+  };
+
+  //if index is a parent..do something different?
+  if(e->field()->context()->base_decl != nullptr) {
+    // std::cout << e->field()->index() << "\n";
+    //never gets into next if on derived.base
+    if(e->field()->index()==0) {
+      // auto parent = e->field()->context()->base_decl;
+      // auto i = 
+      // std::cout << "parent\n";
+      std::vector<llvm::Value*> args {
+          build.getInt32(0),                  // 0th element from base
+          build.getInt32(e->field()->index()) // nth element in struct
+      };
+      return build.CreateGEP(obj,args);
+    }
+  }
+
+  obj = build.CreateGEP(obj, args);
   return obj;
-//    llvm::Value* obj = gen(e->container());
-//    std::vector<llvm::Value*> args {
-//            build.getInt32(0),                  // 0th element from base
-//            build.getInt32(e->field()->index()[0]) // nth element in struct
-//    };
-//    return build.CreateGEP(obj, args);
 }
 
 

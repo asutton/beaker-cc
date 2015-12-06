@@ -29,8 +29,6 @@ Field_decl::index() const
 	for (int i = 0; i < f.size(); ++i)
 		if (f[i] == this) {
 		  ret = i;
-			// std::cout<< ret <<"infirst\n";
-		  // return ret;
 		}
 
 	while(current->base_decl != nullptr) {
@@ -38,7 +36,6 @@ Field_decl::index() const
 		ret++;
 		current = current->base_decl;
 	}
-	std::cout<< ret <<"out\n";
 	return ret;
 }
 
