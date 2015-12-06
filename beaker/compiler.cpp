@@ -22,8 +22,8 @@
 
 enum Target
 {
-  module_tgt,
   program_tgt,
+  module_tgt
 };
 
 
@@ -41,7 +41,7 @@ struct Config
 static void
 usage(std::ostream& os, po::options_description& desc)
 {
-  os << "usage: beaker-compile [options] input-files...\n\n";
+  os << "Usage: beaker-compile [options] input-file...\n";
   os << desc << '\n';
 }
 
@@ -67,35 +67,31 @@ compiler_main(int argc, char* argv[])
   init_colors();
   init_symbols(syms);
 
-  po::options_description common("common options");
-  common.add_options()
-    ("help",     "print help message")
-    ("version",  "print version message")
-    ("input,i",   po::value<String_seq>(), "specify build inputs")
-    ("output,o",  po::value<String>(),     "specify the build output file")
-    ("keep,k",    "keep temporary files");
+  po::options_description common_opts("Common options");
+  common_opts.add_options()
+    ("help",      po::bool_switch(),        "Print this message and exit.")
+    ("version",   po::bool_switch(),        "Print version information and exit.")
+    ("input,i",   po::value<String_seq>(),  "Specify input files.")
+    ("output,o",  po::value<String>(),      "Specify the output file.")
+    ("keep,k",    po::bool_switch(),        "Keep temporary files.");
 
   // FIXME: These really define the compilation mode.
   // Here are some rules:
-  //
   //    -s implies -c
   //    -c implies no linking
-  //
-  //    -b [archive|library|program]
-  //
-  po::options_description compiler("compile options");
-  compiler.add_options()
-    ("assemble,s", "compile to native assembly")
-    ("compile,c",  "compile but do not link")
-    ("target,t",   po::value<String>()->default_value("program"),
-                   "produce an archive, module, or program");
+  //    -t program|module
+  po::options_description compile_opts("Compile options");
+  compile_opts.add_options()
+    ("assemble,s",  po::bool_switch(),  "Compile to native assembly.")
+    ("compile,c",   po::bool_switch(),  "Compile but do not link.")
+    ("target,t",    po::value<String>()->default_value("program"),
+     "Specify whether a program or module should be produced.");
 
-  po::positional_options_description pos;
-  pos.add("input", -1);
+  po::positional_options_description positional_opts;
+  positional_opts.add("input", -1);
 
-  po::options_description all;
-  all.add(common)
-     .add(compiler);
+  po::options_description all_opts;
+  all_opts.add(common_opts).add(compile_opts);
 
   // Parse command line options.
   Config conf;
@@ -103,54 +99,51 @@ compiler_main(int argc, char* argv[])
   try {
     po::store(
       po::command_line_parser(argc, argv)
-        .options(all)
-        .positional(pos)
+        .options(all_opts)
+        .positional(positional_opts)
         .run(),
       vm);
     po::notify(vm);
   } catch(std::exception& err) {
     std::cerr << "error: " << err.what() << "\n\n";
-    usage(std::cerr, all);
+    usage(std::cerr, all_opts);
     return -1;
   }
 
   // Check for obvious flags first.
-  if (vm.count("help")) {
-    usage(std::cout, all);
+  if (vm["help"].as<bool>()) {
+    usage(std::cout, all_opts);
     return 0;
   }
-  if (vm.count ("version")) {
-    // TODO: Generate the version number from the build.
-    std::cout << "beaker v0.0" << '\n';
+  if (vm["version"].as<bool>()) {
+    std::cout << BEAKER_PACKAGE_STRING << '\n';
     return 0;
   }
 
   // Check options.
-  if (vm.count("compile"))
+  if (vm["compile"].as<bool>())
     conf.compile = true;
 
-  if (vm.count("assemble")) {
+  if (vm["assemble"].as<bool>()) {
     conf.assemble = true;
     conf.compile = true;
   }
 
-  if (vm.count("target")) {
-    String t = vm["target"].as<String>();
-    if (t == "program") {
-      conf.target = program_tgt;
-    } else if (t == "module") {
-      conf.target = module_tgt;
-    } else  {
-      std::cerr << "error: invalid build target\n";
-      usage(std::cerr, all);
-      return -1;
-    }
+  String t = vm["target"].as<String>();
+  if (t == "program") {
+    conf.target = program_tgt;
+  } else if (t == "module") {
+    conf.target = module_tgt;
+  } else  {
+    std::cerr << "error: invalid build target\n\n";
+    usage(std::cerr, all_opts);
+    return -1;
   }
 
   // Validate the input files.
   if (!vm.count("input")) {
-    std::cerr << "error: no input files given\n";
-    usage(std::cerr, all);
+    std::cerr << "error: no input files\n\n";
+    usage(std::cerr, all_opts);
     return -1;
   }
   Path_seq inputs;
@@ -249,12 +242,12 @@ parse(Path_seq const& in, Path const& out, Config const& conf)
       // lowered and passed through to the link phase. That
       // would allow a module to contain native assembly,
       // and used internally via foreign declarations.
-      std::cerr << "error: unknown input file\n";
-      return -1;
+      std::cerr << "error: unknown input file type\n";
+      return false;
     }
   }
   if (!ok)
-    return -1;
+    return false;
 
   // Elaborate the parse result.
   Elaborator elab(locs, syms);
