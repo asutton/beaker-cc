@@ -422,9 +422,10 @@ Parser::variable_decl(Specifier spec)
 
   // value initialization (var x : T = e;)
   match(equal_tok);
-  if (match_if(trivial_kw))
+  if (match_if(trivial_kw)) {
     match(semicolon_tok);
     return on_variable(spec, n, t, trivial_kw);
+  }
 
   Expr* e = expr();
   match(semicolon_tok);
