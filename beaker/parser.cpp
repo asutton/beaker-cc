@@ -405,7 +405,7 @@ Parser::type()
 //
 //    variable-decl -> 'var' identifier object-type initializer-clause
 //
-//    initializer-clause -> ';' | '=' expr ';'
+//    initializer-clause -> ';' | '=' 'trivial' ';' | '=' expr ';'
 Decl*
 Parser::variable_decl(Specifier spec)
 {
@@ -422,6 +422,10 @@ Parser::variable_decl(Specifier spec)
 
   // value initialization (var x : T = e;)
   match(equal_tok);
+  if (match_if(trivial_kw))
+    match(semicolon_tok);
+    return on_variable(spec, n, t, trivial_kw);
+
   Expr* e = expr();
   match(semicolon_tok);
   return on_variable(spec, n, t, e);
@@ -1212,6 +1216,16 @@ Decl*
 Parser::on_variable(Specifier spec, Token tok, Type const* t)
 {
   Expr* init = new Default_init(t);
+  Decl* decl = new Variable_decl(spec, tok.symbol(), t, init);
+  locate(decl, tok.location());
+  return decl;
+}
+
+
+Decl*
+Parser::on_variable(Specifier spec, Token tok, Type const* t, Token_kind tk)
+{
+  Expr* init = new Trivial_init(t);
   Decl* decl = new Variable_decl(spec, tok.symbol(), t, init);
   locate(decl, tok.location());
   return decl;

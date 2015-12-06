@@ -329,6 +329,7 @@ Elaborator::elaborate(Expr* e)
     Expr* operator()(Value_conv* e) const { return elab.elaborate(e); }
     Expr* operator()(Block_conv* e) const { return elab.elaborate(e); }
     Expr* operator()(Default_init* e) const { return elab.elaborate(e); }
+    Expr* operator()(Trivial_init* e) const { return elab.elaborate(e); }
     Expr* operator()(Copy_init* e) const { return elab.elaborate(e); }
     Expr* operator()(Reference_init* e) const { return elab.elaborate(e); }
   };
@@ -1088,6 +1089,14 @@ Elaborator::elaborate(Block_conv* e)
 // TODO: I probably need to elaborate the type.
 Expr*
 Elaborator::elaborate(Default_init* e)
+{
+  e->type_ = elaborate(e->type_);
+  return e;
+}
+
+
+Expr*
+Elaborator::elaborate(Trivial_init* e)
 {
   e->type_ = elaborate(e->type_);
   return e;

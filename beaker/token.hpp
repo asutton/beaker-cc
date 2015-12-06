@@ -65,6 +65,7 @@ enum Token_kind
   return_kw,
   struct_kw,
   this_kw,
+  trivial_kw,
   var_kw,
   while_kw,
 

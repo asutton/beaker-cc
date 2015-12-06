@@ -103,6 +103,7 @@ private:
   Expr* on_dot(Expr*, Expr*);
 
   Decl* on_variable(Specifier, Token, Type const*);
+  Decl* on_variable(Specifier, Token, Type const*, Token_kind);
   Decl* on_variable(Specifier, Token, Type const*, Expr*);
   Decl* on_parameter(Specifier, Type const*);
   Decl* on_parameter(Specifier, Token, Type const*);
