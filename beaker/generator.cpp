@@ -530,34 +530,16 @@ Generator::gen(Dot_expr const* e)
 llvm::Value*
 Generator::gen(Field_expr const* e)
 {
-  #if 0
-  llvm::Value * obj;
-  obj = gen(e->container());
-
-  // If index is a parent..do something different?
-  if (e->field()->context()->base_decl != nullptr) {
-    // Never gets into next if on derived.base
-    if (e->field()->index() == 0) {
-      std::vector<llvm::Value*> args {
-          build.getInt32(0),                  // 0th element from base
-          build.getInt32(e->field()->index()) // nth element in struct
-      };
-      return build.CreateGEP(obj,args);
-    }
-  } else {
-    std::vector<llvm::Value*> args {
-      build.getInt32(0),                  // 0th element from base
-      build.getInt32(e->field()->index()) // nth element in struct
-    };
-    return build.CreateGEP(obj, args);
-  }
-  #endif
-
   llvm::Value* obj = gen(e->container());
-  std::vector<llvm::Value*> args {
-    build.getInt32(0),                  // 0th element from base
-    build.getInt32(e->field()->index()) // nth element in struct
-  };
+
+  // Build the GEP index array.
+  Field_path const& p = e->path();
+  std::vector<llvm::Value*> args(p.size() + 1);
+  args[0] = build.getInt32(0);
+  std::transform(p.begin(), p.end(), ++args.begin(), [&](int n) {
+    return build.getInt32(n);
+  });
+
   return build.CreateGEP(obj, args);
 }
 

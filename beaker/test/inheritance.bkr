@@ -1,19 +1,29 @@
-struct B {
-	b : int;
+struct B 
+{
+  x : int;
+  y : int;
 }
 
-struct C : B{
-	c : int;
-	d : int;
+struct D : B
+{
+  p : int;
+  q : int;
 }
 
-var bt : B;
-var test : C;
+var b : B;
+var d : D;
 
 
-// def main()->int {
-// 	test.d = 2;
-// 	test.c = 5;
-// 	//test.b = 6;
-// 	bt.b = 3;
-// }
+def main() -> int 
+{
+  b.x = 0;
+  b.y = 1;
+
+  d.p = 2;
+  d.q = 5;
+
+  d.x = 1;
+  d.y = 2;
+
+  return 0;
+}

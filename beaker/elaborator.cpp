@@ -941,6 +941,50 @@ Elaborator::elaborate(Call_expr* e)
 }
 
 
+namespace
+{
+
+// Search the base classes for the given field.
+//
+// TODO: Support multiple base classes.
+void
+get_path(Record_decl* r, Field_decl* f, Field_path& p)
+{
+  // Search the record for the given fields.
+  Decl_seq const& fs = r->fields();
+  auto iter = std::find(fs.begin(), fs.end(), f);
+  if (iter != fs.end()) {
+    // Adjust the offset by 1 if this has a base
+    // class sub-object.
+    int n = std::distance(fs.begin(), iter) + (r->base() ? 1 : 0);
+    p.push_back(n);
+    return;
+  }
+
+  // Recursively search the base class.
+  if (r->base()) {
+    p.push_back(0);
+    get_path(r->base()->declaration(), f, p);  
+  }
+}
+
+
+// Construct a sequence of indexes through the record and
+// up to the given field. The resulting path shall be
+// a non-empty sequence of indexes.
+Field_path
+get_path(Record_decl* r, Field_decl* f)
+{
+  Field_path p;
+  get_path(r, f, p);
+  lingo_assert(!p.empty());
+  return p;
+}
+
+
+} // namespace
+
+
 // TODO: Document the semantics of member access.
 Expr*
 Elaborator::elaborate(Dot_expr* e)
@@ -957,13 +1001,13 @@ Elaborator::elaborate(Dot_expr* e)
   //
   // TODO: If we support modules, we would need to allow
   // for different kinds of scopes here.
-  Record_type const* t = as<Record_type>(e1->type()->nonref());
-  if (!t) {
+  Record_type const* t1 = as<Record_type>(e1->type()->nonref());
+  if (!t1) {
     std::stringstream ss;
     ss << "object does not have record type";
     throw Type_error({}, ss.str());
   }
-  Scope* s = t->declaration()->scope();
+  Scope* s = t1->declaration()->scope();
 
   // We expect the member to be an unresolved id expression.
   // If it isn't, there's not much we can do with it.
@@ -992,8 +1036,9 @@ Elaborator::elaborate(Dot_expr* e)
     Decl*d = ovl->front();
     e2 = new Decl_expr(d->type(), d);
     if (Field_decl* f = as<Field_decl>(d)) {
-      Type const* t = e2->type()->ref();
-      return new Field_expr(t, e1, e2, f);
+      Type const* t2 = e2->type()->ref();
+      Field_path p = get_path(t1->declaration(), f);
+      return new Field_expr(t2, e1, e2, f, p);
     }
     if (Method_decl* m = as<Method_decl>(d)) {
       return new Method_expr(e1, e2, m);

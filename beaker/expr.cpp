@@ -35,15 +35,6 @@ Field_expr::field() const
 }
 
 
-// Returns the index of the field within its
-// record defintition.
-int
-Field_expr::index() const
-{
-  return field()->index();
-}
-
-
 Record_decl*
 Method_expr::record() const
 {
