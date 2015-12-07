@@ -132,7 +132,7 @@ public:
 
   Overload* unqualified_lookup(Symbol const*);
   Overload* qualified_lookup(Scope*, Symbol const*);
-  Overload* qualified_lookup(Record_decl*, Symbol const*);
+  Overload* member_lookup(Record_decl*, Symbol const*);
 
   // Diagnostics
   void on_call_error(Expr_seq const&, Expr_seq const&, Type_seq const&);
@@ -212,6 +212,8 @@ struct Elaborator::Scope_sentinel
 };
 
 
+// An RAII class used to manage a stack of definitions.
+// This helps to prevent loops in recursive elaborations.
 struct Elaborator::Defining_sentinel
 {
   Defining_sentinel(Elaborator& e, Decl* d)

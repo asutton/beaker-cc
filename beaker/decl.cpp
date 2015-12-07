@@ -18,21 +18,24 @@ Function_decl::return_type() const
 }
 
 
+// Returns the index of this field within its record
+// declaration.
 int
 Field_decl::index() const
 {
-	auto current = context();
-	int ret = 0;
-	Decl_seq const& f = current->fields();
-	for (std::size_t i = 0; i < f.size(); ++i)
-		if (f[i] == this)
-		  ret = i;
+  Decl_seq const& f = context()->fields();
+  for (std::size_t i = 0; i < f.size(); ++i)
+    if (f[i] == this)
+      return i;
+  lingo_unreachable();
+}
 
-	while (current->base_decl != nullptr) {
-		ret++;
-		current = current->base_decl;
-	}
-	return ret;
+
+// Returns the record's base class type.
+Record_type const*
+Record_decl::base() const
+{
+  return cast<Record_type>(base_);
 }
 
 

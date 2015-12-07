@@ -148,11 +148,13 @@ struct Parameter_decl : Decl
 struct Record_decl : Decl
 {
   Record_decl(Symbol const* n, Decl_seq const& f, Decl_seq const& m, Type const* base)
-    : Decl(n, nullptr), fields_(f), members_(m), scope_(this), base_(base), base_decl(nullptr)
+    : Decl(n, nullptr), fields_(f), members_(m), scope_(this), base_(base)
   { }
 
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
+
+  Record_type const* base() const;
 
   Decl_seq const& fields() const { return fields_; }
   Decl_seq const& members() const { return members_; }
@@ -160,11 +162,10 @@ struct Record_decl : Decl
   Scope*          scope()       { return &scope_; }
   Scope const*    scope() const { return &scope_; }
 
-  Decl_seq fields_;
-  Decl_seq members_;
-  Scope    scope_;
-    const Type* base_;
-     Record_decl *base_decl;
+  Decl_seq    fields_;
+  Decl_seq    members_;
+  Scope       scope_;
+  const Type* base_;
 };
 
 

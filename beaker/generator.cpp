@@ -530,6 +530,7 @@ Generator::gen(Dot_expr const* e)
 llvm::Value*
 Generator::gen(Field_expr const* e)
 {
+  #if 0
   llvm::Value * obj;
   obj = gen(e->container());
 
@@ -550,13 +551,14 @@ Generator::gen(Field_expr const* e)
     };
     return build.CreateGEP(obj, args);
   }
+  #endif
 
-  // llvm::Value* obj = gen(e->container());
-  // std::vector<llvm::Value*> args {
-  //   build.getInt32(0),                     // 0th element from base
-  //   build.getInt32(e->field()->index()[0]) // nth element in struct
-  // };
-  // return build.CreateGEP(obj, args);
+  llvm::Value* obj = gen(e->container());
+  std::vector<llvm::Value*> args {
+    build.getInt32(0),                  // 0th element from base
+    build.getInt32(e->field()->index()) // nth element in struct
+  };
+  return build.CreateGEP(obj, args);
 }
 
 
@@ -1027,20 +1029,14 @@ Generator::gen(Record_decl const* d)
   if (types.lookup(d))
     return;
 
-  // If the record is empty, generate a struct
-  // with exactly one byte so that we never have
-  // a type with 0 size.
-  //
-  // FIXME: This isn't right because we are currently
-  // mixing methods and fields in the same thing.
-  // They need to be separate.
   std::vector<llvm::Type*> ts;
-  if (types.lookup(d->base_decl)) {
-    auto i = types.get(d->base_decl);
-    ts.push_back(i.second);
-  }
 
+  // Add the base class sub-object before fields.
+  if (d->base())
+    ts.push_back(get_type(d->base()));
 
+  // If the record is empty, generate a struct with exactly one 
+  // byte so that we never have a type with 0 size.
   if (d->fields().empty()) {
     ts.push_back(build.getInt8Ty());
   } else {

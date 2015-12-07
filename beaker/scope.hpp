@@ -24,32 +24,10 @@ struct Scope : Environment<Symbol const*, Overload>
     : decl(d)
   { }
 
-  virtual ~Scope() { }
-
-
-  virtual Binding * lookup(Symbol const* sym) {
-    return Environment::lookup(sym);
-  }
+  ~Scope() { }
 
   Decl* decl;
 };
-
-struct Record_scope : Scope {
-
-  Record_scope()
-    : decl(nullptr)
-  { }
-
-  Record_scope(Record_decl *d)
-    : decl(d)
-  { }
-
-  auto lookup(Symbol const* sym) -> Binding*; 
-
-  Record_decl* decl;
-
-};
-
 
 
 // The scope stack maintains the current scope during
