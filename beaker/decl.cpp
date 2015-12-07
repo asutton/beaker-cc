@@ -3,8 +3,6 @@
 
 #include "beaker/decl.hpp"
 
-#include <iostream>
-
 
 Function_type const*
 Function_decl::type() const
@@ -30,25 +28,26 @@ Field_decl::index() const
   // FIXME: Why isn't this set in the constructor or
   // during elaboration.
   Decl_seq const& f = context()->fields();
-  for (std::size_t i = 0; i < f.size(); ++i)
+  for (std::size_t i = 0; i < f.size(); ++i) {
     if (f[i] == this) {
       path.push_back(i);
       return path;
     }
-
+  }
 
   Record_decl const* decl;
   while (decl->base_decl != nullptr) {
     decl = decl->base_decl;
     path.push_back(0);
     Decl_seq const& f = decl->fields();
-    for (std::size_t i = 0; i < f.size(); ++i)
+    for (std::size_t i = 0; i < f.size(); ++i) {
       if (f[i] == this) {
-          path.push_back(i);
-          return path;
+        path.push_back(i);
+        return path;
       }
+    }
   }
-  
+
   // If the last element is -1, it does not exist.
   path.push_back(-1);
   return path;
