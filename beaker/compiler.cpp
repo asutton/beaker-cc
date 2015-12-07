@@ -41,7 +41,7 @@ struct Config
 static void
 usage(std::ostream& os, po::options_description& desc)
 {
-  os << "Usage: beaker-compile [options] input-file...\n";
+  os << "usage: beaker-compile [options] input-file...\n";
   os << desc << '\n';
 }
 
