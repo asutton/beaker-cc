@@ -1,8 +1,7 @@
 # Copyright (c) 2015 Andrew Sutton
 # All rights reserved
 
-# Generate a static configuration header in the
-# build directory.
+# Generate the configuration header.
 configure_file(config.hpp.in config.hpp)
 
 # Add the core Beaker library.
@@ -37,7 +36,7 @@ target_include_directories(
   beaker
     PUBLIC
       "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR};${PROJECT_BINARY_DIR}>"
-      lingo
+      ${lingo_SOURCE_DIR}
       ${Boost_INCLUDE_DIRS}
       ${LLVM_INCLUDE_DIRS}
 )

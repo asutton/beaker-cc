@@ -17,18 +17,6 @@
 // -------------------------------------------------------------------------- //
 // Declaration of entities
 
-Overload*
-Elaborator::qualified_lookup(Record_decl* r, Symbol const* sym)
-{
-    auto s = r->scope();
-    auto temp = r;
-    if (Scope::Binding* bind = s->lookup(sym))
-      return &bind->second;
-    while ((temp = temp->base_decl))
-      if (Scope::Binding* bind = temp->scope()->lookup(sym))
-        return &bind->second;
-    return nullptr;
-}
 
 // Determine if d can be overloaded with the existing
 // elements in the set.
@@ -109,16 +97,33 @@ Elaborator::unqualified_lookup(Symbol const* sym)
 }
 
 
-// Perform a qualified lookup of a name in the given
-// scope. This searches only that scope for a binding
-// for the identifier.
+// Perform a qualified lookup of a name in the given scope. 
+// This searches only that scope for a binding for the identifier. 
+// If the scope is that of a record, the name may be a member of
+// a base class.
 Overload*
 Elaborator::qualified_lookup(Scope* s, Symbol const* sym)
 {
+  if (Record_decl* d = as<Record_decl>(s->decl))
+    return member_lookup(d, sym);
+  
   if (Scope::Binding* bind = s->lookup(sym))
     return &bind->second;
-  else
-    return nullptr;
+  
+  return nullptr;
+}
+
+
+
+Overload*
+Elaborator::member_lookup(Record_decl* d, Symbol const* sym)
+{
+  do {
+    if (Scope::Binding* bind = d->scope()->lookup(sym))
+      return &bind->second;
+    d = d->base()->declaration();
+  } while (d);
+  return nullptr;
 }
 
 
@@ -937,6 +942,50 @@ Elaborator::elaborate(Call_expr* e)
 }
 
 
+namespace
+{
+
+// Search the base classes for the given field.
+//
+// TODO: Support multiple base classes.
+void
+get_path(Record_decl* r, Field_decl* f, Field_path& p)
+{
+  // Search the record for the given fields.
+  Decl_seq const& fs = r->fields();
+  auto iter = std::find(fs.begin(), fs.end(), f);
+  if (iter != fs.end()) {
+    // Adjust the offset by 1 if this has a base
+    // class sub-object.
+    int n = std::distance(fs.begin(), iter) + (r->base() ? 1 : 0);
+    p.push_back(n);
+    return;
+  }
+
+  // Recursively search the base class.
+  if (r->base()) {
+    p.push_back(0);
+    get_path(r->base()->declaration(), f, p);  
+  }
+}
+
+
+// Construct a sequence of indexes through the record and
+// up to the given field. The resulting path shall be
+// a non-empty sequence of indexes.
+Field_path
+get_path(Record_decl* r, Field_decl* f)
+{
+  Field_path p;
+  get_path(r, f, p);
+  lingo_assert(!p.empty());
+  return p;
+}
+
+
+} // namespace
+
+
 // TODO: Document the semantics of member access.
 Expr*
 Elaborator::elaborate(Dot_expr* e)
@@ -948,14 +997,19 @@ Elaborator::elaborate(Dot_expr* e)
     throw Type_error({}, ss.str());
   }
 
-  // Get the non-reference type of the outer
-  // object so we can perform lookups.
-  Record_type const* t = as<Record_type>(e1->type()->nonref());
-  if (!t) {
+  // Get the non-reference type of the outer object 
+  // so we can perform qualified lookup.
+  //
+  // TODO: If we support modules, we would need to allow
+  // for different kinds of scopes here.
+  Record_type const* t1 = as<Record_type>(e1->type()->nonref());
+  if (!t1) {
     std::stringstream ss;
     ss << "object does not have record type";
     throw Type_error({}, ss.str());
   }
+  Scope* s = t1->declaration()->scope();
+
   // We expect the member to be an unresolved id expression.
   // If it isn't, there's not much we can do with it.
   //
@@ -971,7 +1025,7 @@ Elaborator::elaborate(Dot_expr* e)
   Id_expr* id = cast<Id_expr>(e2);
 
   // Perform qualified lookup on the member.
-  Overload* ovl = qualified_lookup(t->declaration(), id->symbol());
+  Overload* ovl = qualified_lookup(s, id->symbol());
   if (!ovl) {
     String msg = format("no member matching '{}'", *id);
     throw Lookup_error(locate(id), msg);
@@ -983,8 +1037,9 @@ Elaborator::elaborate(Dot_expr* e)
     Decl*d = ovl->front();
     e2 = new Decl_expr(d->type(), d);
     if (Field_decl* f = as<Field_decl>(d)) {
-      Type const* t = e2->type()->ref();
-      return new Field_expr(t, e1, e2, f);
+      Type const* t2 = e2->type()->ref();
+      Field_path p = get_path(t1->declaration(), f);
+      return new Field_expr(t2, e1, e2, f, p);
     }
     if (Method_decl* m = as<Method_decl>(d)) {
       return new Method_expr(e1, e2, m);
@@ -1530,9 +1585,13 @@ Elaborator::elaborate_def(Record_decl* d)
     }
     throw Type_error(locate(d), format("cyclic definition of '{}'", *d->name()));
   }
-
   Defining_sentinel def(*this, d);
-  // Elaborate fields and then method declarations.
+
+  // Elaborate base class.
+  if (d->base_)
+    d->base_ = elaborate(d->base_);
+
+  // Elaborate member declarations, fields first.
   //
   // TODO: What are the lookup rules for default
   // member initializers. If we do this:
@@ -1550,16 +1609,7 @@ Elaborator::elaborate_def(Record_decl* d)
   //      def f() -> int { ... }
   //      // What if f() refers to an uninitialized fiedl?
   //    }
-  //
-  // If we allow the 2nd, then we need to do two
-  // phase elaboration.
-    // Elaborate parent
-    Scope_sentinel scope(*this, d->scope());
-    if (d->base_ != nullptr) {
-        Record_type const *base = cast<Record_type>(elaborate(d->base_));
-        d->base_decl = base->declaration();
-    }
-
+  Scope_sentinel scope(*this, d->scope());
   for (Decl*& f : d->fields_)
     f = elaborate_decl(f);
   for (Decl*& m : d->members_)
