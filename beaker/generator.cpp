@@ -613,6 +613,12 @@ Generator::gen(Default_init const* e)
   throw std::runtime_error("unhahndled default initializer");
 }
 
+//TODO: Write this thing
+llvm::Value*
+Generator::gen(Trivial_init const* e)
+{
+  throw std::runtime_error("Trivial_init not constructed yet");
+}
 
 // TODO: Return the value or store it?
 llvm::Value*
