@@ -1,0 +1,18 @@
+struct B {
+	b : int;
+}
+
+struct C : B{
+	c : int;
+	d : int;
+}
+
+var bt : B;
+var test : C;
+
+def main()->int {
+	test.d = 2;
+	test.c = 5;
+	//test.b = 6;
+	bt.b = 3;
+}

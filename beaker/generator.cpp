@@ -530,16 +530,27 @@ Generator::gen(Dot_expr const* e)
 llvm::Value*
 Generator::gen(Field_expr const* e)
 {
-  llvm::Value* obj;
-  for (std::size_t i = 0; i < e->field()->index().size(); i++) {
-    obj = gen(e->container());
+  llvm::Value * obj;
+  obj = gen(e->container());
+
+  // If index is a parent..do something different?
+  if (e->field()->context()->base_decl != nullptr) {
+    // Never gets into next if on derived.base
+    if (e->field()->index() == 0) {
+      std::vector<llvm::Value*> args {
+          build.getInt32(0),                  // 0th element from base
+          build.getInt32(e->field()->index()) // nth element in struct
+      };
+      return build.CreateGEP(obj,args);
+    }
+  } else {
     std::vector<llvm::Value*> args {
-      build.getInt32(0),                     // 0th element from base
-      build.getInt32(e->field()->index()[i]) // nth element in struct
+      build.getInt32(0),                  // 0th element from base
+      build.getInt32(e->field()->index()) // nth element in struct
     };
-    obj = build.CreateGEP(obj, args);
+    return build.CreateGEP(obj, args);
   }
-  return obj;
+
   // llvm::Value* obj = gen(e->container());
   // std::vector<llvm::Value*> args {
   //   build.getInt32(0),                     // 0th element from base

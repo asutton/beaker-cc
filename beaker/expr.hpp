@@ -459,7 +459,7 @@ struct Field_expr : Dot_expr
 
   Record_decl* record() const;
   Field_decl*  field() const;
-  std::vector<int>  index() const; // Offset in record, modify qualified lookup get decl gen path 2 phase
+  int          index() const; // Offset in record, modify qualified lookup get decl gen path 2 phase
 
   Decl* var;
 };
