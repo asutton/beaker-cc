@@ -37,7 +37,7 @@ Field_expr::field() const
 
 // Returns the index of the field within its
 // record defintition.
-std::vector<int>
+int
 Field_expr::index() const
 {
   return field()->index();
