@@ -1014,15 +1014,19 @@ Generator::gen(Record_decl const* d)
   std::vector<llvm::Type*> ts;
 
   // Add the base class sub-object before fields.
+  //
+  // TODO: If this is a polymorphic root, then generate
+  // a vptr for the object. Note that this will need to
+  // be initialized by each constructor.
   if (d->base())
     ts.push_back(get_type(d->base()));
 
-  // If the record is empty, generate a struct with exactly one 
-  // byte so that we never have a type with 0 size.
+  // Construct the type over only the fields. If the record 
+  // is empty, generate a struct with exactly one  byte so that 
+  // we never have a type with 0 size. 
   if (d->fields().empty()) {
     ts.push_back(build.getInt8Ty());
   } else {
-    // Construct the type over only the fields.
     for (Decl const* f : d->fields())
       ts.push_back(get_type(f->type()));
   }
@@ -1035,6 +1039,10 @@ Generator::gen(Record_decl const* d)
   // Now, generate code for all other members.
   for (Decl const* m : d->members())
     gen(m);
+
+  // Generate the vtable if needed.
+  if (d->is_polymorphic())
+    gen_vtable(d);
 }
 
 
@@ -1076,6 +1084,40 @@ Generator::gen(Module_decl const* d)
 
   // TODO: Make a second pass to generate global
   // constructors for initializers.
+}
+
+
+// FIXME: Do this here or generate code to do this
+// during elaboration/lowering.
+void
+Generator::gen_vtable(Record_decl const* d)
+{
+  // Gather polymorhpic functions.
+  //
+  // TODO: I think we need to gather methods from
+  // base classes as well.
+  std::vector<Method_decl const*> methods;
+  for (Decl const* m : d->members()) {
+    if (Method_decl const* meth = as<Method_decl>(m))
+      if (meth->is_polymorphic())
+        methods.push_back(meth);
+  }
+
+
+  // Build the vtable type.
+  //
+  // FIXME: The name needs better mangling.
+  std::vector<llvm::Type*> types;
+  for (Method_decl const* m : methods) {
+    llvm::Type* t = llvm::PointerType::getUnqual(get_type(m->type()));
+    types.push_back(t);
+  }
+  String n = d->name()->spelling() + "_vtbl_t";
+  llvm::Type* t = llvm::StructType::create(cxt, types, n);
+  t->dump();
+
+  // TODO: Generate a global variable of this type and 
+  // a global constructor that populates it with values.
 }
 
 

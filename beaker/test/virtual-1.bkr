@@ -1,0 +1,6 @@
+
+struct S
+{
+  virtual def f() -> int { }
+  virtual def g(int) -> int { }
+}

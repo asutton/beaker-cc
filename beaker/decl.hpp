@@ -118,6 +118,10 @@ struct Function_decl : Decl
   Stmt const* body() const { return body_; }
   Stmt*       body()       { return body_; }
 
+  bool is_virtual() const  { return spec_ & virtual_spec; }
+  bool is_abstract() const { return spec_ & abstract_spec; }
+  bool is_polymorphic() const { return is_virtual() || is_abstract(); }
+
   Decl_seq parms_;
   Stmt*    body_;
 };
@@ -161,6 +165,10 @@ struct Record_decl : Decl
 
   Scope*          scope()       { return &scope_; }
   Scope const*    scope() const { return &scope_; }
+
+  bool is_virtual() const     { return spec_ & virtual_spec; }
+  bool is_abstract() const    { return spec_ & abstract_spec; }
+  bool is_polymorphic() const { return is_virtual() || is_abstract(); }
 
   Decl_seq    fields_;
   Decl_seq    members_;

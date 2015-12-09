@@ -1428,10 +1428,17 @@ Elaborator::elaborate_decl(Record_decl* d)
 Decl*
 Elaborator::elaborate_decl(Method_decl* d)
 {
+  Record_decl* rec = stack.record();
+
+  // Propagate virtual/abstract specifiers to the class.
+  if (d->is_virtual())
+    rec->spec_ |= virtual_spec;
+  if (d->is_abstract())
+    rec->spec_ |= abstract_spec;
+
   // Generate the type of the implicit this parameter.
   //
   // TODO: Handle constant references.
-  Record_decl* rec = stack.record();
   Type const* type = get_reference_type(get_record_type(rec));
 
   // Re-build the function type.
@@ -1455,6 +1462,7 @@ Elaborator::elaborate_decl(Method_decl* d)
 
   // Now declare the method.
   declare(d);
+
   return d;
 }
 
