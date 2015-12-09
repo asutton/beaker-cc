@@ -196,9 +196,8 @@ struct Lambda_expr : Expr
 
   Symbol const * symbol() const { return sym_; }
 
-  void accept(Visitor & v) const { //v.visit(this);
-  }
-  void accept(Mutator& v)        { //v.visit(this);
+  void accept(Visitor & v) const { v.visit(this); }
+  void accept(Mutator& v)        { v.visit(this);
   }
 
   Symbol const * sym_;

@@ -32,8 +32,10 @@ using Decl_stack = std::vector<Decl*>;
 // an AST with type and other information.
 class Elaborator
 {
+  
   struct Scope_sentinel;
   struct Defining_sentinel;
+
 public:
   Elaborator(Location_map&, Symbol_table&);
 

@@ -396,7 +396,20 @@ Elaborator::elaborate(Decl_expr* e)
   return e;
 }
 
-Expr* 
+Expr*
+Elaborator::elaborate(Lambda_expr* e)
+{
+  std::cout << "FUCK\n";
+  Function_decl* f_decl = new Function_decl(e->symbol(), e->type(), e->parameters(), e->body());
+  Decl* d = elaborate(f_decl);
+  std::cout << "FUCK 2\n";
+  stack.module()->decls_.push_back(f_decl);
+  // declare(f_decl);
+  std::cout << "FUCK 3\n";
+  Decl_expr* d_expr = new Decl_expr(f_decl->type(), f_decl);
+  std::cout << *d_expr << std::endl;
+  return d_expr;
+}
 
 namespace
 {
@@ -419,9 +432,12 @@ require_value(Elaborator& elab, Expr* e)
 Expr*
 require_converted(Elaborator& elab, Expr* e, Type const* t)
 {
-  e = elab.elaborate(e);
-  e = convert(e, t);
-  return e;
+  std::cout << type_str(*e) << ' '  << e <<std::endl;
+  Expr* e1 = elab.elaborate(e);
+  std::cout << e1 <<std::endl;
+  Expr* e2 = convert(e1, t);
+  std::cout << e2 <<std::endl;
+  return e2;
 }
 
 

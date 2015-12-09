@@ -230,6 +230,7 @@ Generator::gen(Expr const* e)
     llvm::Value* operator()(Literal_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Id_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Decl_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Lambda_expr const* e) const { lingo_unreachable(); }
     llvm::Value* operator()(Add_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Sub_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Mul_expr const* e) const { return g.gen(e); }

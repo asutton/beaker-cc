@@ -21,6 +21,7 @@ Evaluator::eval(Expr const* e)
     Value operator()(Literal_expr const* e) { return ev.eval(e); }
     Value operator()(Id_expr const* e) { return ev.eval(e); }
     Value operator()(Decl_expr const* e) { return ev.eval(e); }
+    Value operator()(Lambda_expr const* e) { return ev.eval(e); }
     Value operator()(Add_expr const* e) { return ev.eval(e); }
     Value operator()(Sub_expr const* e) { return ev.eval(e); }
     Value operator()(Mul_expr const* e) { return ev.eval(e); }

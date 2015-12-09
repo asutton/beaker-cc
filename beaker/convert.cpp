@@ -38,10 +38,16 @@ convert_to_block(Expr* e)
 Expr*
 convert(Expr* e, Type const* t)
 {
+  std::cout << 1 << std::endl;
   // If e has type t, no conversions are needed.
   if (e->type() == t)
+  {
+    std::cout << 2 << std::endl;
     return e;
+  }
   Expr* c = e;
+  std::cout << 3 << std::endl;
+
 
   // Ojbect/value transformations
 
@@ -50,9 +56,14 @@ convert(Expr* e, Type const* t)
   //
   //    A& -> B
   if (!is<Reference_type>(t)) {
+    std::cout << 4 << std::endl;
     c = convert_to_value(e);
+    std::cout << 5 << std::endl;
     if (c->type() == t)
+    {
+      std::cout << 6 << std::endl;
       return c;
+    }
   }
 
   // Type conversions
@@ -61,12 +72,18 @@ convert(Expr* e, Type const* t)
   // conversion. This is the case when we have
   //
   //    A[N] -> B[]
+  std::cout << 7 << std::endl;
   if (is<Block_type>(t)) {
+    std::cout << 8 << std::endl;
     c = convert_to_block(c);
+    std::cout << 9 << std::endl;
     if (c->type() == t)
+    {
+      std::cout << 10 << std::endl;
       return c;
+    }
   }
-
+  std::cout << 11 << std::endl;
   // If we've exhaused all possible conversions
   // without matching the type, then just return
   // nullptr.
