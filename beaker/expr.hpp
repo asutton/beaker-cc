@@ -602,7 +602,7 @@ struct Trivial_init : Init
   using Init::Init;
 
   void accept(Visitor& v) const { v.visit(this); }
-  void accept(Mutator& v)      { v.visit(this); }
+  void accept(Mutator& v)       { v.visit(this); }
 };
 
 

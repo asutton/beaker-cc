@@ -613,13 +613,11 @@ Generator::gen(Default_init const* e)
   throw std::runtime_error("unhahndled default initializer");
 }
 
-//TODO: Write this thing
 llvm::Value*
 Generator::gen(Trivial_init const* e)
 {
-
-
-  throw std::runtime_error("Trivial_init not constructed yet");
+  // Trivial initialization is a no-op.
+  return nullptr;
 }
 
 // TODO: Return the value or store it?
@@ -871,8 +869,11 @@ Generator::gen_local(Variable_decl const* d)
   // Generate the initializer.
   llvm::Value* init = gen(d->init());
 
-  // Store the result in the object.
-  build.CreateStore(init, ptr);
+  // Create a store if an initializer was generated.
+  if (init != nullptr) {
+    // Store the result in the object.
+    build.CreateStore(init, ptr);
+  }
 }
 
 
