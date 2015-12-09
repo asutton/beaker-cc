@@ -309,16 +309,56 @@ Parser::primary_type()
     return on_id_type(tok);
 
   // bool
-  if (match_if(bool_kw))
+  else if (match_if(bool_kw))
     return get_boolean_type();
 
   // char
-  if (match_if(char_kw))
+  else if (match_if(char_kw))
     return get_character_type();
 
+  // signed int
+  else if (match_if(signed_kw))
+    return on_sign_type();
+  
+  // unsigned int
+  else if (match_if(unsigned_kw))
+    return on_sign_type(false);
+            
+  // short
+  else if (match_if(short_kw))
+    return on_short_type();
+    
+  // long
+  else if (match_if(long_kw))
+    return on_long_type();
+  
   // int
   else if (match_if(int_kw))
-    return get_integer_type();
+      return get_integer_type();
+    
+  // int16
+  else if (match_if(int16_kw))
+      return get_integer16_type();
+    
+  // int32
+  else if (match_if(int32_kw))
+      return get_integer32_type();
+    
+  // int64
+  else if (match_if(int64_kw))
+      return get_integer64_type();
+    
+  // int128
+  else if (match_if(int128_kw))
+      return get_integer128_type();
+    
+  // float
+  else if (match_if(float_kw))
+      return get_float_type();
+    
+  // double
+  else if (match_if(double_kw))
+      return get_double_type();
 
   // function-type
   else if (match_if(lparen_tok)) {
@@ -1010,6 +1050,56 @@ Parser::on_function_type(Type_seq const& ts, Type const* t)
   return get_function_type(ts, t);
 }
 
+Type const*
+Parser::on_short_type(bool is_signed)
+{
+  match_if(int_kw);
+  
+  return get_short_integer_type(is_signed);
+}
+
+Type const*
+Parser::on_long_type(bool is_signed)
+{
+  match_if(int_kw);
+  
+  return get_long_integer_type(is_signed);
+}
+
+Type const*
+Parser::on_sign_type(bool is_signed)
+{
+  // short
+  if (match_if(short_kw))
+      return on_short_type(is_signed);
+
+  // long
+  else if (match_if(long_kw))
+      return on_long_type(is_signed);
+  
+  // int
+  else if (match_if(int_kw))
+      return get_integer_type(is_signed);
+    
+  // int16
+  else if (match_if(int16_kw))
+      return get_integer16_type(is_signed);
+    
+  // int32
+  else if (match_if(int32_kw))
+      return get_integer32_type(is_signed);
+    
+  // int64
+  else if (match_if(int64_kw))
+      return get_integer64_type(is_signed);
+    
+  // int128
+  else if (match_if(int128_kw))
+      return get_integer128_type(is_signed);
+  
+  else
+      error("invalid integer type");
+}
 
 Expr*
 Parser::on_id(Token tok)
