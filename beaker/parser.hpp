@@ -169,7 +169,6 @@ Parser::Parser(Symbol_table& s, Token_stream& t)
   : syms_(s), ts_(t), locs_(nullptr), errs_(0), term_()
 { }
 
-
 inline
 Parser::Parser(Symbol_table& s, Token_stream& t, Location_map& l)
   : syms_(s), ts_(t), locs_(&l), errs_(0), term_()

@@ -432,6 +432,9 @@ struct Dot_expr : Expr
 };
 
 
+using Field_path = std::vector<int>;
+
+
 // An expression of the form e.f where e has record
 // type and f is a field of that type.
 //
@@ -450,8 +453,8 @@ struct Dot_expr : Expr
 // inherit members.
 struct Field_expr : Dot_expr
 {
-  Field_expr(Type const* t, Expr* e1, Expr* e2, Decl* v)
-    : Dot_expr(t, e1, e2), var(v)
+  Field_expr(Type const* t, Expr* e1, Expr* e2, Decl* v, Field_path const& p)
+    : Dot_expr(t, e1, e2), var(v), path_(p)
   { }
 
   void accept(Visitor& v) const { v.visit(this); }
@@ -459,9 +462,10 @@ struct Field_expr : Dot_expr
 
   Record_decl* record() const;
   Field_decl*  field() const;
-  std::vector<int>  index() const; // Offset in record, modify qualified lookup get decl gen path 2 phase
+  Field_path   path() const { return path_; }
 
-  Decl* var;
+  Decl*      var;
+  Field_path path_;
 };
 
 

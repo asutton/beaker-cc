@@ -3,8 +3,6 @@
 
 #include "beaker/decl.hpp"
 
-#include <iostream>
-
 
 Function_type const*
 Function_decl::type() const
@@ -20,37 +18,24 @@ Function_decl::return_type() const
 }
 
 
-std::vector<int>
+// Returns the index of this field within its record
+// declaration.
+int
 Field_decl::index() const
 {
-	auto current = context();
-	std::vector<int> ret;
-	Decl_seq const& f = current->fields();
-  int i = current->fields().size();
+  Decl_seq const& f = context()->fields();
+  for (std::size_t i = 0; i < f.size(); ++i)
+    if (f[i] == this)
+      return i;
+  lingo_unreachable();
+}
 
-	for (std::size_t i = 0; i < f.size(); ++i) {
-		if (f[i] == this) {
-		  ret.push_back(i);
-		  return ret;
-		}
-	}
 
-	while (current->base_decl != nullptr) {
-		current = current->base_decl;
-		ret.push_back(0);
-		Decl_seq const& f = current->fields();
-
-		for (std::size_t i = 0; i < f.size(); ++i) {
-			if (f[i] == this) {
-		  		ret.push_back(i);
-		  		return ret;
-			}
-		}
-	}
-
-	//if the last element is -1, it does not exist
-	ret.push_back(-1);
-	return ret;
+// Returns the record's base class type.
+Record_type const*
+Record_decl::base() const
+{
+  return cast<Record_type>(base_);
 }
 
 
