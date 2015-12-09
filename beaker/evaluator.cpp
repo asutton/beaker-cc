@@ -44,6 +44,7 @@ Evaluator::eval(Expr const* e)
     Value operator()(Index_expr const* e) { return ev.eval(e); }
     Value operator()(Value_conv const* e) { return ev.eval(e); }
     Value operator()(Block_conv const* e) { return ev.eval(e); }
+    Value operator()(Derived_conv const* e) { return ev.eval(e); }
     Value operator()(Default_init const* e) { return ev.eval(e); }
     Value operator()(Copy_init const* e) { return ev.eval(e); }
     Value operator()(Reference_init const* e) { return ev.eval(e); }
@@ -355,6 +356,11 @@ Evaluator::eval(Block_conv const* e)
   throw std::runtime_error("not implemented");
 }
 
+Value
+Evaluator::eval(Derived_conv const* e)
+{
+  throw std::runtime_error("not implemented");
+}
 
 // FIXME: This is wrong. We should be calling a function
 // that default initializes the created object.

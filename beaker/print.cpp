@@ -144,6 +144,7 @@ operator<<(std::ostream& os, Expr const& e)
     void operator()(Index_expr const* e) { os << *e; }
     void operator()(Value_conv const* e) { os << *e; }
     void operator()(Block_conv const* e) { os << *e; }
+    void operator()(Derived_conv const* e) { os << *e; }
     void operator()(Default_init const* e) { os << *e; }
     void operator()(Copy_init const* e) { os << *e; }
     void operator()(Reference_init const* e) { os << *e; }
@@ -339,6 +340,13 @@ operator<<(std::ostream& os, Block_conv const& e)
             << *e.target() << ')';
 }
 
+std::ostream&
+operator<<(std::ostream& os, Derived_conv const& e)
+{
+  return os << "__to_derived("
+         << *e.source() << ','
+         << *e.target() << ')';
+}
 
 std::ostream&
 operator<<(std::ostream& os, Default_init const& e)

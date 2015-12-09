@@ -252,6 +252,7 @@ Generator::gen(Expr const* e)
     llvm::Value* operator()(Index_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Value_conv const* e) const { return g.gen(e); }
     llvm::Value* operator()(Block_conv const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Derived_conv const* e) const { return g.gen(e); }
     llvm::Value* operator()(Default_init const* e) const { return g.gen(e); }
     llvm::Value* operator()(Copy_init const* e) const { return g.gen(e); }
     llvm::Value* operator()(Reference_init const* e) const { return g.gen(e); }
@@ -589,6 +590,11 @@ Generator::gen(Block_conv const* e)
   return build.CreateInBoundsGEP(a, args);
 }
 
+llvm::Value*
+Generator::gen(Derived_conv const* e)
+{
+  return nullptr;
+}
 
 // TODO: Return the value or store it?
 llvm::Value*

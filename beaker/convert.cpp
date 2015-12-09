@@ -33,7 +33,13 @@ convert_to_block(Expr* e)
     return e;
 }
 
-
+Expr*
+convert_to_derived(Expr* e){
+  if (Record_type const* r = as<Record_type>(e->type()))
+    return new Derived_conv(get_record_type(r->declaration()));
+   else
+    return e;
+}
 // Find a conversion from e to t. If no such
 // conversion exists, return nullptr. Diagnostics
 // are better handled in the calling context.
@@ -59,7 +65,7 @@ convert(Expr* e, Type const* t)
 
   // Type conversions
 
-  // Determine if we can apply an array-to-chunk
+  // Determine if we can apply an array-to-block
   // conversion. This is the case when we have
   //
   //    A[N] -> B[]
@@ -67,11 +73,18 @@ convert(Expr* e, Type const* t)
     c = convert_to_block(c);
     if (c->type() == t)
       return c;
+  } else if (is<Record_type>(t)) {
+    if (is<Record_type>(c->type())) {
+      c = convert_to_derived(c);
+    }
   }
 
   // If we've exhaused all possible conversions
   // without matching the type, then just return
   // nullptr.
+  // adjustment
+  //conversion
+  //qualification
 
   return nullptr;
 }
