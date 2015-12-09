@@ -619,6 +619,10 @@ Parser::specifier_seq()
   while (true) {
     if (match_if(foreign_kw))
       spec |= foreign_spec;
+    else if (match_if(abstract_kw))
+      spec |= abstract_spec;
+    else if (match_if(virtual_kw))
+      spec |= virtual_spec;
     else
       break;
   }

@@ -14,6 +14,14 @@ enum Specifier
   // No specifiers present.
   no_spec      = 0,
 
+  // The virtual specifier indicates an overridable method
+  // or a dispatched parameter of a multimethod.
+  virtual_spec = 1 << 5,
+
+  // The abstract specifier indicates an abstract method
+  // or base class.
+  abstract_spec = 1 << 5,
+
   // The declaration has foreign language linkage. 
   // This affects  how the symbol is generated during 
   // translation. By default, a declaration with the 
