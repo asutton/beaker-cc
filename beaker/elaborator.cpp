@@ -904,7 +904,11 @@ Elaborator::elaborate(Call_expr* e)
   // into the argument list and update the function target.
   if (Dot_expr* dot = as_method(f)) {
       // Build the "this" argument.
+      //Method_expr* m = dynamic_cast<Method_expr*>(dot);
+
       Expr* self = dot->container();
+
+      //Expr* self = m->container();
       args.insert(args.begin(), self);
 
       // Adjust the function target.
@@ -980,6 +984,14 @@ get_path(Record_decl* r, Field_decl* f)
   lingo_assert(!p.empty());
   return p;
 }
+
+//Method_path
+//get_path(Record_decl* r, Method_decl* m){
+//  Method_path p;
+//  get_path(r, m, p);
+//  lingo_assert(!p.empty());
+//  return p;
+//}
 
 
 } // namespace

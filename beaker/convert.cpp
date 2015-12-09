@@ -36,7 +36,7 @@ convert_to_block(Expr* e)
 
 // Find a conversion from e to t. If no such
 // conversion exists, return nullptr. Diagnostics
-// a better handled in the calling context.
+// are better handled in the calling context.
 Expr*
 convert(Expr* e, Type const* t)
 {
@@ -77,7 +77,7 @@ convert(Expr* e, Type const* t)
 }
 
 
-// Convert a seequence of arguments to a corresponding
+// Convert a sequence of arguments to a corresponding
 // parameter type. The conversion is successful only
 // when all individual conversions are successful.
 // This is the case when the result vector contains
