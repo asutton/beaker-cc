@@ -121,4 +121,5 @@ init_symbols(Symbol_table& syms)
 
   // Common identifiers
   syms.put<Symbol>("main", identifier_tok);
+  syms.put<Symbol>("vptr", identifier_tok);
 }

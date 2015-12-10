@@ -7,7 +7,6 @@
 #include <beaker/prelude.hpp>
 #include <beaker/scope.hpp>
 #include <beaker/specifier.hpp>
-#include <beaker/vtable.hpp>
 #include <beaker/type.hpp>
 
 
@@ -152,8 +151,8 @@ struct Parameter_decl : Decl
 struct Record_decl : Decl
 {
   Record_decl(Symbol const* n, Decl_seq const& f, Decl_seq const& m, Type const* base)
-    : Decl(n, nullptr), fields_(f), members_(m), scope_(this), base_(base)
-    , vtbl_(nullptr)
+    : Decl(n, nullptr), scope_(this), fields_(f), members_(m)
+    , base_(base), vref_(nullptr), vtbl_(nullptr)
   { }
 
   void accept(Visitor& v) const { v.visit(this); }
@@ -168,20 +167,23 @@ struct Record_decl : Decl
   Scope const*    scope() const { return &scope_; }
   Scope*          scope()       { return &scope_; }
 
-  Virtual_table const* vtable() const { return vtbl_; }
-  Virtual_table*       vtable()       { return vtbl_; }
+  Decl const*     vref() const   { return vref_; }
+  Decl*           vref()         { return vref_; }
+
+  Decl_seq const* vtable() const { return vtbl_; }
+  Decl_seq*       vtable()       { return vtbl_; }
 
   bool is_empty() const;
   bool is_virtual() const     { return spec_ & virtual_spec; }
   bool is_abstract() const    { return spec_ & abstract_spec; }
   bool is_polymorphic() const { return is_virtual() || is_abstract(); }
-  bool is_root() const        { return spec_ & root_spec; }
 
+  Scope          scope_;
   Decl_seq       fields_;
   Decl_seq       members_;
-  Scope          scope_;
   const Type*    base_;
-  Virtual_table* vtbl_;
+  Decl*          vref_;
+  Decl_seq*      vtbl_;
 };
 
 

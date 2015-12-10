@@ -27,15 +27,6 @@ enum Specifier
   // or base class.
   abstract_spec = 1 << 6,
 
-  // The root specifier indicates that the declaraiton is
-  // the root of a hierarchy. For polymorphic classes, this
-  // is the first virtual class in a hiearchy (where the
-  // vptr will be installed).
-  //
-  // Note that the root specifier cannot be written 
-  // explicitly. It is derived by analysis.
-  root_spec = 1 << 7,
-
   // The declaration has foreign language linkage. 
   // This affects  how the symbol is generated during 
   // translation. By default, a declaration with the 

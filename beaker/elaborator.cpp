@@ -955,10 +955,10 @@ get_path(Record_decl* r, Field_decl* f, Field_path& p)
   auto iter = std::find(fs.begin(), fs.end(), f);
   if (iter != fs.end()) {
     // Compute the offset adjustment for this member.
-    // A virtual pointer counts as a subobject, and so
-    // does a base class sub-object.
+    // A virtual table reference counts as a subobject, and 
+    // so does a base class sub-object.
     int a = 0;
-    if (r->is_root())
+    if (r->vref())
       ++a;
     if (r->base())
       ++a;
@@ -1479,7 +1479,7 @@ Elaborator::elaborate_decl(Method_decl* d)
   // TODO: Factor this out as an operation on a record.
   if (d->is_polymorphic()) {
     if (!rec->vtbl_)
-      rec->vtbl_ = new Virtual_table();
+      rec->vtbl_ = new Decl_seq();
     rec->vtbl_->push_back(d);
 
     // FIXME: Set the vtable index for the method.
@@ -1615,8 +1615,8 @@ Elaborator::elaborate_def(Record_decl* d)
   // Propagate the virtual table if supported.
   Record_decl const* b = d->base_declaration();
   if (b)
-    if (Virtual_table const* vt = b->vtable())
-      d->vtbl_ = new Virtual_table(*vt);
+    if (Decl_seq const* vt = b->vtable())
+      d->vtbl_ = new Decl_seq(*vt);
  
   // Elaborate member declarations, fields first.
   //
@@ -1658,14 +1658,24 @@ Elaborator::elaborate_def(Record_decl* d)
       d->spec_ |= abstract_spec;
   }
 
-  // Determine if this is the polymorphic root of
-  // a hierarchy. This is the case when this is
-  // polymorphic and
+  // Determine if we need a vtable reference. This is the case 
+  // when:
   //    - there is no base class or
   //    - the base is not polymorphic
+  //
+  // TODO: We may need to perform this transformation
+  // before elaborating any fields. It depends on whether
+  // or not we allow a member's type to refer to member
+  // variables (a la decltype).
+  //
+  // TODO: For multiple base classes, we probably want
+  // multiple vtable references (one for each base).
   if (d->is_polymorphic()) {
-    if (!b || !b->is_polymorphic())
-      d->spec_ |= root_spec;
+    if (!b || !b->is_polymorphic()) {
+      Symbol const* n = syms.get("vref");
+      Type const* p = get_reference_type(get_character_type());
+      d->vref_ = new Field_decl(n, p);
+    }
   }
 
   defined.insert(d);

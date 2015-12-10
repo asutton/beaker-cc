@@ -972,14 +972,14 @@ Generator::gen(Record_decl const* d)
   // then generate a vptr as its first sub-object. This is
   // represented as an i8* since we haven't generated the
   // the table yet.
-  if (d->is_root())
-    ts.push_back(build.getInt8PtrTy());
+  if (Decl const* vr = d->vref())
+    ts.push_back(get_type(vr->type()));
 
   // Add the base class sub-object before fields.
   //
   // TODO: Implement the empty base optimization.
-  if (d->base())
-    ts.push_back(get_type(d->base()));
+  if (Type const* b = d->base())
+    ts.push_back(get_type(b));
 
   // Construct the type over only the fields. If the record 
   // is empty, generate a struct with exactly one  byte so that 
@@ -1050,7 +1050,7 @@ Generator::gen(Module_decl const* d)
 void
 Generator::gen_vtable(Record_decl const* d)
 {
-  Virtual_table const& vtbl = *d->vtable();
+  Decl_seq const& vtbl = *d->vtable();
 
   // Build the vtable type.
   //
