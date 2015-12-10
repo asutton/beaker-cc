@@ -1012,19 +1012,25 @@ Generator::gen(Record_decl const* d)
     return;
 
   std::vector<llvm::Type*> ts;
+  ts.reserve(16);
+
+  // If d is the root of a polymorphic type hierarchy,
+  // then generate a vptr as its first sub-object. This is
+  // represented as an i8* since we haven't generated the
+  // the table yet.
+  if (d->is_root())
+    ts.push_back(build.getInt8PtrTy());
 
   // Add the base class sub-object before fields.
   //
-  // TODO: If this is a polymorphic root, then generate
-  // a vptr for the object. Note that this will need to
-  // be initialized by each constructor.
+  // TODO: Implement the empty base optimization.
   if (d->base())
     ts.push_back(get_type(d->base()));
 
   // Construct the type over only the fields. If the record 
   // is empty, generate a struct with exactly one  byte so that 
   // we never have a type with 0 size. 
-  if (d->fields().empty()) {
+  if (d->is_empty()) {
     ts.push_back(build.getInt8Ty());
   } else {
     for (Decl const* f : d->fields())
@@ -1036,13 +1042,14 @@ Generator::gen(Record_decl const* d)
   llvm::Type* t = llvm::StructType::create(cxt, ts, d->name()->spelling());
   types.bind(d, t);
 
+  // Generate the vtable. Note that we have to do
+  // this after defining the class because
+  if (d->is_polymorphic())
+    gen_vtable(d);
+
   // Now, generate code for all other members.
   for (Decl const* m : d->members())
     gen(m);
-
-  // Generate the vtable if needed.
-  if (d->is_polymorphic())
-    gen_vtable(d);
 }
 
 
@@ -1087,15 +1094,13 @@ Generator::gen(Module_decl const* d)
 }
 
 
-// FIXME: Do this here or generate code to do this
-// during elaboration/lowering.
-void
+llvm::Value*
 Generator::gen_vtable(Record_decl const* d)
 {
   // Gather polymorhpic functions.
   //
-  // TODO: I think we need to gather methods from
-  // base classes as well.
+  // FIXME: Find the vtable for each base class and
+  // add its fields to this ones.
   std::vector<Method_decl const*> methods;
   for (Decl const* m : d->members()) {
     if (Method_decl const* meth = as<Method_decl>(m))
@@ -1103,21 +1108,26 @@ Generator::gen_vtable(Record_decl const* d)
         methods.push_back(meth);
   }
 
-
   // Build the vtable type.
   //
-  // FIXME: The name needs better mangling.
+  // TODO: The type is unnamed. Does this actually matter?
   std::vector<llvm::Type*> types;
   for (Method_decl const* m : methods) {
     llvm::Type* t = llvm::PointerType::getUnqual(get_type(m->type()));
     types.push_back(t);
   }
-  String n = d->name()->spelling() + "_vtbl_t";
-  llvm::Type* t = llvm::StructType::create(cxt, types, n);
-  t->dump();
+  String name = d->name()->spelling() + "_vtbl";
+  llvm::Type* type = llvm::StructType::create(cxt, types);
 
-  // TODO: Generate a global variable of this type and 
-  // a global constructor that populates it with values.
+  // Generate the vtable global.
+  return new llvm::GlobalVariable(
+    *mod,                                  // owning module
+    type,                                  // type
+    true,                                  // is constant
+    llvm::GlobalVariable::ExternalLinkage, // linkage,
+    llvm::Constant::getNullValue(type),    // initializer
+    name                                   // name
+  );
 }
 
 

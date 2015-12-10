@@ -159,6 +159,7 @@ struct Record_decl : Decl
   void accept(Mutator& v)       { v.visit(this); }
 
   Record_type const* base() const;
+  Record_decl*       base_declaration() const;
 
   Decl_seq const& fields() const { return fields_; }
   Decl_seq const& members() const { return members_; }
@@ -166,9 +167,11 @@ struct Record_decl : Decl
   Scope*          scope()       { return &scope_; }
   Scope const*    scope() const { return &scope_; }
 
+  bool is_empty() const;
   bool is_virtual() const     { return spec_ & virtual_spec; }
   bool is_abstract() const    { return spec_ & abstract_spec; }
   bool is_polymorphic() const { return is_virtual() || is_abstract(); }
+  bool is_root() const        { return spec_ & root_spec; }
 
   Decl_seq    fields_;
   Decl_seq    members_;

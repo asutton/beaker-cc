@@ -954,10 +954,15 @@ get_path(Record_decl* r, Field_decl* f, Field_path& p)
   Decl_seq const& fs = r->fields();
   auto iter = std::find(fs.begin(), fs.end(), f);
   if (iter != fs.end()) {
-    // Adjust the offset by 1 if this has a base
-    // class sub-object.
-    int n = std::distance(fs.begin(), iter) + (r->base() ? 1 : 0);
-    p.push_back(n);
+    // Compute the offset adjustment for this member.
+    // A virtual pointer counts as a subobject, and so
+    // does a base class sub-object.
+    int a = 0;
+    if (r->is_root())
+      ++a;
+    if (r->base())
+      ++a;
+    p.push_back(std::distance(fs.begin(), iter) + a);
     return;
   }
 
@@ -1586,10 +1591,10 @@ Elaborator::elaborate_def(Record_decl* d)
   }
   Defining_sentinel def(*this, d);
 
-  // Elaborate base class.
+  // Elaborate base class. 
   if (d->base_)
     d->base_ = elaborate(d->base_);
-
+ 
   // Elaborate member declarations, fields first.
   //
   // TODO: What are the lookup rules for default
@@ -1618,6 +1623,27 @@ Elaborator::elaborate_def(Record_decl* d)
   // above about handling member defintions.
   for (Decl*& m : d->members_)
     m = elaborate_def(m);
+
+
+  // If the base class is polymorphic, then so
+  // is the derived class.
+  Record_decl const* b = d->base_declaration();
+  if (b) {
+    if (b->is_virtual())
+      d->spec_ |= virtual_spec;
+    if (b->is_abstract())
+      d->spec_ |= abstract_spec;
+  }
+
+  // Determine if this is the polymorphic root of
+  // a hierarchy. This is the case when this is
+  // polymorphic and
+  //    - there is no base class or
+  //    - the base is not polymorphic
+  if (d->is_polymorphic()) {
+    if (!b || !b->is_polymorphic())
+      d->spec_ |= root_spec;
+  }
 
   defined.insert(d);
   return d;

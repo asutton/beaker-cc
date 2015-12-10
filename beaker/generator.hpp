@@ -116,7 +116,7 @@ struct Generator
   void gen_local(Variable_decl const*);
   void gen_global(Variable_decl const*);
 
-  void gen_vtable(Record_decl const*);
+  llvm::Value* gen_vtable(Record_decl const*);
 
   // Helper functions for determining where
   // breaks and continues should go to
