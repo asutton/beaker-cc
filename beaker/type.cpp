@@ -109,88 +109,41 @@ get_character_type()
 
 
 Type const*
-get_integer_type(bool is_signed)
+get_integer_type(bool is_signed, int precision)
 {
-  static Integer_type st;
-  static Integer_type ut(false);
-    
+  static Integer_type st16(16);
+  static Integer_type ut16(false,16);
+  static Integer_type st32(32);
+  static Integer_type ut32(false);
+  static Integer_type st64(64);
+  static Integer_type ut64(false,64);
+  
   if (is_signed)
-    return &st;
+    switch (precision)
+    {
+        case 32:
+            return &st32;
+        case 16:
+            return &st16;
+        case 64:
+            return &st64;
+        default:
+            throw std::runtime_error("No integer with precision " + std::to_string(precision));
+    }
   else
-    return &ut;
+    switch (precision)
+    {
+        case 32:
+            return &ut32;
+        case 16:
+            return &ut16;
+        case 64:
+            return &ut64;
+        default:
+            throw std::runtime_error("No integer with precision " + std::to_string(precision));
+    }
 }
 
-Type const*
-get_short_integer_type(bool is_signed)
-{
-  static Short_Integer_type st;
-  static Short_Integer_type ut(false);
-    
-  if (is_signed)
-    return &st;
-  else
-    return &ut;
-}
-
-Type const*
-get_long_integer_type(bool is_signed)
-{
-  static Long_Integer_type st;
-  static Long_Integer_type ut(false);
-    
-  if (is_signed)
-    return &st;
-  else
-    return &ut;
-}
-
-Type const*
-get_integer16_type(bool is_signed)
-{
-  static Integer16_type st;
-  static Integer16_type ut(false);
-    
-  if (is_signed)
-    return &st;
-  else
-    return &ut;
-}
-
-Type const*
-get_integer32_type(bool is_signed)
-{
-  static Integer32_type st;
-  static Integer32_type ut(false);
-    
-  if (is_signed)
-    return &st;
-  else
-    return &ut;
-}
-
-Type const*
-get_integer64_type(bool is_signed)
-{
-  static Integer64_type st;
-  static Integer64_type ut(false);
-    
-  if (is_signed)
-    return &st;
-  else
-    return &ut;
-}
-
-Type const*
-get_integer128_type(bool is_signed)
-{
-  static Integer128_type st;
-  static Integer128_type ut(false);
-    
-  if (is_signed)
-    return &st;
-  else
-    return &ut;
-}
 
 Type const*
 get_float_type()
@@ -199,12 +152,14 @@ get_float_type()
   return &t;
 }
 
+
 Type const*
 get_double_type()
 {
   static Double_type t;
   return &t;
 }
+
 
 Type const*
 get_function_type(Type_seq const& t, Type const* r)

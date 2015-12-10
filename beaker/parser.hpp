@@ -76,9 +76,6 @@ private:
   Type const* on_array_type(Type const*, Expr*);
   Type const* on_block_type(Type const*);
   Type const* on_function_type(Type_seq const&, Type const*);
-  Type const* on_short_type(bool = true);
-  Type const* on_long_type(bool = true);
-  Type const* on_sign_type(bool = true);
 
   Expr* on_id(Token);
   Expr* on_bool(Token);

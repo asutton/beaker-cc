@@ -54,12 +54,6 @@ struct Generator
   llvm::Type* get_type(Boolean_type const*);
   llvm::Type* get_type(Character_type const*);
   llvm::Type* get_type(Integer_type const*);
-  llvm::Type* get_type(Short_Integer_type const*);
-  llvm::Type* get_type(Long_Integer_type const*);
-  llvm::Type* get_type(Integer16_type const*);
-  llvm::Type* get_type(Integer32_type const*);
-  llvm::Type* get_type(Integer64_type const*);
-  llvm::Type* get_type(Integer128_type const*);
   llvm::Type* get_type(Float_type const*);
   llvm::Type* get_type(Double_type const*);
   llvm::Type* get_type(Function_type const*);

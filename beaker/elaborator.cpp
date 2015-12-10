@@ -182,12 +182,6 @@ Elaborator::elaborate(Type const* t)
     Type const* operator()(Boolean_type const* t) { return elab.elaborate(t); }
     Type const* operator()(Character_type const* t) { return elab.elaborate(t); }
     Type const* operator()(Integer_type const* t) { return elab.elaborate(t); }
-    Type const* operator()(Short_Integer_type const* t) { return elab.elaborate(t); }
-    Type const* operator()(Long_Integer_type const* t) { return elab.elaborate(t); }
-    Type const* operator()(Integer16_type const* t) { return elab.elaborate(t); }
-    Type const* operator()(Integer32_type const* t) { return elab.elaborate(t); }
-    Type const* operator()(Integer64_type const* t) { return elab.elaborate(t); }
-    Type const* operator()(Integer128_type const* t) { return elab.elaborate(t); }
     Type const* operator()(Float_type const* t) { return elab.elaborate(t); }
     Type const* operator()(Double_type const* t) { return elab.elaborate(t); }
     Type const* operator()(Function_type const* t) { return elab.elaborate(t); }
@@ -248,42 +242,6 @@ Elaborator::elaborate(Character_type const* t)
 
 Type const*
 Elaborator::elaborate(Integer_type const* t)
-{
-  return t;
-}
-
-Type const*
-Elaborator::elaborate(Short_Integer_type const* t)
-{
-  return t;
-}
-
-Type const*
-Elaborator::elaborate(Long_Integer_type const* t)
-{
-  return t;
-}
-
-Type const*
-Elaborator::elaborate(Integer16_type const* t)
-{
-  return t;
-}
-
-Type const*
-Elaborator::elaborate(Integer32_type const* t)
-{
-  return t;
-}
-
-Type const*
-Elaborator::elaborate(Integer64_type const* t)
-{
-  return t;
-}
-
-Type const*
-Elaborator::elaborate(Integer128_type const* t)
 {
   return t;
 }

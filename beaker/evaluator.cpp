@@ -421,15 +421,9 @@ get_value(Type const* t)
     Value operator()(Boolean_type const*) { return 0; }
     Value operator()(Character_type const*) { return 0; }
     //TODO: get actual types and sign value
-    Value operator()(Integer_type const* t) { return 0;}//(t->is_signed()?(int)0:(unsigned int)0); }
-    Value operator()(Short_Integer_type const* t) { return 0;}//(t->is_signed()?(short)0:(unsigned short)0); }
-    Value operator()(Long_Integer_type const* t) { return 0;}//(t->is_signed()?(long)0:(unsigned long)0); }
-    Value operator()(Integer16_type const* t) { return 0;}//(t->is_signed()?(int16_t)0:(uint16_t)0); }
-    Value operator()(Integer32_type const* t) { return 0;}//(t->is_signed()?(int32_t)0:(uint32_t)0); }
-    Value operator()(Integer64_type const* t) { return 0;}//(t->is_signed()?(int64_t)0:(uint64_t)0); }
-    Value operator()(Integer128_type const* t) { return 0;}//(t->is_signed()?(int128_t)0:(uint128_t)0); }
-    Value operator()(Float_type const*) { return 0;}//(float)0; }
-    Value operator()(Double_type const*) { return 0;}//(double)0; }
+    Value operator()(Integer_type const* t) { return 0;}
+    Value operator()(Float_type const*) { return (float)0;}
+    Value operator()(Double_type const*) { return (double)0;}
 
     // Produce a function value.
     Value operator()(Function_type const*)

@@ -104,12 +104,6 @@ Generator::get_type(Type const* t)
     llvm::Type* operator()(Boolean_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Character_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Integer_type const* t) const { return g.get_type(t); }
-    llvm::Type* operator()(Short_Integer_type const* t) const { return g.get_type(t); }
-    llvm::Type* operator()(Long_Integer_type const* t) const { return g.get_type(t); }
-    llvm::Type* operator()(Integer16_type const* t) const { return g.get_type(t); }
-    llvm::Type* operator()(Integer32_type const* t) const { return g.get_type(t); }
-    llvm::Type* operator()(Integer64_type const* t) const { return g.get_type(t); }
-    llvm::Type* operator()(Integer128_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Float_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Double_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Function_type const* t) const { return g.get_type(t); }
@@ -149,55 +143,21 @@ Generator::get_type(Character_type const*)
   return build.getInt8Ty();
 }
 
-//TODO: get actual types and sign value
-
 // Return the standard integer type.
 llvm::Type*
-Generator::get_type(Integer_type const*)
+Generator::get_type(Integer_type const* t)
 {
-  return build.getInt32Ty();
-}
-
-// Return the short integer type.
-llvm::Type*
-Generator::get_type(Short_Integer_type const*)
-{
-  return build.getInt16Ty();
-}
-
-// Return the long integer type.
-llvm::Type*
-Generator::get_type(Long_Integer_type const*)
-{
-  return build.getInt64Ty();
-}
-
-// Return the 16 bit integer type.
-llvm::Type*
-Generator::get_type(Integer16_type const*)
-{
-  return build.getInt16Ty();
-}
-
-// Return the 32 bit integer type.
-llvm::Type*
-Generator::get_type(Integer32_type const*)
-{
-  return build.getInt32Ty();
-}
-
-// Return the 64 bit integer type.
-llvm::Type*
-Generator::get_type(Integer64_type const*)
-{
-  return build.getInt64Ty();
-}
-
-// Return the 128 bit integer type.
-llvm::Type*
-Generator::get_type(Integer128_type const*)
-{
-  return build.getInt64Ty();
+  switch (t->precision())
+  {
+      case 32:
+        return build.getInt32Ty();
+      case 16:
+        return build.getInt16Ty();
+      case 64:
+        return build.getInt64Ty();
+      default:
+        throw std::runtime_error("No integer with precision " + std::to_string(t->precision()));
+  }
 }
 
 // Return the float type.

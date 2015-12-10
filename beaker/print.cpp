@@ -23,12 +23,6 @@ operator<<(std::ostream& os, Type const& t)
     void operator()(Boolean_type const* t) { os << *t; }
     void operator()(Character_type const* t) { os << *t; }
     void operator()(Integer_type const* t) { os << *t; }
-    void operator()(Short_Integer_type const* t) { os << *t; }
-    void operator()(Long_Integer_type const* t) { os << *t; }
-    void operator()(Integer16_type const* t) { os << *t; }
-    void operator()(Integer32_type const* t) { os << *t; }
-    void operator()(Integer64_type const* t) { os << *t; }
-    void operator()(Integer128_type const* t) { os << *t; }
     void operator()(Float_type const* t) { os << *t; }
     void operator()(Double_type const* t) { os << *t; }
     void operator()(Function_type const* t) { os << *t; }
@@ -66,43 +60,7 @@ operator<<(std::ostream& os, Character_type const&)
 std::ostream&
 operator<<(std::ostream& os, Integer_type const& t)
 {
-  return os << (t.is_signed()?"signed ":"unsigned ") << "int";
-}
-
-std::ostream&
-operator<<(std::ostream& os, Short_Integer_type const& t)
-{
-  return os << (t.is_signed()?"signed ":"unsigned ") << "short int";
-}
-
-std::ostream&
-operator<<(std::ostream& os, Long_Integer_type const& t)
-{
-  return os << (t.is_signed()?"signed ":"unsigned ") << "long int";
-}
-
-std::ostream&
-operator<<(std::ostream& os, Integer16_type const& t)
-{
-  return os << (t.is_signed()?"signed ":"unsigned ") << "int16";
-}
-
-std::ostream&
-operator<<(std::ostream& os, Integer32_type const& t)
-{
-  return os << (t.is_signed()?"signed ":"unsigned ") << "int32";
-}
-
-std::ostream&
-operator<<(std::ostream& os, Integer64_type const& t)
-{
-  return os << (t.is_signed()?"signed ":"unsigned ") << "int64";
-}
-
-std::ostream&
-operator<<(std::ostream& os, Integer128_type const& t)
-{
-  return os << (t.is_signed()?"signed ":"unsigned ") << "int128";
+  return os << (t.is_signed()?"":"u") << "int" << std::to_string(t.precision());
 }
 
 std::ostream&

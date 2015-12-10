@@ -45,12 +45,6 @@ public:
   Type const* elaborate(Boolean_type const*);
   Type const* elaborate(Character_type const*);
   Type const* elaborate(Integer_type const*);
-  Type const* elaborate(Short_Integer_type const*);
-  Type const* elaborate(Long_Integer_type const*);
-  Type const* elaborate(Integer16_type const*);
-  Type const* elaborate(Integer32_type const*);
-  Type const* elaborate(Integer64_type const*);
-  Type const* elaborate(Integer128_type const*);
   Type const* elaborate(Float_type const*);
   Type const* elaborate(Double_type const*);
   Type const* elaborate(Function_type const*);
