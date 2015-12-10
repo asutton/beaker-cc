@@ -10,6 +10,7 @@ struct B : B0
 
 struct D : B
 {
+  virtual def h(bool) -> int { }
   y : int;
 }
 

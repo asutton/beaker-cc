@@ -1447,6 +1447,8 @@ Elaborator::elaborate_decl(Method_decl* d)
   Type const* type = get_reference_type(get_record_type(rec));
 
   // Re-build the function type.
+  //
+  // TODO: Factor this out as an operation on a method.
   Function_type const* ft = cast<Function_type>(elaborate(d->type()));
   Type_seq pt = ft->parameter_types();
   pt.insert(pt.begin(), type);
@@ -1467,6 +1469,21 @@ Elaborator::elaborate_decl(Method_decl* d)
 
   // Now declare the method.
   declare(d);
+
+  // If the method is virtual add it to the record'sd
+  // virtual table and update its index.
+  //
+  // FIXME: If the function is an overrider, then replace its
+  // current definition in the virtual table.
+  //
+  // TODO: Factor this out as an operation on a record.
+  if (d->is_polymorphic()) {
+    if (!rec->vtbl_)
+      rec->vtbl_ = new Virtual_table();
+    rec->vtbl_->push_back(d);
+
+    // FIXME: Set the vtable index for the method.
+  }
 
   return d;
 }
@@ -1594,6 +1611,12 @@ Elaborator::elaborate_def(Record_decl* d)
   // Elaborate base class. 
   if (d->base_)
     d->base_ = elaborate(d->base_);
+
+  // Propagate the virtual table if supported.
+  Record_decl const* b = d->base_declaration();
+  if (b)
+    if (Virtual_table const* vt = b->vtable())
+      d->vtbl_ = new Virtual_table(*vt);
  
   // Elaborate member declarations, fields first.
   //
@@ -1627,8 +1650,8 @@ Elaborator::elaborate_def(Record_decl* d)
 
   // If the base class is polymorphic, then so
   // is the derived class.
-  Record_decl const* b = d->base_declaration();
   if (b) {
+    // Propagate specifiers.
     if (b->is_virtual())
       d->spec_ |= virtual_spec;
     if (b->is_abstract())

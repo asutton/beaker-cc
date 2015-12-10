@@ -42,52 +42,6 @@ Generator::get_name(Decl const* d)
 
 
 // -------------------------------------------------------------------------- //
-//            Helper functions
-
-
-// Attempt to insert a branch into a block
-// Will not insert anything if the block already
-// has a terminating instruction
-void
-Generator::make_branch(llvm::BasicBlock* srcBB, llvm::BasicBlock* dstBB)
-{
-  if (!srcBB->getTerminator())
-    build.CreateBr(dstBB);
-}
-
-
-// Resolve illformed blocks within an llvm function
-// These are blocks with no termination instructions.
-//
-// This can be caused by short-curcuiting if-then-stmt like:
-//
-// def foo(x : int) -> int {
-//    if (x == 1)
-//      return x;
-// }
-//
-// The block merging back into the control will have no terminators.
-// Resolve them by inserting the terminator instruction 'unreachable'
-//
-void
-Generator::resolve_illformed_blocks(llvm::Function* fn)
-{
-  // maintain the old insert block
-  auto prev = build.GetInsertBlock();
-
-  for (llvm::Function::iterator i = fn->begin(), e = fn->end(); i != e; ++i) {
-    // if no terminator inject an unreachable instruction
-    if (!i->getTerminator()) {
-      build.SetInsertPoint(i);
-      build.CreateUnreachable();
-    }
-  }
-
-  // reset the old insertion block
-  build.SetInsertPoint(prev);
-}
-
-// -------------------------------------------------------------------------- //
 // Mapping of types
 //
 // The type generator transforms a beaker type into
@@ -1042,14 +996,13 @@ Generator::gen(Record_decl const* d)
   llvm::Type* t = llvm::StructType::create(cxt, ts, d->name()->spelling());
   types.bind(d, t);
 
-  // Generate the vtable. Note that we have to do
-  // this after defining the class because
-  if (d->is_polymorphic())
-    gen_vtable(d);
-
   // Now, generate code for all other members.
   for (Decl const* m : d->members())
     gen(m);
+
+  // Finally, generate the vtable. 
+  if (d->is_polymorphic())
+    gen_vtable(d);
 }
 
 
@@ -1094,39 +1047,44 @@ Generator::gen(Module_decl const* d)
 }
 
 
-llvm::Value*
+void
 Generator::gen_vtable(Record_decl const* d)
 {
-  // Gather polymorhpic functions.
-  //
-  // FIXME: Find the vtable for each base class and
-  // add its fields to this ones.
-  std::vector<Method_decl const*> methods;
-  for (Decl const* m : d->members()) {
-    if (Method_decl const* meth = as<Method_decl>(m))
-      if (meth->is_polymorphic())
-        methods.push_back(meth);
-  }
+  Virtual_table const& vtbl = *d->vtable();
 
   // Build the vtable type.
   //
   // TODO: The type is unnamed. Does this actually matter?
+  //
+  // FIXME: Appropriately mangle the vtable name.
   std::vector<llvm::Type*> types;
-  for (Method_decl const* m : methods) {
-    llvm::Type* t = llvm::PointerType::getUnqual(get_type(m->type()));
+  std::vector<llvm::Constant*> values;
+  for (Decl const* d : vtbl) {
+    // Get the member type.
+    llvm::Type* t = llvm::PointerType::getUnqual(get_type(d->type()));
     types.push_back(t);
+
+    // And its initializer.
+    llvm::Value* v = stack.lookup(d)->second;
+    llvm::Function* f = llvm::cast<llvm::Function>(v);
+    values.push_back(f);
   }
-  String name = d->name()->spelling() + "_vtbl";
-  llvm::Type* type = llvm::StructType::create(cxt, types);
+
+  // Build the type and initializer.
+  //
+  // TODO: The name is terrible.
+  String vtn = d->name()->spelling() + "_vtbl";
+  llvm::StructType* vtt = llvm::StructType::create(cxt, types);
+  llvm::Constant* vti = llvm::ConstantStruct::get(vtt, values);
 
   // Generate the vtable global.
-  return new llvm::GlobalVariable(
+  new llvm::GlobalVariable(
     *mod,                                  // owning module
-    type,                                  // type
-    true,                                  // is constant
+    vtt,                                   // type
+    true,                                 // is constant
     llvm::GlobalVariable::ExternalLinkage, // linkage,
-    llvm::Constant::getNullValue(type),    // initializer
-    name                                   // name
+    vti,                                   // initializer
+    vtn                                    // name
   );
 }
 
@@ -1138,3 +1096,4 @@ Generator::operator()(Decl const* d)
   gen(d);
   return mod;
 }
+

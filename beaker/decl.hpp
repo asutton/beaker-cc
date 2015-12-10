@@ -7,6 +7,7 @@
 #include <beaker/prelude.hpp>
 #include <beaker/scope.hpp>
 #include <beaker/specifier.hpp>
+#include <beaker/vtable.hpp>
 #include <beaker/type.hpp>
 
 
@@ -139,12 +140,11 @@ struct Parameter_decl : Decl
 
 // Declares a user-defined record type.
 //
-// The record class maintains two sets of declarations:
-// fields, which constitute its actual type, and
-// another set of member declarations (e.g., methods,
-// nested types, templates, constants, etc). These
-// aren't really part of the object, just part of
-// the scope.
+// The record class maintains two sets of declarations: 
+// - fields, which constitute its actual type, and 
+// - another set of member declarations (e.g., methods, nested 
+//   types, templates, constants, etc). These aren't really part 
+//   of the object, just part of the scope.
 //
 // A record declaration defines a scope. Declarations
 // within the record are cached here for use during
@@ -153,6 +153,7 @@ struct Record_decl : Decl
 {
   Record_decl(Symbol const* n, Decl_seq const& f, Decl_seq const& m, Type const* base)
     : Decl(n, nullptr), fields_(f), members_(m), scope_(this), base_(base)
+    , vtbl_(nullptr)
   { }
 
   void accept(Visitor& v) const { v.visit(this); }
@@ -161,11 +162,14 @@ struct Record_decl : Decl
   Record_type const* base() const;
   Record_decl*       base_declaration() const;
 
-  Decl_seq const& fields() const { return fields_; }
+  Decl_seq const& fields() const  { return fields_; }
   Decl_seq const& members() const { return members_; }
 
-  Scope*          scope()       { return &scope_; }
   Scope const*    scope() const { return &scope_; }
+  Scope*          scope()       { return &scope_; }
+
+  Virtual_table const* vtable() const { return vtbl_; }
+  Virtual_table*       vtable()       { return vtbl_; }
 
   bool is_empty() const;
   bool is_virtual() const     { return spec_ & virtual_spec; }
@@ -173,10 +177,11 @@ struct Record_decl : Decl
   bool is_polymorphic() const { return is_virtual() || is_abstract(); }
   bool is_root() const        { return spec_ & root_spec; }
 
-  Decl_seq    fields_;
-  Decl_seq    members_;
-  Scope       scope_;
-  const Type* base_;
+  Decl_seq       fields_;
+  Decl_seq       members_;
+  Scope          scope_;
+  const Type*    base_;
+  Virtual_table* vtbl_;
 };
 
 
