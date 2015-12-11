@@ -6,6 +6,7 @@
 
 #include <beaker/prelude.hpp>
 #include <beaker/scope.hpp>
+#include "decl.hpp"
 
 
 // The Type class represents the set of all types in the
@@ -271,5 +272,6 @@ apply(Type const* t, F fn)
   return accept(t, v);
 }
 
+bool is_derived(const Type*, const Type*);
 
 #endif

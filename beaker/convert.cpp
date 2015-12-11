@@ -78,8 +78,13 @@ convert(Expr* e, Type const* t)
       return c;
   } else if (is<Reference_type>(t)) {
       const Reference_type* v = cast<Reference_type>(t);
-      if(is<Record_type>(v->type()))
-        c = convert_to_derived(c);
+      if(is<Record_type>(v->type())) {
+        std::cout << *c->type()->nonref() << "\n";
+        std::cout << *v->type() << "\n";
+
+        if (is_derived(c->type()->nonref(), v->type()))
+          c = convert_to_derived(c);
+      }
       //if (c->type() == t)
         return c;
   }

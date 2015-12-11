@@ -593,6 +593,12 @@ Generator::gen(Block_conv const* e)
 llvm::Value*
 Generator::gen(Derived_conv const* e)
 {
+  // Can do a bit cast here or possibly a GEP
+  llvm::Value* a = gen(e->source());
+
+  llvm::Value *zero = build.getInt32(0);
+  llvm::Value *args[] = {zero};
+  return build.CreateGEP(a,args);
   return nullptr;
 }
 

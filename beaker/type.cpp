@@ -171,3 +171,19 @@ get_record_type(Record_decl* r)
   auto ins = ts.emplace(r);
   return &*ins.first;
 }
+
+bool
+is_derived(Type const* derived, Type const* base){
+  if (Record_type const* d = as<Record_type>(derived))  {
+    if (Record_type const* b = as<Record_type>(base)) {
+      // If D and B are the same return true
+      Record_decl * der = d->declaration();
+      do {
+        if (der == b->declaration())
+          return true;
+        der = der->base()->declaration();
+      } while (der);
+    }
+  }
+  return false;
+}
