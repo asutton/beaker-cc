@@ -1052,29 +1052,28 @@ Generator::gen_vtable(Record_decl const* d)
 {
   Decl_seq const& vtbl = *d->vtable();
 
-  // Build the vtable type.
+  // Build the vtable type. This is just an array
+  // of character pointers. The call expression re-casts
+  // to the appropriate static type.
   //
   // TODO: The type is unnamed. Does this actually matter?
-  //
-  // FIXME: Appropriately mangle the vtable name.
   std::vector<llvm::Type*> types;
   std::vector<llvm::Constant*> values;
   for (Decl const* d : vtbl) {
-    // Get the member type.
-    llvm::Type* t = llvm::PointerType::getUnqual(get_type(d->type()));
+    llvm::Type* t = build.getInt8PtrTy();
     types.push_back(t);
 
-    // And its initializer.
     llvm::Value* v = stack.lookup(d)->second;
     llvm::Function* f = llvm::cast<llvm::Function>(v);
-    values.push_back(f);
+    llvm::Constant* p = llvm::ConstantExpr::getBitCast(f, t);
+    values.push_back(p);
   }
 
   // Build the type and initializer.
-  //
-  // TODO: The name is terrible.
-  String vtn = d->name()->spelling() + "_vtbl";
-  llvm::StructType* vtt = llvm::StructType::create(cxt, types);
+  String base = mangle(d);
+  String vtn = "_VT_" + base;
+  String vttn = "_VTT_" + base;
+  llvm::StructType* vtt = llvm::StructType::create(cxt, types, vttn);
   llvm::Constant* vti = llvm::ConstantStruct::get(vtt, values);
 
   // Generate the vtable global.
