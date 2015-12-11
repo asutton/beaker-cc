@@ -190,12 +190,12 @@ Token
 Lexer::on_f_slash(){
   //Look for lambda identifier in Symbol_table
   //if it's found mutate the identifier
-  String str = "L";
+  String str = "lambda";
   long int count = 0;
   Symbol const* sym = syms_.get(str);
   while(sym)
   {
-    str = "L";
+    str = "lambda";
     str += "_";
     str += to_string(count);
     sym = syms_.get(str);

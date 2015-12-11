@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <typeinfo>
 
 
 // -------------------------------------------------------------------------- //
@@ -399,15 +400,17 @@ Elaborator::elaborate(Decl_expr* e)
 Expr*
 Elaborator::elaborate(Lambda_expr* e)
 {
-  std::cout << "FUCK\n";
+  std::cout << "THE LAMBDA FUCK!" << "\n";
   Function_decl* f_decl = new Function_decl(e->symbol(), e->type(), e->parameters(), e->body());
-  Decl* d = elaborate(f_decl);
-  std::cout << "FUCK 2\n";
-  stack.module()->decls_.push_back(f_decl);
+  Decl* d = elaborate_decl(f_decl);
+  d = elaborate_def(f_decl);
+
   // declare(f_decl);
-  std::cout << "FUCK 3\n";
-  Decl_expr* d_expr = new Decl_expr(f_decl->type(), f_decl);
-  std::cout << *d_expr << std::endl;
+
+  Decl_expr* d_expr = new Decl_expr(f_decl->type()->ref(), f_decl);
+  // std::cout << *d_expr->type() << '\n';
+  lambda_decls_[d_expr] = f_decl;
+  // std::cout << typeid(*d).name() << "\n";
   return d_expr;
 }
 
@@ -432,11 +435,8 @@ require_value(Elaborator& elab, Expr* e)
 Expr*
 require_converted(Elaborator& elab, Expr* e, Type const* t)
 {
-  std::cout << type_str(*e) << ' '  << e <<std::endl;
   Expr* e1 = elab.elaborate(e);
-  std::cout << e1 <<std::endl;
   Expr* e2 = convert(e1, t);
-  std::cout << e2 <<std::endl;
   return e2;
 }
 
@@ -888,6 +888,7 @@ Elaborator::resolve(Overload_expr* ovl, Expr_seq const& args)
 Expr*
 Elaborator::elaborate(Call_expr* e)
 {
+
   // Apply lvalue to rvalue conversion and ensure that
   // the target (ultimately) has function type.
   Expr* f = require_value(*this, e->target());
@@ -1279,12 +1280,18 @@ Elaborator::elaborate(Method_decl* d)
 Decl*
 Elaborator::elaborate(Module_decl* m)
 {
+  //MODULE FUCK
   Scope_sentinel scope(*this, m);
   for (Decl*& d : m->decls_)
     d = elaborate_decl(d);
   for (Decl*& d : m->decls_)
     d = elaborate_def(d);
+
+  for(auto && a : lambda_decls_)
+    m->decls_.insert(m->decls_.begin(), a.second);
+
   return m;
+
 }
 
 
@@ -1320,6 +1327,12 @@ Elaborator::elaborate_decl(Decl* d)
 Decl*
 Elaborator::elaborate_decl(Variable_decl* d)
 {
+  if(is<Function_type>(d->type_))
+  {
+    std::cout << "IT'S FUCKING FUCNTION!" << '\n';
+    d->type_ = d->type()->ref();
+  }
+
   d->type_ = elaborate_type(d->type_);
   declare(d);
   return d;

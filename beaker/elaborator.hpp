@@ -18,6 +18,7 @@
 #include "scope.hpp"
 
 #include <unordered_set>
+#include <unordered_map>
 
 
 // Track defined declarations.
@@ -32,7 +33,7 @@ using Decl_stack = std::vector<Decl*>;
 // an AST with type and other information.
 class Elaborator
 {
-  
+
   struct Scope_sentinel;
   struct Defining_sentinel;
 
@@ -60,7 +61,7 @@ public:
   // NOTE NOTE NOTE
   // ADDITIONS FOR LAMBDAS
   Expr* elaborate(Lambda_expr*);
-
+  std::unordered_map<Expr*, Function_decl*> lambda_decls_;
 
   Expr* elaborate(Add_expr* e);
   Expr* elaborate(Sub_expr* e);
