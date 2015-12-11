@@ -509,8 +509,7 @@ Generator::gen(Call_expr const* e)
       build.getInt32(m->vtable_entry())
     };
     llvm::Value* vfpp = build.CreateInBoundsGEP(vptr, a);
-    llvm::Value* vfp = build.CreateLoad(vfpp);
-    fn = vfp;
+    fn = build.CreateLoad(vfpp);
   } else {
     fn = gen(e->target());
   }
@@ -870,6 +869,20 @@ Generator::gen_local(Variable_decl const* d)
 
   // Store the result in the object.
   build.CreateStore(init, ptr);
+
+  // If the variable has polymorphic record type, 
+  // initialize its vref to the appropriate table.
+  //
+  // FIXME: This is totally broken if it doesn't
+  // happen before initialization. Also, note that
+  // polymorphic types cannot be zero-initialized.
+  // Only member-wise initialized.
+  if (Record_type const* rt = as<Record_type>(d->type())) {
+    Record_decl const* rec = rt->declaration();
+    llvm::Value* vtbl = vtables.find(rec)->second;
+    llvm::Value* vref = gen_vref(rec, ptr);
+    build.CreateStore(vtbl, vref);
+  }
 }
 
 
@@ -1151,13 +1164,26 @@ Generator::gen_vptr(Expr const* e)
   Decl_expr const* d = cast<Decl_expr>(e);
   llvm::Value* obj = gen(d);
 
-  // Build an access to the vptr in the first argument.
-  // We have to walk upwards through base classes to
-  // get the vptr.
-  //
-  // TODO: Is there a good way to simplifiy this?
   Record_type const* t = cast<Record_type>(d->type()->nonref());
   Record_decl const* r = t->declaration();
+  return gen_vptr(r, obj);
+}
+
+
+// Returns the vtable pointer.
+llvm::Value*
+Generator::gen_vptr(Record_decl const* r, llvm::Value* obj)
+{
+  llvm::Value* ref = gen_vref(r, obj);
+  return build.CreateLoad(ref);
+}
+
+
+// Returns a reference to the vptr that's suitable for
+// storing a value.
+llvm::Value*
+Generator::gen_vref(Record_decl const* r, llvm::Value* obj)
+{
   std::vector<llvm::Value*> args { build.getInt32(0) };
   Record_decl const* p = r;
   while (!p->vref()) {
@@ -1165,11 +1191,11 @@ Generator::gen_vptr(Expr const* e)
     p = p->base_declaration();
   }
   args.push_back(build.getInt32(0));
-
+  
   llvm::Value* ref = build.CreateInBoundsGEP(obj, args);
-  llvm::Value* load = build.CreateLoad(ref);
   llvm::Value* vtbl = vtables.find(r)->second;
-  return build.CreateBitCast(load, vtbl->getType());
+  llvm::Type* type = llvm::PointerType::getUnqual(vtbl->getType());
+  return build.CreateBitCast(ref, type);
 }
 
 

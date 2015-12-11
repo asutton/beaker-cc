@@ -123,6 +123,8 @@ struct Generator
 
   llvm::Value* gen_vtable(Record_decl const*);
   llvm::Value* gen_vptr(Expr const*);
+  llvm::Value* gen_vptr(Record_decl const*, llvm::Value*);
+  llvm::Value* gen_vref(Record_decl const*, llvm::Value*);
 
   llvm::LLVMContext cxt;
   llvm::IRBuilder<> build;
