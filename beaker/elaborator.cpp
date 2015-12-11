@@ -805,7 +805,7 @@ Elaborator::call(Function_decl* d, Expr_seq const& args)
   // Update the expression with the return type
   // of the named function.
   Expr* ref = new Decl_expr(t, d);
-  return new Call_expr(t->return_type(), ref, args);
+  return new Call_expr(t->return_type(), ref, conv);
 }
 
 
@@ -903,12 +903,12 @@ Elaborator::elaborate(Call_expr* e)
   // If the target is of the form x.m or x.ovl, insert x
   // into the argument list and update the function target.
   if (Dot_expr* dot = as_method(f)) {
-      // Build the "this" argument.
-      Expr* self = dot->container();
-      args.insert(args.begin(), self);
+    // Build the "this" argument.
+    Expr* self = dot->container();
+    args.insert(args.begin(), self);
 
-      // Adjust the function target.
-      f = dot->member();
+    // Adjust the function target.
+    f = dot->member();
   }
 
   // Handle the case where f is an overload set.

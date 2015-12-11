@@ -1,0 +1,16 @@
+
+struct B 
+{
+  virtual def f(x : int) -> int { return 0; }
+}
+
+struct D : B
+{
+  virtual def f(x : int) -> int { return 0; }
+}
+
+def main() -> int
+{
+  var d : D;
+  d.f(0);
+}
