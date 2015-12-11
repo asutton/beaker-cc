@@ -214,6 +214,12 @@ struct Method_decl : Function_decl
   void accept(Mutator& v)       { v.visit(this); }
 
   Record_decl const* context() const { return cast<Record_decl>(cxt_); }
+
+  int vtable_entry() const { return vtent_; }
+
+  // If polymorphic, the position of the function
+  // within the classes virtual table.
+  int vtent_ = -1;
 };
 
 

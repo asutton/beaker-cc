@@ -121,7 +121,7 @@ Elaborator::member_lookup(Record_decl* d, Symbol const* sym)
   do {
     if (Scope::Binding* bind = d->scope()->lookup(sym))
       return &bind->second;
-    d = d->base()->declaration();
+    d = d->base_declaration();
   } while (d);
   return nullptr;
 }
@@ -817,7 +817,7 @@ Elaborator::call(Function_decl* d, Expr_seq const& args)
   // Update the expression with the return type
   // of the named function.
   Expr* ref = new Decl_expr(t, d);
-  return new Call_expr(t->return_type(), ref, args);
+  return new Call_expr(t->return_type(), ref, conv);
 }
 
 
@@ -915,12 +915,12 @@ Elaborator::elaborate(Call_expr* e)
   // If the target is of the form x.m or x.ovl, insert x
   // into the argument list and update the function target.
   if (Dot_expr* dot = as_method(f)) {
-      // Build the "this" argument.
-      Expr* self = dot->container();
-      args.insert(args.begin(), self);
+    // Build the "this" argument.
+    Expr* self = dot->container();
+    args.insert(args.begin(), self);
 
-      // Adjust the function target.
-      f = dot->member();
+    // Adjust the function target.
+    f = dot->member();
   }
 
   // Handle the case where f is an overload set.
@@ -1440,18 +1440,73 @@ Elaborator::elaborate_decl(Record_decl* d)
 }
 
 
+namespace
+{
+
+// Returns true if m1 is an override of m2. This is the
+// case when m1 has the same name and type as m2.
+//
+// TODO: Allow for covariant return types.
+//
+// TODO: Consider allowing contravariant argument types?
+bool
+is_override(Method_decl const* m1, Method_decl const* m2)
+{
+  // Different name? Not an overrider.
+  if (m1->name() != m2->name())
+    return false;
+
+  // Different return types? Not an overrider.
+  //
+  // TODO: Support covariant return types here.
+  Function_type const* t1 = m1->type();
+  Function_type const* t2 = m2->type();
+  if (t1->return_type() != t2->return_type())
+    return false;
+
+  // Compare all parameter types except the implicit this
+  // parameter. Those differ by definition (m1's this is
+  // derived from m2's this).
+  Type_seq const& p1 = m1->type()->parameter_types();
+  Type_seq const& p2 = m2->type()->parameter_types();
+  if (p1.size() != p2.size())
+    return false;
+  for (std::size_t i = 1; i < p1.size(); ++i) {
+    // TODO: Support covariant return types here.
+    if (p1[i] != p2[i])
+      return false;
+  }
+  return true;
+}
+
+
+// Find the method in d that m overrides anmd return the
+// offset in the virtual table. If the record is not polymorphic
+// then this cannot be an overrider.
+int
+find_override(Record_decl const* d, Method_decl const* m)
+{
+  Decl_seq const& ms = *d->vtable();
+  auto iter = std::find_if(ms.begin(), ms.end(), [m](Decl const* m2) {
+    return is_override(m, cast<Method_decl>(m2));
+  });
+  if (iter != ms.end())
+    return std::distance(ms.begin(), iter);
+  else
+    return -1;
+}
+
+
+} // namespace
+
+
 // Insert the implicit this parameter and adjust the
 // type of the declaration.
 Decl*
 Elaborator::elaborate_decl(Method_decl* d)
 {
   Record_decl* rec = stack.record();
-
-  // Propagate virtual/abstract specifiers to the class.
-  if (d->is_virtual())
-    rec->spec_ |= virtual_spec;
-  if (d->is_abstract())
-    rec->spec_ |= abstract_spec;
+  Decl_seq* vtable = rec->vtable();
 
   // Generate the type of the implicit this parameter.
   //
@@ -1474,6 +1529,46 @@ Elaborator::elaborate_decl(Method_decl* d)
   Parameter_decl* self = new Parameter_decl(name, type);
   d->parms_.insert(d->parms_.begin(), self);
 
+
+  // Propagate virtual/abstract specifiers to the class.
+  // Build a new virtual table as needed.
+  if (d->is_virtual())
+    rec->spec_ |= virtual_spec;
+  if (d->is_abstract())
+    rec->spec_ |= abstract_spec;
+  if (rec->is_polymorphic() && !vtable)
+    rec->vtbl_ = vtable = new Decl_seq();
+
+  // This function may be an override of a previous
+  // virtual function -- even if it wasn't declared as
+  // such. Propagate flags from an overrider if there
+  // was one.
+  if (vtable) {
+    int ent = find_override(rec, d);
+    if (ent >= 0) {
+      // Update the method (and class) with the state
+      // from the overrider.
+      //
+      // TODO: Actually save the overriden function with
+      // the current declaration?
+      //
+      // TODO: Can I declare an abstract overrider?
+      Method_decl const* m = cast<Method_decl>((*vtable)[ent]);
+      if (m->is_polymorphic()) {
+        d->spec_ |= virtual_spec;
+        rec->spec_ |= virtual_spec;
+      }
+
+      // Overwrite the overrider in the vtable.
+      (*vtable)[ent] = d;
+    } else {
+      // Extend the virtual table.
+      ent = vtable->size();
+      vtable->push_back(d);
+    }
+    d->vtent_ = ent;
+  }
+
   // Note that we don't need to elaborate or declare
   // the funciton parameters because they're only visible
   // within the function body (see the def elaborator for
@@ -1481,21 +1576,6 @@ Elaborator::elaborate_decl(Method_decl* d)
 
   // Now declare the method.
   declare(d);
-
-  // If the method is virtual add it to the record'sd
-  // virtual table and update its index.
-  //
-  // FIXME: If the function is an overrider, then replace its
-  // current definition in the virtual table.
-  //
-  // TODO: Factor this out as an operation on a record.
-  if (d->is_polymorphic()) {
-    if (!rec->vtbl_)
-      rec->vtbl_ = new Decl_seq();
-    rec->vtbl_->push_back(d);
-
-    // FIXME: Set the vtable index for the method.
-  }
 
   return d;
 }
@@ -1624,12 +1704,23 @@ Elaborator::elaborate_def(Record_decl* d)
   if (d->base_)
     d->base_ = elaborate(d->base_);
 
-  // Propagate the virtual table if supported.
-  Record_decl const* b = d->base_declaration();
-  if (b)
-    if (Decl_seq const* vt = b->vtable())
-      d->vtbl_ = new Decl_seq(*vt);
- 
+  // If the base class is polymorphic, then so is the 
+  // derived class. Propagate the virtual table to this 
+  // class.
+  //
+  // FIXME: A derived class is abstract only if it fails
+  // to provide overriders for each all abstract methods.
+  // Think of a better way for this to work.
+  Record_decl const* base = d->base_declaration();
+  if (base) {
+    if (base->is_virtual())
+      d->spec_ |= virtual_spec;
+    if (base->is_abstract())
+      d->spec_ |= abstract_spec;
+    if (base->is_polymorphic())
+      d->vtbl_ = new Decl_seq(*base->vtable());
+  }
+
   // Elaborate member declarations, fields first.
   //
   // TODO: What are the lookup rules for default
@@ -1659,17 +1750,6 @@ Elaborator::elaborate_def(Record_decl* d)
   for (Decl*& m : d->members_)
     m = elaborate_def(m);
 
-
-  // If the base class is polymorphic, then so
-  // is the derived class.
-  if (b) {
-    // Propagate specifiers.
-    if (b->is_virtual())
-      d->spec_ |= virtual_spec;
-    if (b->is_abstract())
-      d->spec_ |= abstract_spec;
-  }
-
   // Determine if we need a vtable reference. This is the case 
   // when:
   //    - there is no base class or
@@ -1683,7 +1763,7 @@ Elaborator::elaborate_def(Record_decl* d)
   // TODO: For multiple base classes, we probably want
   // multiple vtable references (one for each base).
   if (d->is_polymorphic()) {
-    if (!b || !b->is_polymorphic()) {
+    if (!base || !base->is_polymorphic()) {
       Symbol const* n = syms.get("vref");
       Type const* p = get_reference_type(get_character_type());
       d->vref_ = new Field_decl(n, p);

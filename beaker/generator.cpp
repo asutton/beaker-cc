@@ -481,12 +481,64 @@ Generator::gen(Not_expr const* e)
 }
 
 
-// Note that method calls have been explicitly
-// rewritten to free function calls.
+namespace
+{
+
+// Returns a method declaration if e is a virtual call
+// to that method. Otherwise, returns nullptr.
+inline Method_decl const*
+calls_virtual_method(Call_expr const* e)
+{
+  if (Decl_expr const* d = as<Decl_expr>(e->target()))
+    if (Method_decl const* m = as<Method_decl>(d->declaration()))
+      if (m->is_polymorphic())
+        return m;
+  return nullptr;
+}
+
+
+} // namespace
+
+
 llvm::Value*
 Generator::gen(Call_expr const* e)
 {
-  llvm::Value* fn = gen(e->target());
+  // Generate the code for a virtual function call.
+  //
+  //    f(x, args...)
+  //
+  // If x is a polymorphic record type, then we want to
+  // transform that to:
+  //
+  //    x.vptr[m](x, args...);
+  //
+  // where n is the offset of the f in the virtual table
+  // of x's type.
+  //
+  // TODO: Consider representing virtual calls separately
+  // within the AST. That would help simplify the code
+  // generation a bit.
+  //
+  // TODO: If x refers to a variable of non-reference type,
+  // then we can call the method directly, since x's dynamic
+  // type is known.
+  llvm::Value* fn;
+  if (Method_decl const* m = calls_virtual_method(e)) {
+    Expr_seq const& args = e->arguments();
+
+    // Get (and load) the virtual function pointer.
+    llvm::Value* vptr = gen_vptr(args.front());
+    llvm::Value* a[] = {
+      build.getInt32(0),
+      build.getInt32(m->vtable_entry())
+    };
+    llvm::Value* vfpp = build.CreateInBoundsGEP(vptr, a);
+    llvm::Value* vfp = build.CreateLoad(vfpp);
+    fn = vfp;
+  } else {
+    fn = gen(e->target());
+  }
+
   std::vector<llvm::Value*> args;
   for (Expr const* a : e->arguments())
     args.push_back(gen(a));
@@ -1071,45 +1123,77 @@ Generator::gen(Module_decl const* d)
 }
 
 
-void
+llvm::Value*
 Generator::gen_vtable(Record_decl const* d)
 {
   Decl_seq const& vtbl = *d->vtable();
 
-  // Build the vtable type.
+  // Build the vtable type. This is just an array
+  // of character pointers. The call expression re-casts
+  // to the appropriate static type.
   //
   // TODO: The type is unnamed. Does this actually matter?
-  //
-  // FIXME: Appropriately mangle the vtable name.
   std::vector<llvm::Type*> types;
   std::vector<llvm::Constant*> values;
   for (Decl const* d : vtbl) {
-    // Get the member type.
     llvm::Type* t = llvm::PointerType::getUnqual(get_type(d->type()));
     types.push_back(t);
 
-    // And its initializer.
     llvm::Value* v = stack.lookup(d)->second;
     llvm::Function* f = llvm::cast<llvm::Function>(v);
-    values.push_back(f);
+    llvm::Constant* p = llvm::ConstantExpr::getBitCast(f, t);
+    values.push_back(p);
   }
 
   // Build the type and initializer.
-  //
-  // TODO: The name is terrible.
-  String vtn = d->name()->spelling() + "_vtbl";
-  llvm::StructType* vtt = llvm::StructType::create(cxt, types);
+  String base = mangle(d);
+  String vtn = "_VT_" + base;
+  String vttn = "_VTT_" + base;
+  llvm::StructType* vtt = llvm::StructType::create(cxt, types, vttn);
   llvm::Constant* vti = llvm::ConstantStruct::get(vtt, values);
 
   // Generate the vtable global.
-  new llvm::GlobalVariable(
+  llvm::GlobalVariable* ret = new llvm::GlobalVariable(
     *mod,                                  // owning module
     vtt,                                   // type
-    true,                                 // is constant
+    true,                                  // is constant
     llvm::GlobalVariable::ExternalLinkage, // linkage,
     vti,                                   // initializer
     vtn                                    // name
   );
+  vtables.emplace(d, ret);
+  return ret;
+}
+
+
+// Generate an expression that accesses the virtual 
+// table within the object. Here, expr is the first
+// argument of the function call.
+llvm::Value*
+Generator::gen_vptr(Expr const* e)
+{
+  Decl_expr const* d = cast<Decl_expr>(e);
+  llvm::Value* obj = gen(d);
+
+  // Build an access to the vptr in the first argument.
+  // We have to walk upwards through base classes to
+  // get the vptr.
+  //
+  // TODO: Is there a good way to simplifiy this?
+  Record_type const* t = cast<Record_type>(d->type()->nonref());
+  Record_decl const* r = t->declaration();
+  std::vector<llvm::Value*> args { build.getInt32(0) };
+  Record_decl const* p = r;
+  while (!p->vref()) {
+    args.push_back(build.getInt32(0));
+    p = p->base_declaration();
+  }
+  args.push_back(build.getInt32(0));
+
+  llvm::Value* ref = build.CreateInBoundsGEP(obj, args);
+  llvm::Value* load = build.CreateLoad(ref);
+  llvm::Value* vtbl = vtables.find(r)->second;
+  return build.CreateBitCast(load, vtbl->getType());
 }
 
 
