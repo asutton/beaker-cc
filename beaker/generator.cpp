@@ -118,14 +118,14 @@ Generator::get_type(Integer_type const* t)
 llvm::Type*
 Generator::get_type(Float_type const*)
 {
-  return build.getInt32Ty();
+  return build.getFloatTy();
 }
 
 // Return the double type.
 llvm::Type*
 Generator::get_type(Double_type const*)
 {
-  return build.getInt32Ty();
+  return build.getDoubleTy();
 }
 
 // Return a function type.
