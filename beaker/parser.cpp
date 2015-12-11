@@ -1254,7 +1254,7 @@ Decl*
 Parser::on_function(Specifier spec, Token tok, Decl_seq const& p, Type const* t)
 {
   Type const* f = get_function_type(p, t);
-  return new Function_decl(tok.symbol(), f, p, nullptr);
+  return new Function_decl(spec, tok.symbol(), f, p, nullptr);
 }
 
 
