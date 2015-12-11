@@ -580,6 +580,8 @@ Parser::field_decl(Specifier spec)
 // parameter. Maybe before the return type? Maybe
 // as part of the specifiers?
 //
+// TODO:
+//
 //    struct R {
 //      const def f() -> void { }   // Why not...
 //      virtual def f() -> void { } // Sure...
@@ -588,6 +590,10 @@ Parser::method_decl(Specifier spec)
 {
   require(def_kw);
   Token n = match(identifier_tok);
+
+  //check for a this_kw
+  //do stuff
+  //return on_ctor <- reference on_method
 
   // parameter-clause
   Decl_seq parms;

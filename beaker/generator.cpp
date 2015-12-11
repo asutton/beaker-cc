@@ -617,6 +617,8 @@ Generator::gen(Default_init const* e)
 llvm::Value*
 Generator::gen(Trivial_init const* e)
 {
+
+
   throw std::runtime_error("Trivial_init not constructed yet");
 }
 
@@ -1024,7 +1026,7 @@ Generator::gen(Record_decl const* d)
   if (d->base())
     ts.push_back(get_type(d->base()));
 
-  // If the record is empty, generate a struct with exactly one 
+  // If the record is empty, generate a struct with exactly one
   // byte so that we never have a type with 0 size.
   if (d->fields().empty()) {
     ts.push_back(build.getInt8Ty());

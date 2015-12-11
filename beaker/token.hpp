@@ -51,6 +51,7 @@ enum Token_kind
   not_tok,
   amp_tok,
   arrow_tok,
+  tilde_tok,
 
   // Keywords
   bool_kw,

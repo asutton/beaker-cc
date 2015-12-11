@@ -112,6 +112,10 @@ private:
   Decl* on_record(Specifier, Token, Decl_seq const&, Decl_seq const&, Type const*);
   Decl* on_field(Specifier, Token, Type const*);
   Decl* on_method(Specifier, Token, Decl_seq const&, Type const*, Stmt*);
+  //need to implement below for constructors and destructors
+  //refence on_method for implementation
+  //Decl* on_ctor(Specifier, Token, Decl_seq const&, Type const* Stmt*);
+  //Decl* on_dtor(Specifier, Token, Decl_seq const&, Type const* Stmt*);
   Decl* on_module(Module_decl*, Decl_seq const&);
 
   // FIXME: Remove _stmt from handlers.

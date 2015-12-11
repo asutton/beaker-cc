@@ -39,6 +39,7 @@ spelling(Token_kind k)
     case not_tok: return "!";
     case amp_tok: return "&";
     case arrow_tok: return "->";
+    case tilde_tok: return "~";
 
     case bool_kw: return "bool";
     case break_kw: return "break";
@@ -95,6 +96,7 @@ init_symbols(Symbol_table& syms)
   syms.put<Symbol>("!", not_tok);
   syms.put<Symbol>("&", amp_tok);
   syms.put<Symbol>("->", arrow_tok);
+  syms.put<Symbol>("~", tilde_tok);
 
   // Keywords
   syms.put<Symbol>("bool", bool_kw);
