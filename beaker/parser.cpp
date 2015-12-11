@@ -629,7 +629,6 @@ Parser::field_decl(Specifier spec)
 //
 //    struct R {
 //      const def f() -> void { }   // Why not...
-//      virtual def f() -> void { } // Sure...
 Decl*
 Parser::method_decl(Specifier spec)
 {
@@ -671,6 +670,10 @@ Parser::specifier_seq()
   while (true) {
     if (match_if(foreign_kw))
       spec |= foreign_spec;
+    else if (match_if(abstract_kw))
+      spec |= abstract_spec;
+    else if (match_if(virtual_kw))
+      spec |= virtual_spec;
     else
       break;
   }
@@ -1330,7 +1333,7 @@ Decl*
 Parser::on_method(Specifier spec, Token tok, Decl_seq const& p, Type const* t, Stmt* b)
 {
   Type const* f = get_function_type(p, t);
-  Decl* decl = new Method_decl(tok.symbol(), f, p, b);
+  Decl* decl = new Method_decl(spec, tok.symbol(), f, p, b);
   locate(decl, tok.location());
   return decl;
 }

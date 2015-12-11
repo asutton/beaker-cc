@@ -118,11 +118,8 @@ struct Generator
   void gen_local(Variable_decl const*);
   void gen_global(Variable_decl const*);
 
-  // Helper functions for determining where
-  // breaks and continues should go to
-  void make_branch(llvm::BasicBlock*, llvm::BasicBlock*);
-  void resolve_illformed_blocks(llvm::Function*);
-
+  void gen_vtable(Record_decl const*);
+  void gen_vtable_init(Record_decl const*);
 
   llvm::LLVMContext cxt;
   llvm::IRBuilder<> build;
@@ -137,7 +134,6 @@ struct Generator
   llvm::BasicBlock* exit;   // Function exit
   llvm::BasicBlock* top;    // Loop top
   llvm::BasicBlock* bottom; // Loop bottom
-
 
   // Environment.
   Symbol_stack      stack;

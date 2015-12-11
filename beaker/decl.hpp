@@ -118,6 +118,10 @@ struct Function_decl : Decl
   Stmt const* body() const { return body_; }
   Stmt*       body()       { return body_; }
 
+  bool is_virtual() const  { return spec_ & virtual_spec; }
+  bool is_abstract() const { return spec_ & abstract_spec; }
+  bool is_polymorphic() const { return is_virtual() || is_abstract(); }
+
   Decl_seq parms_;
   Stmt*    body_;
 };
@@ -135,12 +139,11 @@ struct Parameter_decl : Decl
 
 // Declares a user-defined record type.
 //
-// The record class maintains two sets of declarations:
-// fields, which constitute its actual type, and
-// another set of member declarations (e.g., methods,
-// nested types, templates, constants, etc). These
-// aren't really part of the object, just part of
-// the scope.
+// The record class maintains two sets of declarations: 
+// - fields, which constitute its actual type, and 
+// - another set of member declarations (e.g., methods, nested 
+//   types, templates, constants, etc). These aren't really part 
+//   of the object, just part of the scope.
 //
 // A record declaration defines a scope. Declarations
 // within the record are cached here for use during
@@ -148,24 +151,39 @@ struct Parameter_decl : Decl
 struct Record_decl : Decl
 {
   Record_decl(Symbol const* n, Decl_seq const& f, Decl_seq const& m, Type const* base)
-    : Decl(n, nullptr), fields_(f), members_(m), scope_(this), base_(base)
+    : Decl(n, nullptr), scope_(this), fields_(f), members_(m)
+    , base_(base), vref_(nullptr), vtbl_(nullptr)
   { }
 
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
 
   Record_type const* base() const;
+  Record_decl*       base_declaration() const;
 
-  Decl_seq const& fields() const { return fields_; }
+  Decl_seq const& fields() const  { return fields_; }
   Decl_seq const& members() const { return members_; }
 
-  Scope*          scope()       { return &scope_; }
   Scope const*    scope() const { return &scope_; }
+  Scope*          scope()       { return &scope_; }
 
-  Decl_seq    fields_;
-  Decl_seq    members_;
-  Scope       scope_;
-  const Type* base_;
+  Decl const*     vref() const   { return vref_; }
+  Decl*           vref()         { return vref_; }
+
+  Decl_seq const* vtable() const { return vtbl_; }
+  Decl_seq*       vtable()       { return vtbl_; }
+
+  bool is_empty() const;
+  bool is_virtual() const     { return spec_ & virtual_spec; }
+  bool is_abstract() const    { return spec_ & abstract_spec; }
+  bool is_polymorphic() const { return is_virtual() || is_abstract(); }
+
+  Scope          scope_;
+  Decl_seq       fields_;
+  Decl_seq       members_;
+  const Type*    base_;
+  Decl*          vref_;
+  Decl_seq*      vtbl_;
 };
 
 

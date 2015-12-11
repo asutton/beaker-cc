@@ -39,6 +39,35 @@ Record_decl::base() const
 }
 
 
+Record_decl*
+Record_decl::base_declaration() const
+{
+  if (base_)
+    return base()->declaration();
+  else
+    return nullptr;
+}
+
+
+// Returns true if the record has no members.
+bool
+Record_decl::is_empty() const
+{
+  // A polymorphic type is not an empty class.
+  if (is_polymorphic())
+    return false;
+
+  // If a base class is non-empty, then this class
+  // is non-empty.
+  if (Record_decl const* b = base_declaration())
+    if (b->is_empty())
+      return false;
+  
+  // An empty base class has no fields.
+  return fields_.empty();
+}
+
+
 // Returns true when the declaration is declared as
 // a reference to an object.
 bool

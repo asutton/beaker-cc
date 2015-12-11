@@ -966,10 +966,15 @@ get_path(Record_decl* r, Field_decl* f, Field_path& p)
   Decl_seq const& fs = r->fields();
   auto iter = std::find(fs.begin(), fs.end(), f);
   if (iter != fs.end()) {
-    // Adjust the offset by 1 if this has a base
-    // class sub-object.
-    int n = std::distance(fs.begin(), iter) + (r->base() ? 1 : 0);
-    p.push_back(n);
+    // Compute the offset adjustment for this member.
+    // A virtual table reference counts as a subobject, and 
+    // so does a base class sub-object.
+    int a = 0;
+    if (r->vref())
+      ++a;
+    if (r->base())
+      ++a;
+    p.push_back(std::distance(fs.begin(), iter) + a);
     return;
   }
 
@@ -1440,13 +1445,22 @@ Elaborator::elaborate_decl(Record_decl* d)
 Decl*
 Elaborator::elaborate_decl(Method_decl* d)
 {
+  Record_decl* rec = stack.record();
+
+  // Propagate virtual/abstract specifiers to the class.
+  if (d->is_virtual())
+    rec->spec_ |= virtual_spec;
+  if (d->is_abstract())
+    rec->spec_ |= abstract_spec;
+
   // Generate the type of the implicit this parameter.
   //
   // TODO: Handle constant references.
-  Record_decl* rec = stack.record();
   Type const* type = get_reference_type(get_record_type(rec));
 
   // Re-build the function type.
+  //
+  // TODO: Factor this out as an operation on a method.
   Function_type const* ft = cast<Function_type>(elaborate(d->type()));
   Type_seq pt = ft->parameter_types();
   pt.insert(pt.begin(), type);
@@ -1467,6 +1481,22 @@ Elaborator::elaborate_decl(Method_decl* d)
 
   // Now declare the method.
   declare(d);
+
+  // If the method is virtual add it to the record'sd
+  // virtual table and update its index.
+  //
+  // FIXME: If the function is an overrider, then replace its
+  // current definition in the virtual table.
+  //
+  // TODO: Factor this out as an operation on a record.
+  if (d->is_polymorphic()) {
+    if (!rec->vtbl_)
+      rec->vtbl_ = new Decl_seq();
+    rec->vtbl_->push_back(d);
+
+    // FIXME: Set the vtable index for the method.
+  }
+
   return d;
 }
 
@@ -1590,10 +1620,16 @@ Elaborator::elaborate_def(Record_decl* d)
   }
   Defining_sentinel def(*this, d);
 
-  // Elaborate base class.
+  // Elaborate base class. 
   if (d->base_)
     d->base_ = elaborate(d->base_);
 
+  // Propagate the virtual table if supported.
+  Record_decl const* b = d->base_declaration();
+  if (b)
+    if (Decl_seq const* vt = b->vtable())
+      d->vtbl_ = new Decl_seq(*vt);
+ 
   // Elaborate member declarations, fields first.
   //
   // TODO: What are the lookup rules for default
@@ -1622,6 +1658,37 @@ Elaborator::elaborate_def(Record_decl* d)
   // above about handling member defintions.
   for (Decl*& m : d->members_)
     m = elaborate_def(m);
+
+
+  // If the base class is polymorphic, then so
+  // is the derived class.
+  if (b) {
+    // Propagate specifiers.
+    if (b->is_virtual())
+      d->spec_ |= virtual_spec;
+    if (b->is_abstract())
+      d->spec_ |= abstract_spec;
+  }
+
+  // Determine if we need a vtable reference. This is the case 
+  // when:
+  //    - there is no base class or
+  //    - the base is not polymorphic
+  //
+  // TODO: We may need to perform this transformation
+  // before elaborating any fields. It depends on whether
+  // or not we allow a member's type to refer to member
+  // variables (a la decltype).
+  //
+  // TODO: For multiple base classes, we probably want
+  // multiple vtable references (one for each base).
+  if (d->is_polymorphic()) {
+    if (!b || !b->is_polymorphic()) {
+      Symbol const* n = syms.get("vref");
+      Type const* p = get_reference_type(get_character_type());
+      d->vref_ = new Field_decl(n, p);
+    }
+  }
 
   defined.insert(d);
   return d;

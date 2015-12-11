@@ -47,7 +47,7 @@ convert(Expr* e, Type const* t)
 
   // Ojbect/value transformations
 
-  // If t is a non-reference type, try an
+  // If t is a non-reference type, try an 
   // object-to-value conversion:
   //
   //    A& -> B

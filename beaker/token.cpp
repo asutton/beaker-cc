@@ -40,6 +40,7 @@ spelling(Token_kind k)
     case amp_tok: return "&";
     case arrow_tok: return "->";
 
+    case abstract_kw: return "abstract";
     case bool_kw: return "bool";
     case break_kw: return "break";
     case char_kw: return "char";
@@ -52,6 +53,7 @@ spelling(Token_kind k)
     case struct_kw: return "struct";
     case this_kw: return "this";
     case var_kw: return "var";
+    case virtual_kw: return "virtual";
     case while_kw: return "while";
     case int_kw: return "int";
     case uint_kw: return "uint";
@@ -110,6 +112,7 @@ init_symbols(Symbol_table& syms)
   syms.put<Symbol>("->", arrow_tok);
 
   // Keywords
+  syms.put<Symbol>("abstract", abstract_kw);
   syms.put<Symbol>("bool", bool_kw);
   syms.put<Symbol>("break", break_kw);
   syms.put<Symbol>("char", char_kw);
@@ -118,7 +121,6 @@ init_symbols(Symbol_table& syms)
   syms.put<Symbol>("else", else_kw);
   syms.put<Symbol>("foreign", foreign_kw);
   syms.put<Symbol>("if", if_kw);
-  syms.put<Symbol>("while", while_kw);
   syms.put<Symbol>("return", return_kw);
   syms.put<Symbol>("struct", struct_kw);
   syms.put<Symbol>("this", this_kw);
@@ -137,6 +139,8 @@ init_symbols(Symbol_table& syms)
   syms.put<Symbol>("uint64", uint64_kw);
   syms.put<Symbol>("float", float_kw);
   syms.put<Symbol>("double", double_kw);
+  syms.put<Symbol>("virtual", virtual_kw);
+  syms.put<Symbol>("while", while_kw);
 
   // Reserved names.
   syms.put<Boolean_sym>("true", boolean_tok, true);
@@ -144,4 +148,5 @@ init_symbols(Symbol_table& syms)
 
   // Common identifiers
   syms.put<Symbol>("main", identifier_tok);
+  syms.put<Symbol>("vptr", identifier_tok);
 }
