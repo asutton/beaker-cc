@@ -871,11 +871,8 @@ Generator::gen_local(Variable_decl const* d)
   // Save the decl binding.
   stack.top().bind(d, ptr);
 
-  // Generate the initializer.
-  llvm::Value* init = gen(d->init());
-
   // Create a store if an initializer was generated.
-  if (init != nullptr) {
+  if (llvm::Value* init = gen(d->init())) {
     // Store the result in the object.
     build.CreateStore(init, ptr);
   }
