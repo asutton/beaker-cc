@@ -14,10 +14,15 @@ enum Specifier
   // No specifiers present.
   no_spec      = 0,
 
-  // The declaration has foreign language linkage. 
-  // This affects  how the symbol is generated during 
-  // translation. By default, a declaration with the 
-  // foreign specifier has C language linkage. 
+  // The generated specifier indicates a compiler generated
+  // program element in respect to program elements where a
+  // user may optionally otherwise define said element.
+  generated_spec = 1 << 4,
+
+  // The declaration has foreign language linkage.
+  // This affects  how the symbol is generated during
+  // translation. By default, a declaration with the
+  // foreign specifier has C language linkage.
   // Otherwise, it has Beaker language linkage.
   //
   // Only functions and variables can have foreign
