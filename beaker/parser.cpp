@@ -35,6 +35,10 @@ Parser::primary_expr()
   // integer-literal
   if (Token tok = match_if(integer_tok))
     return on_int(tok);
+    
+  // floating-point-literal
+  if (Token tok = match_if(floating_tok))
+    return on_float(tok);
 
   // character-literal
   if (Token tok = match_if(character_tok))
@@ -1085,11 +1089,18 @@ Parser::on_bool(Token tok)
 Expr*
 Parser::on_int(Token tok)
 {
-  Type const* t = get_integer_type();
+  Type const* t = get_integer_type(64);
   int64_t v = tok.integer_symbol()->value();
   return init<Literal_expr>(tok.location(), t, v);
 }
 
+Expr*
+Parser::on_float(Token tok)
+{
+  Type const* t = get_double_type();
+  double v = tok.floating_symbol()->value();
+  return init<Literal_expr>(tok.location(), t, v);
+}
 
 Expr*
 Parser::on_char(Token tok)
