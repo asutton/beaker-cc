@@ -188,7 +188,7 @@ inline Token
 Lexer::on_integer()
 {
   String str = build_.take();
-  long long n = string_to_int<int>(str, 10);
+  int64_t n = string_to_int<int>(str, 10);
   Symbol* sym = syms_.put<Integer_sym>(str, integer_tok, n);
   return Token(loc_, integer_tok, sym);
 }

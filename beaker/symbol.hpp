@@ -72,13 +72,13 @@ struct Boolean_sym : Symbol
 // useful to keep cached.
 struct Integer_sym : Symbol
 {
-  Integer_sym(int k, long long n)
+  Integer_sym(int k, int64_t n)
     : Symbol(k), value_(n)
   { }
 
-  long long value() const { return value_; }
+  int64_t value() const { return value_; }
 
-  long long value_;
+  int64_t value_;
 };
 
 
