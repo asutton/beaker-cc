@@ -72,6 +72,7 @@ Lexer::scan()
       case '+': return plus();
       case '-': return minus();
       case '*': return star();
+      case '~': return tilde();
 
       case '/':
         get();

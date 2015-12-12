@@ -45,6 +45,7 @@ Evaluator::eval(Expr const* e)
     Value operator()(Value_conv const* e) { return ev.eval(e); }
     Value operator()(Block_conv const* e) { return ev.eval(e); }
     Value operator()(Default_init const* e) { return ev.eval(e); }
+    Value operator()(Trivial_init const* e) { return ev.eval(e); }
     Value operator()(Copy_init const* e) { return ev.eval(e); }
     Value operator()(Reference_init const* e) { return ev.eval(e); }
   };
@@ -364,9 +365,17 @@ Evaluator::eval(Default_init const* e)
   lingo_unimplemented();
 }
 
+// FIXME: This is wrong. We should be calling a function
+// that trivially initializes the created object.
+Value
+Evaluator::eval(Trivial_init const* e)
+{
+  lingo_unimplemented();
+}
+
 
 // FIXME: This should be calling a function that
-// default iniitializes the created object.
+// copy iniitializes the created object.
 Value
 Evaluator::eval(Copy_init const* e)
 {
@@ -488,7 +497,11 @@ Evaluator::eval(Variable_decl const* d)
   if (is<Default_init>(e))
     zero_init(v1);
 
-  // Perfor copy initialization. We should guarantee
+  // Perform trivial initialization.
+  else if (is<Trivial_init>(e))
+    trivial_init(v1);
+
+  // Perform copy initialization. We should guarantee
   // that v1 and the evaluation of i produce values
   // of the same shape.
   else if (Copy_init const* i = as<Copy_init>(e))

@@ -207,6 +207,7 @@ Generator::gen(Expr const* e)
     llvm::Value* operator()(Value_conv const* e) const { return g.gen(e); }
     llvm::Value* operator()(Block_conv const* e) const { return g.gen(e); }
     llvm::Value* operator()(Default_init const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Trivial_init const* e) const { return g.gen(e); }
     llvm::Value* operator()(Copy_init const* e) const { return g.gen(e); }
     llvm::Value* operator()(Reference_init const* e) const { return g.gen(e); }
   };
@@ -617,6 +618,12 @@ Generator::gen(Default_init const* e)
   throw std::runtime_error("unhahndled default initializer");
 }
 
+llvm::Value*
+Generator::gen(Trivial_init const* e)
+{
+  // Trivial initialization is a no-op.
+  return nullptr;
+}
 
 // TODO: Return the value or store it?
 llvm::Value*
@@ -864,13 +871,13 @@ Generator::gen_local(Variable_decl const* d)
   // Save the decl binding.
   stack.top().bind(d, ptr);
 
-  // Generate the initializer.
-  llvm::Value* init = gen(d->init());
+  // Create a store if an initializer was generated.
+  if (llvm::Value* init = gen(d->init())) {
+    // Store the result in the object.
+    build.CreateStore(init, ptr);
+  }
 
-  // Store the result in the object.
-  build.CreateStore(init, ptr);
-
-  // If the variable has polymorphic record type, 
+  // If the variable has polymorphic record type,
   // initialize its vref to the appropriate table.
   //
   // FIXME: This is totally broken if it doesn't
@@ -1046,10 +1053,10 @@ Generator::gen(Record_decl const* d)
   if (Type const* b = d->base())
     ts.push_back(get_type(b));
 
-  // Construct the type over only the fields. If the record 
-  // is empty, generate a struct with exactly one  byte so that 
-  // we never have a type with 0 size. 
-  if (d->is_empty()) {
+  // Construct the type over only the fields. If the record
+  // is empty, generate a struct with exactly one  byte so that
+  // we never have a type with 0 size.
+  if (d->fields().empty()) {
     ts.push_back(build.getInt8Ty());
   } else {
     for (Decl const* f : d->fields())
@@ -1065,7 +1072,7 @@ Generator::gen(Record_decl const* d)
   for (Decl const* m : d->members())
     gen(m);
 
-  // Finally, generate the vtable. 
+  // Finally, generate the vtable.
   if (d->is_polymorphic())
     gen_vtable(d);
 }
@@ -1155,7 +1162,7 @@ Generator::gen_vtable(Record_decl const* d)
 }
 
 
-// Generate an expression that accesses the virtual 
+// Generate an expression that accesses the virtual
 // table within the object. Here, expr is the first
 // argument of the function call.
 llvm::Value*
@@ -1191,7 +1198,7 @@ Generator::gen_vref(Record_decl const* r, llvm::Value* obj)
     p = p->base_declaration();
   }
   args.push_back(build.getInt32(0));
-  
+
   llvm::Value* ref = build.CreateInBoundsGEP(obj, args);
   llvm::Value* vtbl = vtables.find(r)->second;
   llvm::Type* type = llvm::PointerType::getUnqual(vtbl->getType());
@@ -1206,4 +1213,3 @@ Generator::operator()(Decl const* d)
   gen(d);
   return mod;
 }
-

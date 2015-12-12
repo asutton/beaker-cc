@@ -60,6 +60,7 @@ struct Value_conv;
 struct Block_conv;
 struct Init;
 struct Default_init;
+struct Trivial_init;
 struct Copy_init;
 struct Reference_init;
 

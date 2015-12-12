@@ -138,3 +138,44 @@ zero_init(Value& v)
   apply(v, Fn{});
 }
 
+// -------------------------------------------------------------------------- //
+// Trivial initialization
+
+
+// Set to null.
+//
+// TODO: Can a function value ever be zero initialized?
+// For example, is this valid?
+//
+//    var f : () -> int;
+//
+// This would effectively decare a default initialized
+// function pointer. There are arguments for and against.
+inline void
+trivial_init(Function_value& v)
+{
+  throw std::runtime_error("trivial initialization of function");
+}
+
+
+// This is most definitely not defined.
+inline void
+trivial_init(Reference_value& v)
+{
+  throw std::runtime_error("trivial initialization of reference");
+}
+
+// Zero initialzie the value.
+void
+trivial_init(Value& v)
+{
+  struct Fn
+  {
+    void operator()(Error_value& v) { };
+    void operator()(Integer_value& v) { };
+    void operator()(Function_value& v) { trivial_init(v); }
+    void operator()(Reference_value& v) { trivial_init(v); }
+    void operator()(Aggregate_value& v) { };
+  };
+  apply(v, Fn{});
+}

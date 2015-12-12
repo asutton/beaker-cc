@@ -72,6 +72,7 @@ struct Expr::Visitor
   virtual void visit(Value_conv const*) = 0;
   virtual void visit(Block_conv const*) = 0;
   virtual void visit(Default_init const*) = 0;
+  virtual void visit(Trivial_init const*) = 0;
   virtual void visit(Copy_init const*) = 0;
   virtual void visit(Reference_init const*) = 0;
 };
@@ -109,6 +110,7 @@ struct Expr::Mutator
   virtual void visit(Value_conv*) = 0;
   virtual void visit(Block_conv*) = 0;
   virtual void visit(Default_init*) = 0;
+  virtual void visit(Trivial_init*) = 0;
   virtual void visit(Copy_init*) = 0;
   virtual void visit(Reference_init*) = 0;
 };
@@ -584,10 +586,18 @@ struct Init : Expr
 // FIXME: Find a constructor of the type:
 //
 //    (ref T) -> void
-//
-// Note that we should also explicitly represent
-// trivial default constructors.
 struct Default_init : Init
+{
+  using Init::Init;
+
+  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Mutator& v)       { v.visit(this); }
+};
+
+
+// Performs trivial initialization of an object
+// of the given type.
+struct Trivial_init : Init
 {
   using Init::Init;
 
@@ -677,6 +687,7 @@ struct Generic_expr_visitor : Expr::Visitor, lingo::Generic_visitor<F, T>
   void visit(Value_conv const* e) { this->invoke(e); }
   void visit(Block_conv const* e) { this->invoke(e); }
   void visit(Default_init const* e) { this->invoke(e); }
+  void visit(Trivial_init const* e) { this->invoke(e); }
   void visit(Copy_init const* e) { this->invoke(e); }
   void visit(Reference_init const* e) { this->invoke(e); }
 };
@@ -730,6 +741,7 @@ struct Generic_expr_mutator : Expr::Mutator, lingo::Generic_mutator<F, T>
   void visit(Value_conv* e) { this->invoke(e); }
   void visit(Block_conv* e) { this->invoke(e); }
   void visit(Default_init* e) { this->invoke(e); }
+  void visit(Trivial_init* e) { this->invoke(e); }
   void visit(Copy_init* e) { this->invoke(e); }
   void visit(Reference_init* e) { this->invoke(e); }
 };
