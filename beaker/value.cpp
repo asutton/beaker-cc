@@ -141,12 +141,6 @@ zero_init(Value& v)
 // -------------------------------------------------------------------------- //
 // Trivial initialization
 
-inline void
-trivial_init(Integer_value& v)
-{
-
-}
-
 
 // Set to null.
 //
@@ -160,7 +154,7 @@ trivial_init(Integer_value& v)
 inline void
 trivial_init(Function_value& v)
 {
-  throw std::runtime_error("zero initialization of function");
+  throw std::runtime_error("trivial initialization of function");
 }
 
 
@@ -168,16 +162,7 @@ trivial_init(Function_value& v)
 inline void
 trivial_init(Reference_value& v)
 {
-  throw std::runtime_error("zero initialization of reference");
-}
-
-
-// Recursively zero initialize the aggregate.
-void
-trivial_init(Aggregate_value& v)
-{
-  for (std::size_t i = 0; i < v.len; ++i)
-    trivial_init(v.data[i]);
+  throw std::runtime_error("trivial initialization of reference");
 }
 
 // Zero initialzie the value.
@@ -187,10 +172,10 @@ trivial_init(Value& v)
   struct Fn
   {
     void operator()(Error_value& v) { };
-    void operator()(Integer_value& v) { trivial_init(v); };
+    void operator()(Integer_value& v) { };
     void operator()(Function_value& v) { trivial_init(v); }
     void operator()(Reference_value& v) { trivial_init(v); }
-    void operator()(Aggregate_value& v) { trivial_init(v); };
+    void operator()(Aggregate_value& v) { };
   };
   apply(v, Fn{});
 }
