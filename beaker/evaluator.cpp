@@ -365,12 +365,10 @@ Evaluator::eval(Default_init const* e)
   lingo_unimplemented();
 }
 
-// FIXME: This is wrong. We should be calling a function
-// that trivially initializes the created object.
 Value
 Evaluator::eval(Trivial_init const* e)
 {
-  lingo_unimplemented();
+  // Trivial initialization is a no-op.
 }
 
 
