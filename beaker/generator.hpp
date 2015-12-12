@@ -41,6 +41,11 @@ using Type_env = Environment<Decl const*, llvm::Type*>;
 using String_env = Environment<String, llvm::Value*>;
 
 
+// Associates record declarations with their vtables.
+// VTables are simply global variables with struct type.
+using Vtable_map = std::unordered_map<Decl const*, llvm::GlobalVariable*>;
+
+
 struct Generator
 {
   Generator();
@@ -117,11 +122,10 @@ struct Generator
   void gen_local(Variable_decl const*);
   void gen_global(Variable_decl const*);
 
-  // Helper functions for determining where
-  // breaks and continues should go to
-  void make_branch(llvm::BasicBlock*, llvm::BasicBlock*);
-  void resolve_illformed_blocks(llvm::Function*);
-
+  llvm::Value* gen_vtable(Record_decl const*);
+  llvm::Value* gen_vptr(Expr const*);
+  llvm::Value* gen_vptr(Record_decl const*, llvm::Value*);
+  llvm::Value* gen_vref(Record_decl const*, llvm::Value*);
 
   llvm::LLVMContext cxt;
   llvm::IRBuilder<> build;
@@ -137,11 +141,11 @@ struct Generator
   llvm::BasicBlock* top;    // Loop top
   llvm::BasicBlock* bottom; // Loop bottom
 
-
   // Environment.
   Symbol_stack      stack;
   Type_env          types;
   String_env        strings;
+  Vtable_map        vtables;
 
   struct Symbol_sentinel;
   struct Loop_sentinel;

@@ -54,6 +54,7 @@ enum Token_kind
   tilde_tok,
 
   // Keywords
+  abstract_kw,
   bool_kw,
   break_kw,
   char_kw,
@@ -68,6 +69,7 @@ enum Token_kind
   this_kw,
   trivial_kw,
   var_kw,
+  virtual_kw,
   while_kw,
 
   // Multi-valued tokens

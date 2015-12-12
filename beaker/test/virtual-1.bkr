@@ -1,0 +1,24 @@
+
+struct B0 { z : int; }
+
+struct B : B0
+{
+  virtual def f() -> int { }
+  virtual def g(int) -> int { }
+  x : int;
+}
+
+struct D : B
+{
+  virtual def h(bool) -> int { }
+  y : int;
+}
+
+def main() -> int
+{
+  var d : D;
+  d.x = 0;
+  d.y = 1;
+
+  return 0;
+}
