@@ -15,7 +15,7 @@ Array_value::get_string() const
 {
   std::string str(len, '\0');
   std::transform(data, data + len, str.begin(), [](Value const& v) -> char {
-    return v.get_integer();
+    return (v.is_integer()?v.get_integer():v.get_float());
   });
   return str;
 }
@@ -68,6 +68,7 @@ operator<<(std::ostream& os, Value const& v)
 
     void operator()(Error_value const& v) { os << "<error>"; }
     void operator()(Integer_value const& v) { os << v; };
+    void operator()(Float_value const& v) { os << v; };
     void operator()(Function_value const& v) { os << v->name()->spelling(); };
     void operator()(Reference_value const& v) { os << *v << '@' << (void*)v; };
     void operator()(Array_value const& v) { print(os, v); }
@@ -88,6 +89,13 @@ inline void
 zero_init(Integer_value& v)
 {
   v = 0;
+}
+
+// Set to 0.
+inline void
+zero_init(Float_value& v)
+{
+  v = 0.0;
 }
 
 
@@ -131,6 +139,7 @@ zero_init(Value& v)
   {
     void operator()(Error_value& v) { };
     void operator()(Integer_value& v) { zero_init(v); };
+    void operator()(Float_value& v) { zero_init(v); };
     void operator()(Function_value& v) { zero_init(v); }
     void operator()(Reference_value& v) { zero_init(v); }
     void operator()(Aggregate_value& v) { zero_init(v); };

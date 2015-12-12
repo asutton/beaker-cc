@@ -1086,7 +1086,7 @@ Expr*
 Parser::on_int(Token tok)
 {
   Type const* t = get_integer_type();
-  int v = tok.integer_symbol()->value();
+  int64_t v = tok.integer_symbol()->value();
   return init<Literal_expr>(tok.location(), t, v);
 }
 
