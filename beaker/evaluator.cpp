@@ -44,13 +44,56 @@ Evaluator::eval(Expr const* e)
     Value operator()(Index_expr const* e) { return ev.eval(e); }
     Value operator()(Value_conv const* e) { return ev.eval(e); }
     Value operator()(Block_conv const* e) { return ev.eval(e); }
-    Value operator()(Default_init const* e) { return ev.eval(e); }
-    Value operator()(Trivial_init const* e) { return ev.eval(e); }
-    Value operator()(Copy_init const* e) { return ev.eval(e); }
-    Value operator()(Reference_init const* e) { return ev.eval(e); }
+    Value operator()(Default_init const* e) { lingo_unreachable(); }
+    Value operator()(Trivial_init const* e) { lingo_unreachable(); }
+    Value operator()(Copy_init const* e) { lingo_unreachable(); }
+    Value operator()(Reference_init const* e) { lingo_unreachable(); }
   };
 
   return apply(e, Fn {*this});
+}
+
+
+void
+Evaluator::eval_init(Expr const* e, Value& v) {
+  struct Fn
+  {
+    Evaluator& ev;
+    Value& v;
+
+    void operator()(Literal_expr const* e) { lingo_unreachable(); }
+    void operator()(Id_expr const* e) { lingo_unreachable(); }
+    void operator()(Decl_expr const* e) { lingo_unreachable(); }
+    void operator()(Add_expr const* e) { lingo_unreachable(); }
+    void operator()(Sub_expr const* e) { lingo_unreachable(); }
+    void operator()(Mul_expr const* e) { lingo_unreachable(); }
+    void operator()(Div_expr const* e) { lingo_unreachable(); }
+    void operator()(Rem_expr const* e) { lingo_unreachable(); }
+    void operator()(Neg_expr const* e) { lingo_unreachable(); }
+    void operator()(Pos_expr const* e) { lingo_unreachable(); }
+    void operator()(Eq_expr const* e) { lingo_unreachable(); }
+    void operator()(Ne_expr const* e) { lingo_unreachable(); }
+    void operator()(Lt_expr const* e) { lingo_unreachable(); }
+    void operator()(Gt_expr const* e) { lingo_unreachable(); }
+    void operator()(Le_expr const* e) { lingo_unreachable(); }
+    void operator()(Ge_expr const* e) { lingo_unreachable(); }
+    void operator()(And_expr const* e) { lingo_unreachable(); }
+    void operator()(Or_expr const* e) { lingo_unreachable(); }
+    void operator()(Not_expr const* e) { lingo_unreachable(); }
+    void operator()(Call_expr const* e) { lingo_unreachable(); }
+    void operator()(Dot_expr const* e) { lingo_unreachable(); }
+    void operator()(Field_expr const* e) { lingo_unreachable(); }
+    void operator()(Method_expr const* e) { lingo_unreachable(); }
+    void operator()(Index_expr const* e) { lingo_unreachable(); }
+    void operator()(Value_conv const* e) { lingo_unreachable(); }
+    void operator()(Block_conv const* e) { lingo_unreachable(); }
+    void operator()(Default_init const* e) { ev.eval_init(e, v); }
+    void operator()(Trivial_init const* e) { ev.eval_init(e, v); }
+    void operator()(Copy_init const* e) { ev.eval_init(e, v); }
+    void operator()(Reference_init const* e) { ev.eval_init(e, v); }
+  };
+
+  apply(e, Fn {*this, v});
 }
 
 
@@ -357,34 +400,29 @@ Evaluator::eval(Block_conv const* e)
 }
 
 
-// FIXME: This is wrong. We should be calling a function
-// that default initializes the created object.
-Value
-Evaluator::eval(Default_init const* e)
+void
+Evaluator::eval_init(Default_init const* e, Value& v)
 {
-  lingo_unimplemented();
-}
-
-// FIXME: This is wrong. We should be calling a function
-// that trivially initializes the created object.
-Value
-Evaluator::eval(Trivial_init const* e)
-{
-  lingo_unimplemented();
+  zero_init(v);
 }
 
 
-// FIXME: This should be calling a function that
-// copy iniitializes the created object.
-Value
-Evaluator::eval(Copy_init const* e)
+void
+Evaluator::eval_init(Trivial_init const* e, Value& v)
 {
-  lingo_unimplemented();
+  return;
 }
 
 
-Value
-Evaluator::eval(Reference_init const* e)
+void
+Evaluator::eval_init(Copy_init const* e, Value& v)
+{
+  eval(e->value());
+}
+
+
+void
+Evaluator::eval_init(Reference_init const* e, Value& v)
 {
   lingo_unimplemented();
 }
@@ -487,27 +525,7 @@ Evaluator::eval(Variable_decl const* d)
   Value& v1 = stack.top().bind(d->name(), v0).second;
 
   // Handle initialization.
-  //
-  // FIXME: The initializer should hold a function
-  // that can be evalated to perform the initialization
-  // procedure. We shouldn't be doing this explicitly.
-  Expr const* e = d->init();
-
-  // Perform default initialization.
-  if (is<Default_init>(e))
-    zero_init(v1);
-
-  // Perform trivial initialization.
-  else if (is<Trivial_init>(e))
-    trivial_init(v1);
-
-  // Perform copy initialization. We should guarantee
-  // that v1 and the evaluation of i produce values
-  // of the same shape.
-  else if (Copy_init const* i = as<Copy_init>(e))
-    v1 = eval(i->value());
-  else
-    throw std::runtime_error("unhandled initializer");
+  eval_init(d->init(), v1);
 }
 
 

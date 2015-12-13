@@ -206,15 +206,58 @@ Generator::gen(Expr const* e)
     llvm::Value* operator()(Index_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Value_conv const* e) const { return g.gen(e); }
     llvm::Value* operator()(Block_conv const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Default_init const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Trivial_init const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Copy_init const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Reference_init const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Default_init const* e) const { lingo_unreachable(); }
+    llvm::Value* operator()(Trivial_init const* e) const { lingo_unreachable(); }
+    llvm::Value* operator()(Copy_init const* e) const { lingo_unreachable(); }
+    llvm::Value* operator()(Reference_init const* e) const { lingo_unreachable(); }
   };
 
   return apply(e, Fn{*this});
 }
 
+
+void
+Generator::gen_init(llvm::Value* ptr, Expr const* e)
+{
+  struct Fn
+  {
+    Generator& g;
+    llvm::Value* ptr;
+
+    void operator()(Literal_expr const* e) const { lingo_unreachable(); }
+    void operator()(Id_expr const* e) const { lingo_unreachable(); }
+    void operator()(Decl_expr const* e) const { lingo_unreachable(); }
+    void operator()(Add_expr const* e) const { lingo_unreachable(); }
+    void operator()(Sub_expr const* e) const { lingo_unreachable(); }
+    void operator()(Mul_expr const* e) const { lingo_unreachable(); }
+    void operator()(Div_expr const* e) const { lingo_unreachable(); }
+    void operator()(Rem_expr const* e) const { lingo_unreachable(); }
+    void operator()(Neg_expr const* e) const { lingo_unreachable(); }
+    void operator()(Pos_expr const* e) const { lingo_unreachable(); }
+    void operator()(Eq_expr const* e) const { lingo_unreachable(); }
+    void operator()(Ne_expr const* e) const { lingo_unreachable(); }
+    void operator()(Lt_expr const* e) const { lingo_unreachable(); }
+    void operator()(Gt_expr const* e) const { lingo_unreachable(); }
+    void operator()(Le_expr const* e) const { lingo_unreachable(); }
+    void operator()(Ge_expr const* e) const { lingo_unreachable(); }
+    void operator()(And_expr const* e) const { lingo_unreachable(); }
+    void operator()(Or_expr const* e) const { lingo_unreachable(); }
+    void operator()(Not_expr const* e) const { lingo_unreachable(); }
+    void operator()(Call_expr const* e) const { lingo_unreachable(); }
+    void operator()(Dot_expr const* e) const { lingo_unreachable(); }
+    void operator()(Field_expr const* e) const { lingo_unreachable(); }
+    void operator()(Method_expr const* e) const { lingo_unreachable(); }
+    void operator()(Index_expr const* e) const { lingo_unreachable(); }
+    void operator()(Value_conv const* e) const { lingo_unreachable(); }
+    void operator()(Block_conv const* e) const { lingo_unreachable(); }
+    void operator()(Default_init const* e) const { g.gen_init(ptr, e); }
+    void operator()(Trivial_init const* e) const { g.gen_init(ptr, e); }
+    void operator()(Copy_init const* e) const { g.gen_init(ptr, e); }
+    void operator()(Reference_init const* e) const { g.gen_init(ptr, e); }
+  };
+
+  apply(e, Fn{*this, ptr});
+}
 
 // Return the value corresponding to a literal expression.
 llvm::Value*
@@ -597,46 +640,53 @@ Generator::gen(Block_conv const* e)
 
 
 // TODO: Return the value or store it?
-llvm::Value*
-Generator::gen(Default_init const* e)
+void
+Generator::gen_init(llvm::Value* ptr, Default_init const* e)
 {
   Type const* t = e->type();
   llvm::Type* type = get_type(t);
+  llvm::Value* init = nullptr;
 
   // Scalar types should get a 0 value in the
   // appropriate type.
   if (is_scalar(t))
-    return llvm::ConstantInt::get(type, 0);
+    init = llvm::ConstantInt::get(type, 0);
 
   // Aggregate types are zero initialized.
   //
   // NOTE: This isn't actually correct. Aggregate types
   // should be memberwise default initialized.
   if (is_aggregate(t))
-    return llvm::ConstantAggregateZero::get(type);
+    init = llvm::ConstantAggregateZero::get(type);
+
+  if (init != nullptr) {
+    build.CreateStore(init, ptr);
+    return;
+  }
 
   throw std::runtime_error("unhahndled default initializer");
 }
 
-llvm::Value*
-Generator::gen(Trivial_init const* e)
+void
+Generator::gen_init(llvm::Value* ptr, Trivial_init const* e)
 {
-  // Trivial initialization is a no-op.
-  return nullptr;
+  return;
 }
 
 // TODO: Return the value or store it?
-llvm::Value*
-Generator::gen(Copy_init const* e)
+void
+Generator::gen_init(llvm::Value* ptr, Copy_init const* e)
 {
-  return gen(e->value());
+  llvm::Value* init = gen(e->value());
+  build.CreateStore(init, ptr);
 }
 
 
-llvm::Value*
-Generator::gen(Reference_init const* e)
+void
+Generator::gen_init(llvm::Value* ptr, Reference_init const* e)
 {
-  return gen(e->object());
+  llvm::Value* init = gen(e->object());
+  build.CreateStore(init, ptr);
 }
 
 
@@ -871,11 +921,8 @@ Generator::gen_local(Variable_decl const* d)
   // Save the decl binding.
   stack.top().bind(d, ptr);
 
-  // Create a store if an initializer was generated.
-  if (llvm::Value* init = gen(d->init())) {
-    // Store the result in the object.
-    build.CreateStore(init, ptr);
-  }
+  // Generate the initializer.
+  gen_init(ptr, d->init());
 
   // If the variable has polymorphic record type,
   // initialize its vref to the appropriate table.
