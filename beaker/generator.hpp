@@ -94,7 +94,7 @@ struct Generator
   llvm::Value* gen(Index_expr const*);
   llvm::Value* gen(Value_conv const*);
   llvm::Value* gen(Block_conv const*);
-  llvm::Value* gen(Derived_conv const*);
+  llvm::Value* gen(Base_conv const*);
 
   void gen_init(llvm::Value*, Expr const*);
   void gen_init(llvm::Value*, Default_init const*);

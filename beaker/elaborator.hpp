@@ -81,7 +81,7 @@ public:
   Expr* elaborate(Index_expr* e);
   Expr* elaborate(Value_conv* e);
   Expr* elaborate(Block_conv* e);
-  Expr* elaborate(Derived_conv* e);
+  Expr* elaborate(Base_conv* e);
   Expr* elaborate(Default_init* e);
   Expr* elaborate(Trivial_init* e);
   Expr* elaborate(Copy_init* e);

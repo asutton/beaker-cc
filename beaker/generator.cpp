@@ -230,61 +230,40 @@ Generator::gen(Expr const* e)
     llvm::Value* operator()(Index_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Value_conv const* e) const { return g.gen(e); }
     llvm::Value* operator()(Block_conv const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Derived_conv const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Default_init const* e) const { lingo_unreachable(); }
-    llvm::Value* operator()(Trivial_init const* e) const { lingo_unreachable(); }
-    llvm::Value* operator()(Copy_init const* e) const { lingo_unreachable(); }
-    llvm::Value* operator()(Reference_init const* e) const { lingo_unreachable(); }
+    llvm::Value* operator()(Base_conv const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Init const* e) const { lingo_unreachable(); }
   };
 
   return apply(e, Fn{*this});
 }
 
 
+namespace
+{
+struct Gen_init_fn
+{
+  Generator& g;
+  llvm::Value* ptr;
+
+  template<typename T>
+  void operator()(T const*) { lingo_unreachable(); }
+  
+  void operator()(Default_init const* e) { g.gen_init(ptr, e); }
+  void operator()(Trivial_init const* e) { g.gen_init(ptr, e); }
+  void operator()(Copy_init const* e) { g.gen_init(ptr, e); }
+  void operator()(Reference_init const* e) { g.gen_init(ptr, e); }
+};
+
+
+} // namespace
+
+
 void
 Generator::gen_init(llvm::Value* ptr, Expr const* e)
 {
-  struct Fn
-  {
-    Generator& g;
-    llvm::Value* ptr;
-
-    // FIXME: Factor unreachables into a template.
-    void operator()(Literal_expr const* e) const { lingo_unreachable(); }
-    void operator()(Id_expr const* e) const { lingo_unreachable(); }
-    void operator()(Decl_expr const* e) const { lingo_unreachable(); }
-    void operator()(Add_expr const* e) const { lingo_unreachable(); }
-    void operator()(Sub_expr const* e) const { lingo_unreachable(); }
-    void operator()(Mul_expr const* e) const { lingo_unreachable(); }
-    void operator()(Div_expr const* e) const { lingo_unreachable(); }
-    void operator()(Rem_expr const* e) const { lingo_unreachable(); }
-    void operator()(Neg_expr const* e) const { lingo_unreachable(); }
-    void operator()(Pos_expr const* e) const { lingo_unreachable(); }
-    void operator()(Eq_expr const* e) const { lingo_unreachable(); }
-    void operator()(Ne_expr const* e) const { lingo_unreachable(); }
-    void operator()(Lt_expr const* e) const { lingo_unreachable(); }
-    void operator()(Gt_expr const* e) const { lingo_unreachable(); }
-    void operator()(Le_expr const* e) const { lingo_unreachable(); }
-    void operator()(Ge_expr const* e) const { lingo_unreachable(); }
-    void operator()(And_expr const* e) const { lingo_unreachable(); }
-    void operator()(Or_expr const* e) const { lingo_unreachable(); }
-    void operator()(Not_expr const* e) const { lingo_unreachable(); }
-    void operator()(Call_expr const* e) const { lingo_unreachable(); }
-    void operator()(Dot_expr const* e) const { lingo_unreachable(); }
-    void operator()(Field_expr const* e) const { lingo_unreachable(); }
-    void operator()(Method_expr const* e) const { lingo_unreachable(); }
-    void operator()(Index_expr const* e) const { lingo_unreachable(); }
-    void operator()(Value_conv const* e) const { lingo_unreachable(); }
-    void operator()(Block_conv const* e) const { lingo_unreachable(); }
-    void operator()(Derived_conv const* e) const { lingo_unreachable(); }
-    void operator()(Default_init const* e) const { g.gen_init(ptr, e); }
-    void operator()(Trivial_init const* e) const { g.gen_init(ptr, e); }
-    void operator()(Copy_init const* e) const { g.gen_init(ptr, e); }
-    void operator()(Reference_init const* e) const { g.gen_init(ptr, e); }
-  };
-
-  apply(e, Fn{*this, ptr});
+  apply(e, Gen_init_fn{*this, ptr});
 }
+
 
 // Return the value corresponding to a literal expression.
 llvm::Value*
@@ -670,7 +649,7 @@ Generator::gen(Block_conv const* e)
 // for derivation from the first base class, a bit-cast
 // would be appropriate.
 llvm::Value*
-Generator::gen(Derived_conv const* e)
+Generator::gen(Base_conv const* e)
 {
   llvm::Value* a = gen(e->source());
   std::vector<llvm::Value*> args(e->path().size(), build.getInt32(0));

@@ -44,59 +44,41 @@ Evaluator::eval(Expr const* e)
     Value operator()(Index_expr const* e) { return ev.eval(e); }
     Value operator()(Value_conv const* e) { return ev.eval(e); }
     Value operator()(Block_conv const* e) { return ev.eval(e); }
-    Value operator()(Derived_conv const* e) { return ev.eval(e); }
-    Value operator()(Default_init const* e) { lingo_unreachable(); }
-    Value operator()(Trivial_init const* e) { lingo_unreachable(); }
-    Value operator()(Copy_init const* e) { lingo_unreachable(); }
-    Value operator()(Reference_init const* e) { lingo_unreachable(); }
+    Value operator()(Base_conv const* e) { return ev.eval(e); }
+    
+    // Initializers are not evaluated like normal expressions.
+    Value operator()(Init const* e) { lingo_unreachable(); }
   };
 
   return apply(e, Fn {*this});
 }
 
 
+namespace
+{
+
+// Dispatch for eval_+init
+struct Eval_init_fn
+{
+  Evaluator& ev;
+  Value& v;
+
+  template<typename T>
+  void operator()(T conste) { lingo_unreachable(); };
+
+  void operator()(Default_init const* e) { ev.eval_init(e, v); }
+  void operator()(Trivial_init const* e) { ev.eval_init(e, v); }
+  void operator()(Copy_init const* e) { ev.eval_init(e, v); }
+  void operator()(Reference_init const* e) { ev.eval_init(e, v); }
+};
+
+} // namespace
+
+
 void
-Evaluator::eval_init(Expr const* e, Value& v) {
-  struct Fn
-  {
-    Evaluator& ev;
-    Value& v;
-
-    // FIXME: Factor all unreachables into a template.
-    void operator()(Literal_expr const* e) { lingo_unreachable(); }
-    void operator()(Id_expr const* e) { lingo_unreachable(); }
-    void operator()(Decl_expr const* e) { lingo_unreachable(); }
-    void operator()(Add_expr const* e) { lingo_unreachable(); }
-    void operator()(Sub_expr const* e) { lingo_unreachable(); }
-    void operator()(Mul_expr const* e) { lingo_unreachable(); }
-    void operator()(Div_expr const* e) { lingo_unreachable(); }
-    void operator()(Rem_expr const* e) { lingo_unreachable(); }
-    void operator()(Neg_expr const* e) { lingo_unreachable(); }
-    void operator()(Pos_expr const* e) { lingo_unreachable(); }
-    void operator()(Eq_expr const* e) { lingo_unreachable(); }
-    void operator()(Ne_expr const* e) { lingo_unreachable(); }
-    void operator()(Lt_expr const* e) { lingo_unreachable(); }
-    void operator()(Gt_expr const* e) { lingo_unreachable(); }
-    void operator()(Le_expr const* e) { lingo_unreachable(); }
-    void operator()(Ge_expr const* e) { lingo_unreachable(); }
-    void operator()(And_expr const* e) { lingo_unreachable(); }
-    void operator()(Or_expr const* e) { lingo_unreachable(); }
-    void operator()(Not_expr const* e) { lingo_unreachable(); }
-    void operator()(Call_expr const* e) { lingo_unreachable(); }
-    void operator()(Dot_expr const* e) { lingo_unreachable(); }
-    void operator()(Field_expr const* e) { lingo_unreachable(); }
-    void operator()(Method_expr const* e) { lingo_unreachable(); }
-    void operator()(Index_expr const* e) { lingo_unreachable(); }
-    void operator()(Value_conv const* e) { lingo_unreachable(); }
-    void operator()(Block_conv const* e) { lingo_unreachable(); }
-    void operator()(Derived_conv const* e) { lingo_unreachable(); }
-    void operator()(Default_init const* e) { ev.eval_init(e, v); }
-    void operator()(Trivial_init const* e) { ev.eval_init(e, v); }
-    void operator()(Copy_init const* e) { ev.eval_init(e, v); }
-    void operator()(Reference_init const* e) { ev.eval_init(e, v); }
-  };
-
-  apply(e, Fn {*this, v});
+Evaluator::eval_init(Expr const* e, Value& v) 
+{
+  apply(e, Eval_init_fn {*this, v});
 }
 
 
@@ -404,7 +386,7 @@ Evaluator::eval(Block_conv const* e)
 
 
 Value
-Evaluator::eval(Derived_conv const* e)
+Evaluator::eval(Base_conv const* e)
 {
   throw std::runtime_error("not implemented");
 }

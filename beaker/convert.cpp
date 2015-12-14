@@ -33,15 +33,19 @@ convert_to_block(Expr* e)
     return e;
 }
 
+
+// Try to form 
 Expr*
-convert_to_derived(Expr* e){
+convert_to_base(Expr* e)
+{
   if (Record_type const* r = as<Record_type>(e->type()->nonref())) {
-    // std::cout << "here " << *e->type() << std::endl;
-    return new Derived_conv(get_record_type(r->declaration()), e);
+    return new Base_conv(get_record_type(r->declaration()), e);
   }
    else
     return e;
 }
+
+
 // Find a conversion from e to t. If no such
 // conversion exists, return nullptr. Diagnostics
 // are better handled in the calling context.
@@ -73,44 +77,40 @@ convert(Expr* e, Type const* t)
   //    A[N] -> B[]
   // std::cout << *t << "\n";
   // std::cout << *c << "\n"; // prints out d
-
   if (is<Block_type>(t)) {
     c = convert_to_block(c);
     if (c->type() == t)
       return c;
-  } else if (is<Reference_type>(t)) {
+  } 
+
+  // FIXME: Clean this up. 
+  else if (is<Reference_type>(t)) {
       const Reference_type* v = cast<Reference_type>(t);
       if(Record_type const* goal = as<Record_type>(v->type())) {
         if (is_derived(c->type()->nonref(), v->type())) {
-          Derived_conv *ret = as<Derived_conv>(convert_to_derived(c));
+          Base_conv *ret = as<Base_conv>(convert_to_base(c));
           Record_type const *d = as<Record_type>(c->type()->nonref());
           // Build path from goal to derived
-          if(goal->declaration() == d->declaration()){
+          if(goal->declaration() == d->declaration()) {
             return ret;
-          }else{
+          } else {
             ret->path_.push_back(0);
             Record_decl* decl = d->declaration();
-            while(decl && decl != goal->declaration()){
+            while(decl && decl != goal->declaration()) {
               ret->path_.push_back(0);
               decl = decl->base()->declaration();
             }
             return ret;
           }
         }
-
       }
 
-      //if (c->type() == t)
+      if (c->type() == t)
         return c;
   }
 
-  // If we've exhaused all possible conversions
-  // without matching the type, then just return
-  // nullptr.
-  // adjustment
-  //conversion
-  //qualification
-
+  // If we've exhaused all possible conversions without matching 
+  // the type, then just return nullptr.
   return nullptr;
 }
 

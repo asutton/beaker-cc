@@ -156,7 +156,7 @@ operator<<(std::ostream& os, Expr const& e)
     void operator()(Index_expr const* e) { os << *e; }
     void operator()(Value_conv const* e) { os << *e; }
     void operator()(Block_conv const* e) { os << *e; }
-    void operator()(Derived_conv const* e) { os << *e; }
+    void operator()(Base_conv const* e) { os << *e; }
     void operator()(Default_init const* e) { os << *e; }
     void operator()(Trivial_init const* e) { os << *e; }
     void operator()(Copy_init const* e) { os << *e; }
@@ -354,9 +354,9 @@ operator<<(std::ostream& os, Block_conv const& e)
 }
 
 std::ostream&
-operator<<(std::ostream& os, Derived_conv const& e)
+operator<<(std::ostream& os, Base_conv const& e)
 {
-  return os << "__to_derived("
+  return os << "__to_base("
          << *e.source() << ','
          << *e.target() << ')';
 }
@@ -416,9 +416,7 @@ operator<<(std::ostream& os, Decl const& d)
   */
 
   // Write everything in declared object format.
-  os << *d.name() << " : " << *d.type();
-
-  return os;
+  return os << *d.name() << " : " << *d.type();
 }
 
 

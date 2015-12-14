@@ -345,7 +345,7 @@ Elaborator::elaborate(Expr* e)
     Expr* operator()(Index_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Value_conv* e) const { return elab.elaborate(e); }
     Expr* operator()(Block_conv* e) const { return elab.elaborate(e); }
-    Expr* operator()(Derived_conv* e) const { return elab.elaborate(e); }
+    Expr* operator()(Base_conv* e) const { return elab.elaborate(e); }
     Expr* operator()(Default_init* e) const { return elab.elaborate(e); }
     Expr* operator()(Trivial_init* e) const { return elab.elaborate(e); }
     Expr* operator()(Copy_init* e) const { return elab.elaborate(e); }
@@ -1171,7 +1171,7 @@ Elaborator::elaborate(Block_conv* e)
 }
 
 Expr*
-Elaborator::elaborate(Derived_conv* e)
+Elaborator::elaborate(Base_conv* e)
 {
   return e;
 }
