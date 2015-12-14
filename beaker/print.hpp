@@ -13,6 +13,8 @@ std::ostream& operator<<(std::ostream&, Id_type const&);
 std::ostream& operator<<(std::ostream&, Boolean_type const&);
 std::ostream& operator<<(std::ostream&, Character_type const&);
 std::ostream& operator<<(std::ostream&, Integer_type const&);
+std::ostream& operator<<(std::ostream&, Float_type const&);
+std::ostream& operator<<(std::ostream&, Double_type const&);
 std::ostream& operator<<(std::ostream&, Function_type const&);
 std::ostream& operator<<(std::ostream&, Block_type const&);
 std::ostream& operator<<(std::ostream&, Array_type const&);

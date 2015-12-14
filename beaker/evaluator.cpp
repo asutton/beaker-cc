@@ -420,7 +420,10 @@ get_value(Type const* t)
     // Produce an integer value.
     Value operator()(Boolean_type const*) { return 0; }
     Value operator()(Character_type const*) { return 0; }
-    Value operator()(Integer_type const*) { return 0; }
+    //TODO: get actual types and sign value
+    Value operator()(Integer_type const* t) { return 0;}
+    Value operator()(Float_type const*) { return (float)0;}
+    Value operator()(Double_type const*) { return (double)0;}
 
     // Produce a function value.
     Value operator()(Function_type const*)

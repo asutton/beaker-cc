@@ -49,13 +49,27 @@ spelling(Token_kind k)
     case else_kw: return "else";
     case foreign_kw: return "else";
     case if_kw: return "if";
-    case int_kw: return "int";
     case return_kw: return "return";
     case struct_kw: return "struct";
     case this_kw: return "this";
     case var_kw: return "var";
     case virtual_kw: return "virtual";
     case while_kw: return "while";
+    case int_kw: return "int";
+    case uint_kw: return "uint";
+    case short_kw: return "short";
+    case ushort_kw: return "ushort";
+    case long_kw: return "long";
+    case ulong_kw: return "ulong";
+    case int16_kw: return "int16";
+    case uint16_kw: return "uint16";
+    case int32_kw: return "int32";
+    case uint32_kw: return "uint32";
+    case int64_kw: return "int64";
+    case uint64_kw: return "uint64";
+    case float_kw: return "float";
+    case double_kw: return "double";
+
 
     default: return "<unspecified>";
   }
@@ -107,11 +121,24 @@ init_symbols(Symbol_table& syms)
   syms.put<Symbol>("else", else_kw);
   syms.put<Symbol>("foreign", foreign_kw);
   syms.put<Symbol>("if", if_kw);
-  syms.put<Symbol>("int", int_kw);
   syms.put<Symbol>("return", return_kw);
   syms.put<Symbol>("struct", struct_kw);
   syms.put<Symbol>("this", this_kw);
   syms.put<Symbol>("var", var_kw);
+  syms.put<Symbol>("int", int_kw);
+  syms.put<Symbol>("uint", uint_kw);
+  syms.put<Symbol>("short", short_kw);
+  syms.put<Symbol>("ushort", ushort_kw);
+  syms.put<Symbol>("long", long_kw);
+  syms.put<Symbol>("ulong", ulong_kw);
+  syms.put<Symbol>("int16", int16_kw);
+  syms.put<Symbol>("uint16", uint16_kw);
+  syms.put<Symbol>("int32", int32_kw);
+  syms.put<Symbol>("uint32", uint32_kw);
+  syms.put<Symbol>("int64", int64_kw);
+  syms.put<Symbol>("uint64", uint64_kw);
+  syms.put<Symbol>("float", float_kw);
+  syms.put<Symbol>("double", double_kw);
   syms.put<Symbol>("virtual", virtual_kw);
   syms.put<Symbol>("while", while_kw);
 

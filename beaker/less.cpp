@@ -99,6 +99,8 @@ is_less(Type const* a, Type const* b)
     bool operator()(Boolean_type const* a) { return false; }
     bool operator()(Character_type const* a) { return false; }
     bool operator()(Integer_type const* a) { return false; }
+    bool operator()(Float_type const* a) { return false; }
+    bool operator()(Double_type const* a) { return false; }
     bool operator()(Function_type const* a) { return is_less(a, cast<Function_type>(b)); }
     bool operator()(Array_type const* a) { return is_less(a, cast<Array_type>(b)); }
     bool operator()(Block_type const* a) { return is_less(a, cast<Block_type>(b)); }

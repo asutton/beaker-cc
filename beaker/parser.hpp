@@ -80,6 +80,7 @@ private:
   Expr* on_id(Token);
   Expr* on_bool(Token);
   Expr* on_int(Token);
+  Expr* on_float(Token);
   Expr* on_char(Token);
   Expr* on_str(Token);
   Expr* on_add(Expr*, Expr*);
@@ -165,7 +166,6 @@ inline
 Parser::Parser(Symbol_table& s, Token_stream& t)
   : syms_(s), ts_(t), locs_(nullptr), errs_(0), term_()
 { }
-
 
 inline
 Parser::Parser(Symbol_table& s, Token_stream& t, Location_map& l)
