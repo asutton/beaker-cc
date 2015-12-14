@@ -35,8 +35,10 @@ convert_to_block(Expr* e)
 
 Expr*
 convert_to_derived(Expr* e){
-  if (Record_type const* r = as<Record_type>(e->type()))
+  if (Record_type const* r = as<Record_type>(e->type()->nonref())) {
+    // std::cout << "here " << *e->type() << std::endl;
     return new Derived_conv(get_record_type(r->declaration()), e);
+  }
    else
     return e;
 }
@@ -69,8 +71,8 @@ convert(Expr* e, Type const* t)
   // conversion. This is the case when we have
   //
   //    A[N] -> B[]
-  std::cout << *t << "\n";
-  std::cout << *c << "\n"; // prints out d
+  // std::cout << *t << "\n";
+  // std::cout << *c << "\n"; // prints out d
 
   if (is<Block_type>(t)) {
     c = convert_to_block(c);
@@ -79,8 +81,8 @@ convert(Expr* e, Type const* t)
   } else if (is<Reference_type>(t)) {
       const Reference_type* v = cast<Reference_type>(t);
       if(is<Record_type>(v->type())) {
-        std::cout << *c->type()->nonref() << "\n";
-        std::cout << *v->type() << "\n";
+        // std::cout << *c->type()->nonref() << "\n";
+        // std::cout << *v->type() << "\n";
 
         if (is_derived(c->type()->nonref(), v->type()))
           c = convert_to_derived(c);
