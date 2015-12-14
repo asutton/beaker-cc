@@ -345,6 +345,7 @@ Elaborator::elaborate(Expr* e)
     Expr* operator()(Index_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Value_conv* e) const { return elab.elaborate(e); }
     Expr* operator()(Block_conv* e) const { return elab.elaborate(e); }
+    Expr* operator()(Derived_conv* e) const { return elab.elaborate(e); }
     Expr* operator()(Default_init* e) const { return elab.elaborate(e); }
     Expr* operator()(Trivial_init* e) const { return elab.elaborate(e); }
     Expr* operator()(Copy_init* e) const { return elab.elaborate(e); }
@@ -916,9 +917,13 @@ Elaborator::elaborate(Call_expr* e)
   // If the target is of the form x.m or x.ovl, insert x
   // into the argument list and update the function target.
   if (Dot_expr* dot = as_method(f)) {
-    // Build the "this" argument.
-    Expr* self = dot->container();
-    args.insert(args.begin(), self);
+      // Build the "this" argument.
+      //Method_expr* m = dynamic_cast<Method_expr*>(dot);
+
+      Expr* self = dot->container();
+
+      //Expr* self = m->container();
+      args.insert(args.begin(), self);
 
     // Adjust the function target.
     f = dot->member();
@@ -998,6 +1003,14 @@ get_path(Record_decl* r, Field_decl* f)
   lingo_assert(!p.empty());
   return p;
 }
+
+//Method_path
+//get_path(Record_decl* r, Method_decl* m){
+//  Method_path p;
+//  get_path(r, m, p);
+//  lingo_assert(!p.empty());
+//  return p;
+//}
 
 
 } // namespace
@@ -1157,6 +1170,11 @@ Elaborator::elaborate(Block_conv* e)
   return e;
 }
 
+Expr*
+Elaborator::elaborate(Derived_conv* e)
+{
+  return e;
+}
 
 // TODO: I probably need to elaborate the type.
 Expr*
