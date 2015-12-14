@@ -378,9 +378,6 @@ Aggregate_value::Aggregate_value(char const* s, std::size_t n)
 void zero_init(Value&);
 
 
-void trivial_init(Value&);
-
-
 // -------------------------------------------------------------------------- //
 // Other types and functions
 

@@ -92,10 +92,12 @@ struct Generator
   llvm::Value* gen(Index_expr const*);
   llvm::Value* gen(Value_conv const*);
   llvm::Value* gen(Block_conv const*);
-  llvm::Value* gen(Default_init const*);
-  llvm::Value* gen(Trivial_init const*);
-  llvm::Value* gen(Copy_init const*);
-  llvm::Value* gen(Reference_init const*);
+
+  void gen_init(llvm::Value*, Expr const*);
+  void gen_init(llvm::Value*, Default_init const*);
+  void gen_init(llvm::Value*, Trivial_init const*);
+  void gen_init(llvm::Value*, Copy_init const*);
+  void gen_init(llvm::Value*, Reference_init const*);
 
   void gen(Stmt const*);
   void gen(Empty_stmt const*);
