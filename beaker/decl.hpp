@@ -42,6 +42,13 @@ struct Decl
 
   Decl const*   context() const { return cxt_; }
 
+  // Polymorphic declarations. Note that not all
+  // declarations can be polymorphic. These methods
+  // are provided here for convenience.
+  bool is_virtual() const  { return spec_ & virtual_spec; }
+  bool is_abstract() const { return spec_ & abstract_spec; }
+  bool is_polymorphic() const { return is_virtual() || is_abstract(); }
+
   Specifier     spec_;
   Symbol const* name_;
   Type const*   type_;
@@ -110,7 +117,9 @@ struct Function_decl : Decl
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
 
-  Decl_seq const&      parameters() const { return parms_; }
+  Decl_seq const& parameters() const         { return parms_; }
+  Decl_seq const* virtual_parameters() const { return vparms_; }
+  Decl_seq*       virtual_parameters()       { return vparms_; }
 
   Function_type const* type() const;
   Type const*          return_type() const;
@@ -118,16 +127,16 @@ struct Function_decl : Decl
   Stmt const* body() const { return body_; }
   Stmt*       body()       { return body_; }
 
-  bool is_virtual() const  { return spec_ & virtual_spec; }
-  bool is_abstract() const { return spec_ & abstract_spec; }
-  bool is_polymorphic() const { return is_virtual() || is_abstract(); }
-
-  Decl_seq parms_;
-  Stmt*    body_;
+  Decl_seq  parms_;
+  Stmt*     body_;
+  Decl_seq* vparms_;
 };
 
 
 // Represents parameter declarations.
+//
+// TODO: Does a parameter also need to keep track of
+// its index?
 struct Parameter_decl : Decl
 {
   using Decl::Decl;
@@ -174,9 +183,6 @@ struct Record_decl : Decl
   Decl_seq*       vtable()       { return vtbl_; }
 
   bool is_empty() const;
-  bool is_virtual() const     { return spec_ & virtual_spec; }
-  bool is_abstract() const    { return spec_ & abstract_spec; }
-  bool is_polymorphic() const { return is_virtual() || is_abstract(); }
 
   Scope          scope_;
   Decl_seq       fields_;
@@ -338,6 +344,5 @@ apply(Decl* d, F fn)
   Generic_decl_mutator<F, T> v = fn;
   return accept(d, v);
 }
-
 
 #endif

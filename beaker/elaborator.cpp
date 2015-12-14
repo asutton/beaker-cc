@@ -1338,6 +1338,34 @@ Elaborator::elaborate(Parameter_decl* d)
 {
   d->type_ = elaborate_type(d->type_);
   declare(d);
+
+  Function_decl* fn = stack.function();
+
+  // Check for virtual parameters. A parameter can only be
+  // declared virtual if t has polymorphic type (or is a reference
+  // to an object of polymorphic type).
+  if (d->is_virtual()) {
+    Type const* t0 = d->type()->nonref();
+    if (!is<Record_type>(t0))
+      throw Type_error(locate(d), "type of virtual parameter is not a record type");
+    Record_type const* t1 = cast<Record_type>(t0);
+    Record_decl const* rec = t1->declaration();
+    if (!rec->is_polymorphic())
+      throw Type_error(locate(d), "type of virtual parameter is not polymorphic");
+
+    // Mark the function as being virtual.
+    fn->spec_ |= virtual_spec;
+
+    // Save virtual parameter.
+    //
+    // TODO: What are we actually going to do with
+    // this thing?
+    if (!fn->vparms_)
+      fn->vparms_ = new Decl_seq {d};
+    else
+      fn->vparms_->push_back(d);
+  }
+
   return d;
 }
 

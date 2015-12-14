@@ -1328,7 +1328,7 @@ Parser::on_parameter(Specifier spec, Type const* t)
 Decl*
 Parser::on_parameter(Specifier spec, Token tok, Type const* t)
 {
-  return new Parameter_decl(tok.symbol(), t);
+  return new Parameter_decl(spec, tok.symbol(), t);
 }
 
 
