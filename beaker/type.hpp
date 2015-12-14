@@ -48,6 +48,8 @@ struct Type::Visitor
   virtual void visit(Boolean_type const*) = 0;
   virtual void visit(Character_type const*) = 0;
   virtual void visit(Integer_type const*) = 0;
+  virtual void visit(Float_type const*) = 0;
+  virtual void visit(Double_type const*) = 0;
   virtual void visit(Function_type const*) = 0;
   virtual void visit(Array_type const*) = 0;
   virtual void visit(Block_type const*) = 0;
@@ -89,6 +91,31 @@ struct Character_type : Type
 // The type int.
 struct Integer_type : Type
 {
+  Integer_type(): _signed(true), _precision(32) { }
+  Integer_type(bool s, int p): _signed(s), _precision(p) { }
+  Integer_type(bool s): _signed(s), _precision(32) { }
+  Integer_type(int p): _signed(true), _precision(p) { }
+    
+  void accept(Visitor& v) const { v.visit(this); };
+    
+  bool is_signed() const { return _signed; }
+  int  precision() const { return _precision; }
+    
+  bool _signed;
+  int _precision;
+};
+
+
+// The type float.
+struct Float_type : Type
+{   
+  void accept(Visitor& v) const { v.visit(this); };
+};
+
+
+// The type double.
+struct Double_type : Type
+{   
   void accept(Visitor& v) const { v.visit(this); };
 };
 
@@ -194,7 +221,9 @@ Type const* get_type_kind();
 Type const* get_id_type(Symbol const*);
 Type const* get_boolean_type();
 Type const* get_character_type();
-Type const* get_integer_type();
+Type const* get_integer_type(bool = true, int = 32);
+Type const* get_float_type();
+Type const* get_double_type();
 Type const* get_function_type(Type_seq const&, Type const*);
 Type const* get_function_type(Decl_seq const&, Type const*);
 Type const* get_array_type(Type const*, Expr*);
@@ -255,6 +284,8 @@ struct Generic_type_visitor : Type::Visitor, lingo::Generic_visitor<F, T>
   void visit(Boolean_type const* t) { this->invoke(t); }
   void visit(Character_type const* t) { this->invoke(t); }
   void visit(Integer_type const* t) { this->invoke(t); }
+  void visit(Float_type const* t) { this->invoke(t); }
+  void visit(Double_type const* t) { this->invoke(t); }
   void visit(Function_type const* t) { this->invoke(t); }
   void visit(Array_type const* t) { this->invoke(t); }
   void visit(Block_type const* t) { this->invoke(t); }

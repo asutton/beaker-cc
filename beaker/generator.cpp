@@ -58,6 +58,8 @@ Generator::get_type(Type const* t)
     llvm::Type* operator()(Boolean_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Character_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Integer_type const* t) const { return g.get_type(t); }
+    llvm::Type* operator()(Float_type const* t) const { return g.get_type(t); }
+    llvm::Type* operator()(Double_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Function_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Array_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Block_type const* t) const { return g.get_type(t); }
@@ -95,14 +97,36 @@ Generator::get_type(Character_type const*)
   return build.getInt8Ty();
 }
 
-
-// Return the 32 bit integer type.
+// Return the standard integer type.
 llvm::Type*
-Generator::get_type(Integer_type const*)
+Generator::get_type(Integer_type const* t)
 {
-  return build.getInt32Ty();
+  switch (t->precision())
+  {
+      case 32:
+        return build.getInt32Ty();
+      case 16:
+        return build.getInt16Ty();
+      case 64:
+        return build.getInt64Ty();
+      default:
+        throw std::runtime_error("No integer with precision " + std::to_string(t->precision()));
+  }
 }
 
+// Return the float type.
+llvm::Type*
+Generator::get_type(Float_type const*)
+{
+  return build.getFloatTy();
+}
+
+// Return the double type.
+llvm::Type*
+Generator::get_type(Double_type const*)
+{
+  return build.getDoubleTy();
+}
 
 // Return a function type.
 llvm::Type*

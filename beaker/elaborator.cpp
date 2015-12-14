@@ -182,6 +182,8 @@ Elaborator::elaborate(Type const* t)
     Type const* operator()(Boolean_type const* t) { return elab.elaborate(t); }
     Type const* operator()(Character_type const* t) { return elab.elaborate(t); }
     Type const* operator()(Integer_type const* t) { return elab.elaborate(t); }
+    Type const* operator()(Float_type const* t) { return elab.elaborate(t); }
+    Type const* operator()(Double_type const* t) { return elab.elaborate(t); }
     Type const* operator()(Function_type const* t) { return elab.elaborate(t); }
     Type const* operator()(Block_type const* t) { return elab.elaborate(t); }
     Type const* operator()(Array_type const* t) { return elab.elaborate(t); }
@@ -238,13 +240,23 @@ Elaborator::elaborate(Character_type const* t)
   return t;
 }
 
-
 Type const*
 Elaborator::elaborate(Integer_type const* t)
 {
   return t;
 }
 
+Type const*
+Elaborator::elaborate(Float_type const* t)
+{
+  return t;
+}
+
+Type const*
+Elaborator::elaborate(Double_type const* t)
+{
+  return t;
+}
 
 // Elaborate each type in the function type.
 Type const*

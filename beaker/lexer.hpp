@@ -176,7 +176,7 @@ public:
   Token ampersand();
   Token bar();
 
-  Token integer();
+  Token number();
   Token word();
   Token character();
   Token string();
@@ -189,6 +189,7 @@ private:
   Token on_token();
   Token on_word();
   Token on_integer();
+  Token on_floating_point();
   Token on_character();
   Token on_string();
 
@@ -490,15 +491,25 @@ Lexer::word()
 }
 
 
-// integer ::= digit+
+// number ::= digit+ or decimal point
 inline Token
-Lexer::integer()
+Lexer::number()
 {
+  bool isFloating = false;
   assert(is_decimal_digit(peek()));
   digit();
-  while (is_decimal_digit(peek()))
+  while (is_decimal_digit(peek()) || peek() == '.') {
+    if(peek() == '.' && isFloating == false)
+      isFloating = true;
+    else
+      throw std::runtime_error("invalid number (multiple decimal points)");
+
     digit();
-  return on_integer();
+  }
+  if(isFloating) 
+    return on_integer();
+  else
+    return on_floating_point();
 }
 
 
@@ -506,7 +517,7 @@ Lexer::integer()
 inline void
 Lexer::digit()
 {
-  assert(is_decimal_digit(peek()));
+  assert(is_decimal_digit(peek()) || peek() == '.');
   get();
 }
 

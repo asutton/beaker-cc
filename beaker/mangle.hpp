@@ -18,6 +18,8 @@ void mangle(std::ostream&, Id_type const*);
 void mangle(std::ostream&, Boolean_type const*);
 void mangle(std::ostream&, Character_type const*);
 void mangle(std::ostream&, Integer_type const*);
+void mangle(std::ostream&, Float_type const*);
+void mangle(std::ostream&, Double_type const*);
 void mangle(std::ostream&, Function_type const*);
 void mangle(std::ostream&, Array_type const*);
 void mangle(std::ostream&, Block_type const*);

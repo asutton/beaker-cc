@@ -23,6 +23,8 @@ operator<<(std::ostream& os, Type const& t)
     void operator()(Boolean_type const* t) { os << *t; }
     void operator()(Character_type const* t) { os << *t; }
     void operator()(Integer_type const* t) { os << *t; }
+    void operator()(Float_type const* t) { os << *t; }
+    void operator()(Double_type const* t) { os << *t; }
     void operator()(Function_type const* t) { os << *t; }
     void operator()(Block_type const* t) { os << *t; }
     void operator()(Array_type const* t) { os << *t; }
@@ -55,13 +57,23 @@ operator<<(std::ostream& os, Character_type const&)
   return os << "char";
 }
 
-
 std::ostream&
-operator<<(std::ostream& os, Integer_type const&)
+operator<<(std::ostream& os, Integer_type const& t)
 {
-  return os << "int";
+  return os << (t.is_signed()?"":"u") << "int" << std::to_string(t.precision());
 }
 
+std::ostream&
+operator<<(std::ostream& os, Float_type const&)
+{
+  return os << "float";
+}
+
+std::ostream&
+operator<<(std::ostream& os, Double_type const&)
+{
+  return os << "double";
+}
 
 std::ostream&
 operator<<(std::ostream& os, Function_type const& t)

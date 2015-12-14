@@ -63,7 +63,6 @@ enum Token_kind
   else_kw,
   foreign_kw,
   if_kw,
-  int_kw,
   return_kw,
   struct_kw,
   this_kw,
@@ -71,10 +70,25 @@ enum Token_kind
   var_kw,
   virtual_kw,
   while_kw,
+  int_kw,
+  uint_kw,
+  short_kw,
+  ushort_kw,
+  long_kw,
+  ulong_kw,
+  int16_kw,
+  uint16_kw,
+  int32_kw,
+  uint32_kw,
+  int64_kw,
+  uint64_kw,
+  float_kw,
+  double_kw,
 
   // Multi-valued tokens
   boolean_tok,      // true | false
   integer_tok,      // digit+
+  floating_tok,     // digit+ or decimal point
   character_tok,    // narrow characters
   string_tok,       // narrow string literals
   identifier_tok,   // letter (letter | digit)*
@@ -112,6 +126,7 @@ public:
   Identifier_sym const* identifier_symbol() const;
   Boolean_sym const*    boolean_symbol() const;
   Integer_sym const*    integer_symbol() const;
+  Floating_sym const*   floating_symbol() const;
   Character_sym const*  character_symbol() const;
   String_sym const*     string_symbol() const;
 
@@ -206,6 +221,14 @@ inline Integer_sym const*
 Token::integer_symbol() const
 {
   return cast<Integer_sym>(sym_);
+}
+
+
+// Returns the floating point symbol for the token.
+inline Floating_sym const*
+Token::floating_symbol() const
+{
+  return cast<Floating_sym>(sym_);
 }
 
 

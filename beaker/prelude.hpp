@@ -69,6 +69,8 @@ struct Id_type;
 struct Boolean_type;
 struct Character_type;
 struct Integer_type;
+struct Float_type;
+struct Double_type;
 struct Function_type;
 struct Array_type;
 struct Block_type;
