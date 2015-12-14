@@ -470,7 +470,7 @@ struct Field_expr : Dot_expr
   Field_path path_;
 };
 
-using Method_path = std::vector<int>;
+
 // An expression of the form e.m where m is
 // a method in the type of e.
 struct Method_expr : Dot_expr
@@ -484,8 +484,6 @@ struct Method_expr : Dot_expr
 
   Record_decl* record() const;
   Method_decl* method() const;
-  Method_path  path() const { return path_;}
-  Method_path path_;
   Decl* fn;
 };
 
@@ -549,8 +547,12 @@ struct Block_conv : Conv
 // Represents the conversion of a base class to a derived class
 struct Derived_conv : Conv
 {
+  using Method_path = std::vector<int>;
   using Conv::Conv;
 
+  Method_path path_;
+
+  Method_path path() const {return path_;}
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
 };

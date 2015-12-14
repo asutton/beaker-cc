@@ -80,13 +80,26 @@ convert(Expr* e, Type const* t)
       return c;
   } else if (is<Reference_type>(t)) {
       const Reference_type* v = cast<Reference_type>(t);
-      if(is<Record_type>(v->type())) {
-        // std::cout << *c->type()->nonref() << "\n";
-        // std::cout << *v->type() << "\n";
+      if(Record_type const* goal = as<Record_type>(v->type())) {
+        if (is_derived(c->type()->nonref(), v->type())) {
+          Derived_conv *ret = as<Derived_conv>(convert_to_derived(c));
+          Record_type const *d = as<Record_type>(c->type()->nonref());
+          // Build path from goal to derived
+          if(goal->declaration() == d->declaration()){
+            return ret;
+          }else{
+            ret->path_.push_back(0);
+            Record_decl* decl = d->declaration();
+            while(decl && decl != goal->declaration()){
+              ret->path_.push_back(0);
+              decl = decl->base()->declaration();
+            }
+            return ret;
+          }
+        }
 
-        if (is_derived(c->type()->nonref(), v->type()))
-          c = convert_to_derived(c);
       }
+
       //if (c->type() == t)
         return c;
   }

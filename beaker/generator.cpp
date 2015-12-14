@@ -597,7 +597,10 @@ Generator::gen(Derived_conv const* e)
   llvm::Value* a = gen(e->source());
 
   llvm::Value *zero = build.getInt32(0);
-  llvm::Value *args[] = {zero, zero};
+  std::vector<llvm::Value*>args;
+  for(int i = 0; i < e->path().size(); ++i)
+    args.push_back(zero);
+  //llvm::Value *args[] = {zero, zero, zero};
   return build.CreateGEP(a,args);
 }
 
