@@ -230,6 +230,7 @@ Generator::gen(Expr const* e)
     llvm::Value* operator()(Index_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Value_conv const* e) const { return g.gen(e); }
     llvm::Value* operator()(Block_conv const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Derived_conv const* e) const { return g.gen(e); }
     llvm::Value* operator()(Default_init const* e) const { lingo_unreachable(); }
     llvm::Value* operator()(Trivial_init const* e) const { lingo_unreachable(); }
     llvm::Value* operator()(Copy_init const* e) const { lingo_unreachable(); }
@@ -248,6 +249,7 @@ Generator::gen_init(llvm::Value* ptr, Expr const* e)
     Generator& g;
     llvm::Value* ptr;
 
+    // FIXME: Factor unreachables into a template.
     void operator()(Literal_expr const* e) const { lingo_unreachable(); }
     void operator()(Id_expr const* e) const { lingo_unreachable(); }
     void operator()(Decl_expr const* e) const { lingo_unreachable(); }
@@ -274,6 +276,7 @@ Generator::gen_init(llvm::Value* ptr, Expr const* e)
     void operator()(Index_expr const* e) const { lingo_unreachable(); }
     void operator()(Value_conv const* e) const { lingo_unreachable(); }
     void operator()(Block_conv const* e) const { lingo_unreachable(); }
+    void operator()(Derived_conv const* e) const { lingo_unreachable(); }
     void operator()(Default_init const* e) const { g.gen_init(ptr, e); }
     void operator()(Trivial_init const* e) const { g.gen_init(ptr, e); }
     void operator()(Copy_init const* e) const { g.gen_init(ptr, e); }
@@ -662,6 +665,17 @@ Generator::gen(Block_conv const* e)
   return build.CreateInBoundsGEP(a, args);
 }
 
+
+// Build a GEP to the base class sub-object. Note that
+// for derivation from the first base class, a bit-cast
+// would be appropriate.
+llvm::Value*
+Generator::gen(Derived_conv const* e)
+{
+  llvm::Value* a = gen(e->source());
+  std::vector<llvm::Value*> args(e->path().size(), build.getInt32(0));
+  return build.CreateGEP(a, args);
+}
 
 // TODO: Return the value or store it?
 void

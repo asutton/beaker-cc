@@ -44,6 +44,7 @@ Evaluator::eval(Expr const* e)
     Value operator()(Index_expr const* e) { return ev.eval(e); }
     Value operator()(Value_conv const* e) { return ev.eval(e); }
     Value operator()(Block_conv const* e) { return ev.eval(e); }
+    Value operator()(Derived_conv const* e) { return ev.eval(e); }
     Value operator()(Default_init const* e) { lingo_unreachable(); }
     Value operator()(Trivial_init const* e) { lingo_unreachable(); }
     Value operator()(Copy_init const* e) { lingo_unreachable(); }
@@ -61,6 +62,7 @@ Evaluator::eval_init(Expr const* e, Value& v) {
     Evaluator& ev;
     Value& v;
 
+    // FIXME: Factor all unreachables into a template.
     void operator()(Literal_expr const* e) { lingo_unreachable(); }
     void operator()(Id_expr const* e) { lingo_unreachable(); }
     void operator()(Decl_expr const* e) { lingo_unreachable(); }
@@ -87,6 +89,7 @@ Evaluator::eval_init(Expr const* e, Value& v) {
     void operator()(Index_expr const* e) { lingo_unreachable(); }
     void operator()(Value_conv const* e) { lingo_unreachable(); }
     void operator()(Block_conv const* e) { lingo_unreachable(); }
+    void operator()(Derived_conv const* e) { lingo_unreachable(); }
     void operator()(Default_init const* e) { ev.eval_init(e, v); }
     void operator()(Trivial_init const* e) { ev.eval_init(e, v); }
     void operator()(Copy_init const* e) { ev.eval_init(e, v); }
@@ -395,6 +398,13 @@ Evaluator::eval(Value_conv const* e)
 // to a reference.
 Value
 Evaluator::eval(Block_conv const* e)
+{
+  throw std::runtime_error("not implemented");
+}
+
+
+Value
+Evaluator::eval(Derived_conv const* e)
 {
   throw std::runtime_error("not implemented");
 }
