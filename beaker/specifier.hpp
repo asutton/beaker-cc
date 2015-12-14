@@ -14,10 +14,28 @@ enum Specifier
   // No specifiers present.
   no_spec      = 0,
 
-  // The declaration has foreign language linkage. 
-  // This affects  how the symbol is generated during 
-  // translation. By default, a declaration with the 
-  // foreign specifier has C language linkage. 
+  // The generated specifier indicates a compiler generated
+  // program element in respect to program elements where a
+  // user may optionally otherwise define said element.
+  generated_spec = 1 << 4,
+
+  // The virtual specifier indicates an overridable method,
+  // that a record is polymorphic, or a dispatched parameter
+  // of a multimethod.
+  //
+  // Note that a record cannot (currently) be declared
+  // virtual, only its members. A class with at least one
+  // virtual method is polymorphic.
+  virtual_spec  = 1 << 5,
+
+  // The abstract specifier indicates an abstract method
+  // or base class.
+  abstract_spec = 1 << 6,
+
+  // The declaration has foreign language linkage.
+  // This affects  how the symbol is generated during
+  // translation. By default, a declaration with the
+  // foreign specifier has C language linkage.
   // Otherwise, it has Beaker language linkage.
   //
   // Only functions and variables can have foreign

@@ -146,6 +146,7 @@ operator<<(std::ostream& os, Expr const& e)
     void operator()(Block_conv const* e) { os << *e; }
     void operator()(Derived_conv const* e) { os << *e; }
     void operator()(Default_init const* e) { os << *e; }
+    void operator()(Trivial_init const* e) { os << *e; }
     void operator()(Copy_init const* e) { os << *e; }
     void operator()(Reference_init const* e) { os << *e; }
   };
@@ -356,6 +357,13 @@ operator<<(std::ostream& os, Default_init const& e)
 
 
 std::ostream&
+operator<<(std::ostream& os, Trivial_init const& e)
+{
+  return os << "__trivial_init(" << *e.type() << ")";
+}
+
+
+std::ostream&
 operator<<(std::ostream& os, Copy_init const& e)
 {
   return os << "__copy_init(" << *e.type() << ',' << *e.value() << ")";
@@ -449,4 +457,3 @@ operator<<(std::ostream& os, Module_decl const& d)
 {
   return os;
 }
-

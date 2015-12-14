@@ -166,6 +166,7 @@ public:
   Token plus();
   Token minus();
   Token star();
+  Token tilde();
   Token slash();
   Token percent();
   Token equal();
@@ -378,6 +379,11 @@ Lexer::minus()
 inline Token
 Lexer::star()
 {
+  return symbol1();
+}
+
+inline Token
+Lexer::tilde(){
   return symbol1();
 }
 
