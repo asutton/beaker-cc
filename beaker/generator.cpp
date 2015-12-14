@@ -566,7 +566,7 @@ Generator::gen(Index_expr const* e)
 llvm::Value*
 Generator::gen(Value_conv const* e)
 {
-  
+
   llvm::Value* v = gen(e->source());
   return build.CreateLoad(v);
 }
@@ -919,6 +919,7 @@ Generator::gen(Variable_decl const* d)
 void
 Generator::gen(Function_decl const* d)
 {
+  std::cout << *d->type() << '\n';
   String name = get_name(d);
   llvm::Type* type = get_type(d->type());
 

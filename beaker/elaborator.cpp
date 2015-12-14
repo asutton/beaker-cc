@@ -400,7 +400,6 @@ Elaborator::elaborate(Decl_expr* e)
 Expr*
 Elaborator::elaborate(Lambda_expr* e)
 {
-  std::cout << "THE LAMBDA FUCK!" << "\n";
   Function_decl* f_decl = new Function_decl(e->symbol(), e->type(), e->parameters(), e->body());
   Decl* d = elaborate_decl(f_decl);
   d = elaborate_def(f_decl);
@@ -926,6 +925,20 @@ Elaborator::elaborate(Call_expr* e)
     if (std::any_of(conv.begin(), conv.end(), [](Expr const* p) { return !p; }))
       on_call_error(conv, args, parms);
 
+    // Check for value conversion nodes
+    // This is the case for lambda initialized variables and parameters
+    if(is<Value_conv>(f)){
+      f = cast<Value_conv>(f)->first;
+      auto decl = cast<Decl_expr>(f)->declaration();
+      if(auto var = as<Variable_decl>(decl)) {
+        auto f_decl = cast<Reference_init>(var->init())->first;
+        f = f_decl;
+      } else if(auto param = as<Parameter_decl>(decl)) {
+        lingo_unreachable();
+        //auto f_decl = cast<Reference_init>(param->init())->first;
+        //f = f_decl;
+      }
+    }
     // Update the expression with the return type
     // of the named function.
     e->type_ = t->return_type();
@@ -933,10 +946,11 @@ Elaborator::elaborate(Call_expr* e)
     e->second = conv;
   }
 
+
   // Guarantee that f is an expression that refers
   // to a declaration.
   lingo_assert(is<Decl_expr>(f) &&
-               is<Function_decl>(cast<Decl_expr>(f)->declaration()));
+                is<Function_decl>(cast<Decl_expr>(f)->declaration()));
 
   // Update the call expression before returning.
   return e;
@@ -1213,6 +1227,11 @@ Elaborator::elaborate(Variable_decl* d)
 {
   d->type_ = elaborate_type(d->type_);
 
+  if(is<Function_type>(d->type_))
+  {
+    d->type_ = d->type_->ref();
+    cast<Init>(d->init_)->type_ = d->type_;
+  }
   // Declare the variable.
   declare(d);
 
@@ -1280,7 +1299,6 @@ Elaborator::elaborate(Method_decl* d)
 Decl*
 Elaborator::elaborate(Module_decl* m)
 {
-  //MODULE FUCK
   Scope_sentinel scope(*this, m);
   for (Decl*& d : m->decls_)
     d = elaborate_decl(d);
@@ -1329,10 +1347,8 @@ Elaborator::elaborate_decl(Variable_decl* d)
 {
   if(is<Function_type>(d->type_))
   {
-    std::cout << "IT'S FUCKING FUCNTION!" << '\n';
     d->type_ = d->type()->ref();
   }
-
   d->type_ = elaborate_type(d->type_);
   declare(d);
   return d;
@@ -1783,6 +1799,7 @@ Elaborator::elaborate(Expression_stmt* s)
 Stmt*
 Elaborator::elaborate(Declaration_stmt* s)
 {
+
   s->first = elaborate(s->declaration());
   return s;
 }

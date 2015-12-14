@@ -682,7 +682,8 @@ Parser::decl()
       return variable_decl(spec);
     case def_kw:
       return function_decl(spec);
-
+    case f_slash_tok:
+      //
     case struct_kw:
       return record_decl(spec);
     default:
