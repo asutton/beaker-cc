@@ -196,7 +196,7 @@ Lexer::on_integer()
 
 // Return a new floating point number token.
 inline Token
-Lexer::on_floating_point()
+Lexer::on_real()
 {
   String str = build_.take();
   double n = stod(str, nullptr);
