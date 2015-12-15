@@ -463,17 +463,17 @@ template<typename T>
 Expr*
 check_binary_arithmetic_expr(Elaborator& elab, T* e)
 {
-  Type const* z = get_integer_type();
-  Expr* c1 = require_converted(elab, e->first, z);
-  Expr* c2 = require_converted(elab, e->second, z);
+  Type const* t = get_promotion_target(e->first, e->second);
+  Expr* c1 = require_converted(elab, e->first, t);
+  Expr* c2 = require_converted(elab, e->second, t);
   if (!c1)
-    throw Type_error({}, "left operand cannot be converted to 'int'");
+    throw Type_error({}, "left operand cannot be converted");
   if (!c2)
-    throw Type_error({}, "right operand cannot be converted to 'int'");
+    throw Type_error({}, "right operand cannot be converted");
 
   // Rebuild the expression with the
   // converted operands.
-  e->type_ = z;
+  e->type_ = t;
   e->first = c1;
   e->second = c2;
   return e;
