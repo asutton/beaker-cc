@@ -48,6 +48,7 @@ std::ostream& operator<<(std::ostream&, Method_expr const&);
 std::ostream& operator<<(std::ostream&, Index_expr const&);
 std::ostream& operator<<(std::ostream&, Value_conv const&);
 std::ostream& operator<<(std::ostream&, Block_conv const&);
+std::ostream& operator<<(std::ostream&, Promote_conv const&);
 std::ostream& operator<<(std::ostream&, Base_conv const&);
 std::ostream& operator<<(std::ostream&, Default_init const&);
 std::ostream& operator<<(std::ostream&, Trivial_init const&);

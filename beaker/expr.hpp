@@ -72,6 +72,7 @@ struct Expr::Visitor
   virtual void visit(Value_conv const*) = 0;
   virtual void visit(Block_conv const*) = 0;
   virtual void visit(Base_conv const*) = 0;
+  virtual void visit(Promote_conv const*) = 0;
   virtual void visit(Default_init const*) = 0;
   virtual void visit(Trivial_init const*) = 0;
   virtual void visit(Copy_init const*) = 0;
@@ -111,6 +112,7 @@ struct Expr::Mutator
   virtual void visit(Value_conv*) = 0;
   virtual void visit(Block_conv*) = 0;
   virtual void visit(Base_conv*) = 0;
+  virtual void visit(Promote_conv*) = 0;
   virtual void visit(Default_init*) = 0;
   virtual void visit(Trivial_init*) = 0;
   virtual void visit(Copy_init*) = 0;
@@ -559,6 +561,15 @@ struct Base_conv : Conv
   void accept(Mutator& v)       { v.visit(this); }
 };
 
+// Represents the promoton of a numeric type
+struct Promote_conv : Conv
+{
+  using Conv::Conv;
+
+  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Mutator& v)       { v.visit(this); }
+};
+
 
 // -------------------------------------------------------------------------- //
 // Initializers
@@ -701,6 +712,7 @@ struct Generic_expr_visitor : Expr::Visitor, lingo::Generic_visitor<F, T>
   void visit(Value_conv const* e) { this->invoke(e); }
   void visit(Block_conv const* e) { this->invoke(e); }
   void visit(Base_conv const* e) { this->invoke(e); }
+  void visit(Promote_conv const* e) { this->invoke(e); }
   void visit(Default_init const* e) { this->invoke(e); }
   void visit(Trivial_init const* e) { this->invoke(e); }
   void visit(Copy_init const* e) { this->invoke(e); }
@@ -756,6 +768,7 @@ struct Generic_expr_mutator : Expr::Mutator, lingo::Generic_mutator<F, T>
   void visit(Value_conv* e) { this->invoke(e); }
   void visit(Block_conv* e) { this->invoke(e); }
   void visit(Base_conv* e) { this->invoke(e); }
+  void visit(Promote_conv* e) { this->invoke(e); }
   void visit(Default_init* e) { this->invoke(e); }
   void visit(Trivial_init* e) { this->invoke(e); }
   void visit(Copy_init* e) { this->invoke(e); }

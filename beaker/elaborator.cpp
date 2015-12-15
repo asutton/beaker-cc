@@ -346,6 +346,7 @@ Elaborator::elaborate(Expr* e)
     Expr* operator()(Value_conv* e) const { return elab.elaborate(e); }
     Expr* operator()(Block_conv* e) const { return elab.elaborate(e); }
     Expr* operator()(Base_conv* e) const { return elab.elaborate(e); }
+    Expr* operator()(Promote_conv* e) const { return elab.elaborate(e); }
     Expr* operator()(Default_init* e) const { return elab.elaborate(e); }
     Expr* operator()(Trivial_init* e) const { return elab.elaborate(e); }
     Expr* operator()(Copy_init* e) const { return elab.elaborate(e); }
@@ -462,17 +463,17 @@ template<typename T>
 Expr*
 check_binary_arithmetic_expr(Elaborator& elab, T* e)
 {
-  Type const* z = get_integer_type();
-  Expr* c1 = require_converted(elab, e->first, z);
-  Expr* c2 = require_converted(elab, e->second, z);
+  Type const* t = get_promotion_target(e->first, e->second);
+  Expr* c1 = require_converted(elab, e->first, t);
+  Expr* c2 = require_converted(elab, e->second, t);
   if (!c1)
-    throw Type_error({}, "left operand cannot be converted to 'int'");
+    throw Type_error({}, "left operand cannot be converted");
   if (!c2)
-    throw Type_error({}, "right operand cannot be converted to 'int'");
+    throw Type_error({}, "right operand cannot be converted");
 
   // Rebuild the expression with the
   // converted operands.
-  e->type_ = z;
+  e->type_ = t;
   e->first = c1;
   e->second = c2;
   return e;
@@ -488,13 +489,13 @@ Expr*
 check_unary_arithmetic_expr(Elaborator& elab, T* e)
 {
   // Apply conversions
-  Type const* z = get_integer_type();
-  Expr* c = require_converted(elab, e->first, z);
+  Type const* t = get_promotion_target(e->first);
+  Expr* c = require_converted(elab, e->first, t);
   if (!c)
-    throw Type_error({}, "operand cannot be converted to 'int'");
+    throw Type_error({}, "operand cannot be converted");
 
   // Rebuild the expression with the converted operands.
-  e->type_ = z;
+  e->type_ = t;
   e->first = c;
   return e;
 }
@@ -611,14 +612,14 @@ Expr*
 check_ordering_expr(Elaborator& elab, Binary_expr* e)
 {
   // Apply conversions.
-  Type const* z = get_integer_type();
+  Type const* t = get_promotion_target(e->first, e->second);
   Type const* b = get_boolean_type();
-  Expr* c1 = require_converted(elab, e->first, z);
-  Expr* c2 = require_converted(elab, e->second, z);
+  Expr* c1 = require_converted(elab, e->first, t);
+  Expr* c2 = require_converted(elab, e->second, t);
   if (!c1)
-    throw Type_error({}, "left operand cannot be converted to 'int'");
+    throw Type_error({}, "left operand cannot be converted");
   if (!c2)
-    throw Type_error({}, "right operand cannot be converted to 'int'");
+    throw Type_error({}, "right operand cannot be converted");
 
   // Rebuild the expression with the converted
   // operands.
@@ -1175,6 +1176,13 @@ Elaborator::elaborate(Base_conv* e)
 {
   return e;
 }
+
+Expr*
+Elaborator::elaborate(Promote_conv* e)
+{
+  return e;
+}
+
 
 // TODO: I probably need to elaborate the type.
 Expr*

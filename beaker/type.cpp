@@ -217,6 +217,48 @@ get_record_type(Record_decl* r)
   return &*ins.first;
 }
 
+// Gets the rank of a type
+int
+get_scalar_rank(Type const* t)
+{
+    // static types
+    static Type const* b = get_boolean_type();
+    static Type const* c = get_character_type();
+    static Type const* ui16 = get_integer_type(false,16);
+    static Type const* i16 = get_integer_type(16);
+    static Type const* ui32 = get_integer_type(false);
+    static Type const* i32 = get_integer_type();
+    static Type const* ui64 = get_integer_type(false,64);
+    static Type const* i64 = get_integer_type(64);
+    static Type const* f = get_float_type();
+    static Type const* d = get_double_type();
+    
+    // return rank
+    if (t == b)
+        return bool_rnk;
+    if (t == c)
+        return char_rnk;
+    if (t == ui16)
+        return uint16_rnk;
+    if (t == i16)
+        return int16_rnk;
+    if (t == ui32)
+        return uint32_rnk;
+    if (t == i32)
+        return int32_rnk;
+    if (t == ui64)
+        return uint64_rnk;
+    if (t == i64)
+        return int64_rnk;
+    if (t == f)
+        return float_rnk;
+    if (t == d)
+        return double_rnk;
+    
+    // default case
+    return default_rnk;
+}
+
 bool
 is_derived(Type const* derived, Type const* base){
   if (Record_type const* d = as<Record_type>(derived))  {

@@ -69,6 +69,7 @@ public:
   Value eval(Value_conv const*);
   Value eval(Block_conv const*);
   Value eval(Base_conv const*);
+  Value eval(Promote_conv const*);
 
   void eval_init(Expr const*, Value&);
   void eval_init(Default_init const*, Value&);

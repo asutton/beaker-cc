@@ -157,6 +157,7 @@ operator<<(std::ostream& os, Expr const& e)
     void operator()(Value_conv const* e) { os << *e; }
     void operator()(Block_conv const* e) { os << *e; }
     void operator()(Base_conv const* e) { os << *e; }
+    void operator()(Promote_conv const* e) { os << *e; }
     void operator()(Default_init const* e) { os << *e; }
     void operator()(Trivial_init const* e) { os << *e; }
     void operator()(Copy_init const* e) { os << *e; }
@@ -360,6 +361,15 @@ operator<<(std::ostream& os, Base_conv const& e)
          << *e.source() << ','
          << *e.target() << ')';
 }
+
+std::ostream&
+operator<<(std::ostream& os, Promote_conv const& e)
+{
+  return os << "__promote("
+            << *e.source() << ','
+            << *e.target() << ')';
+}
+
 
 std::ostream&
 operator<<(std::ostream& os, Default_init const& e)

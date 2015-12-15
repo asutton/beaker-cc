@@ -242,7 +242,9 @@ is_scalar(Type const* t)
 {
   return is<Boolean_type>(t)
       || is<Character_type>(t)
-      || is<Integer_type>(t);
+      || is<Integer_type>(t)
+      || is<Float_type>(t)
+      || is<Double_type>(t);
 }
 
 
@@ -269,6 +271,27 @@ is_string(Type const* t)
   else
     return false;
 }
+
+
+int
+get_scalar_rank(Type const*);
+
+
+// scalar ranks
+enum Scalar_rank
+{
+    default_rnk = -1,
+    bool_rnk,
+    char_rnk,
+    uint16_rnk,
+    int16_rnk,
+    uint32_rnk,
+    int32_rnk,
+    uint64_rnk,
+    int64_rnk,
+    float_rnk,
+    double_rnk
+};
 
 
 // -------------------------------------------------------------------------- //
