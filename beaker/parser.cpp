@@ -461,7 +461,7 @@ Parser::type()
 //
 //    variable-decl -> 'var' identifier object-type initializer-clause
 //
-//    initializer-clause -> ';' | '=' expr ';'
+//    initializer-clause -> ';' | '=' 'trivial' ';' | '=' expr ';'
 Decl*
 Parser::variable_decl(Specifier spec)
 {
@@ -478,6 +478,11 @@ Parser::variable_decl(Specifier spec)
 
   // value initialization (var x : T = e;)
   match(equal_tok);
+  if (match_if(trivial_kw)) {
+    match(semicolon_tok);
+    return on_variable(spec, n, t, trivial_kw);
+  }
+
   Expr* e = expr();
   match(semicolon_tok);
   return on_variable(spec, n, t, e);
@@ -631,6 +636,8 @@ Parser::field_decl(Specifier spec)
 // parameter. Maybe before the return type? Maybe
 // as part of the specifiers?
 //
+// TODO:
+//
 //    struct R {
 //      const def f() -> void { }   // Why not...
 Decl*
@@ -638,6 +645,10 @@ Parser::method_decl(Specifier spec)
 {
   require(def_kw);
   Token n = match(identifier_tok);
+
+  //check for a this_kw
+  //do stuff
+  //return on_ctor <- reference on_method
 
   // parameter-clause
   Decl_seq parms;
@@ -1285,6 +1296,16 @@ Parser::on_variable(Specifier spec, Token tok, Type const* t)
 
 
 Decl*
+Parser::on_variable(Specifier spec, Token tok, Type const* t, Token_kind tk)
+{
+  Expr* init = new Trivial_init(t);
+  Decl* decl = new Variable_decl(spec, tok.symbol(), t, init);
+  locate(decl, tok.location());
+  return decl;
+}
+
+
+Decl*
 Parser::on_variable(Specifier spec, Token tok, Type const* t, Expr* e)
 {
   Expr* init = new Copy_init(t, e);
@@ -1307,7 +1328,7 @@ Parser::on_parameter(Specifier spec, Type const* t)
 Decl*
 Parser::on_parameter(Specifier spec, Token tok, Type const* t)
 {
-  return new Parameter_decl(tok.symbol(), t);
+  return new Parameter_decl(spec, tok.symbol(), t);
 }
 
 
@@ -1317,7 +1338,7 @@ Decl*
 Parser::on_function(Specifier spec, Token tok, Decl_seq const& p, Type const* t)
 {
   Type const* f = get_function_type(p, t);
-  return new Function_decl(tok.symbol(), f, p, nullptr);
+  return new Function_decl(spec, tok.symbol(), f, p, nullptr);
 }
 
 

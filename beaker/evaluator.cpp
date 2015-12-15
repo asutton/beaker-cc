@@ -44,6 +44,10 @@ Evaluator::eval(Expr const* e)
     Value operator()(Index_expr const* e) { return ev.eval(e); }
     Value operator()(Value_conv const* e) { return ev.eval(e); }
     Value operator()(Block_conv const* e) { return ev.eval(e); }
+    Value operator()(Base_conv const* e) { return ev.eval(e); }
+    
+    // Initializers are not evaluated like normal expressions.
+    Value operator()(Init const* e) { lingo_unreachable(); }
     Value operator()(Promote_conv const* e) { return ev.eval(e); }
     Value operator()(Default_init const* e) { return ev.eval(e); }
     Value operator()(Copy_init const* e) { return ev.eval(e); }
@@ -51,6 +55,34 @@ Evaluator::eval(Expr const* e)
   };
 
   return apply(e, Fn {*this});
+}
+
+
+namespace
+{
+
+// Dispatch for eval_+init
+struct Eval_init_fn
+{
+  Evaluator& ev;
+  Value& v;
+
+  template<typename T>
+  void operator()(T conste) { lingo_unreachable(); };
+
+  void operator()(Default_init const* e) { ev.eval_init(e, v); }
+  void operator()(Trivial_init const* e) { ev.eval_init(e, v); }
+  void operator()(Copy_init const* e) { ev.eval_init(e, v); }
+  void operator()(Reference_init const* e) { ev.eval_init(e, v); }
+};
+
+} // namespace
+
+
+void
+Evaluator::eval_init(Expr const* e, Value& v) 
+{
+  apply(e, Eval_init_fn {*this, v});
 }
 
 
@@ -363,27 +395,36 @@ Evaluator::eval(Promote_conv const* e)
   throw std::runtime_error("not implemented");
 }
 
-
-// FIXME: This is wrong. We should be calling a function
-// that default initializes the created object.
 Value
-Evaluator::eval(Default_init const* e)
+Evaluator::eval(Base_conv const* e)
 {
-  lingo_unimplemented();
+  throw std::runtime_error("not implemented");
 }
 
 
-// FIXME: This should be calling a function that
-// default iniitializes the created object.
-Value
-Evaluator::eval(Copy_init const* e)
+void
+Evaluator::eval_init(Default_init const* e, Value& v)
 {
-  lingo_unimplemented();
+  zero_init(v);
 }
 
 
-Value
-Evaluator::eval(Reference_init const* e)
+void
+Evaluator::eval_init(Trivial_init const* e, Value& v)
+{
+  return;
+}
+
+
+void
+Evaluator::eval_init(Copy_init const* e, Value& v)
+{
+  eval(e->value());
+}
+
+
+void
+Evaluator::eval_init(Reference_init const* e, Value& v)
 {
   lingo_unimplemented();
 }
@@ -489,23 +530,7 @@ Evaluator::eval(Variable_decl const* d)
   Value& v1 = stack.top().bind(d->name(), v0).second;
 
   // Handle initialization.
-  //
-  // FIXME: The initializer should hold a function
-  // that can be evalated to perform the initialization
-  // procedure. We shouldn't be doing this explicitly.
-  Expr const* e = d->init();
-
-  // Perform default initialization.
-  if (is<Default_init>(e))
-    zero_init(v1);
-
-  // Perfor copy initialization. We should guarantee
-  // that v1 and the evaluation of i produce values
-  // of the same shape.
-  else if (Copy_init const* i = as<Copy_init>(e))
-    v1 = eval(i->value());
-  else
-    throw std::runtime_error("unhandled initializer");
+  eval_init(d->init(), v1);
 }
 
 

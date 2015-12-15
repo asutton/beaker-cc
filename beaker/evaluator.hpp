@@ -68,10 +68,17 @@ public:
   Value eval(Index_expr const*);
   Value eval(Value_conv const*);
   Value eval(Block_conv const*);
+  Value eval(Base_conv const*);
   Value eval(Promote_conv const*);
   Value eval(Default_init const*);
   Value eval(Copy_init const*);
   Value eval(Reference_init const*);
+
+  void eval_init(Expr const*, Value&);
+  void eval_init(Default_init const*, Value&);
+  void eval_init(Trivial_init const*, Value&);
+  void eval_init(Copy_init const*, Value&);
+  void eval_init(Reference_init const*, Value&);
 
   void eval(Decl const*);
   void eval(Variable_decl const*);

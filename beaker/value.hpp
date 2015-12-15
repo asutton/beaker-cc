@@ -157,6 +157,7 @@ struct Value
   bool is_array() const;
   bool is_tuple() const;
 
+  Error_value get_error() const;
   Integer_value get_integer() const;
   Float_value get_float() const;
   Function_value get_function() const;
@@ -260,6 +261,15 @@ Value::is_tuple() const
 }
 
 
+// Returns the error value.
+inline Error_value
+Value::get_error() const
+{
+  assert(is_error());
+  return r.err_;
+}
+
+
 // Returns the integer value.
 inline Integer_value
 Value::get_integer() const
@@ -268,6 +278,7 @@ Value::get_integer() const
   return r.int_;
 }
 
+
 // Returns the floating point value.
 inline Float_value
 Value::get_float() const
@@ -275,6 +286,7 @@ Value::get_float() const
   assert(is_float());
   return r.float_;
 }
+
 
 // Returns the function value.
 inline Function_value

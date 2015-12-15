@@ -18,6 +18,7 @@
 #include <beaker/scope.hpp>
 
 #include <unordered_set>
+#include "expr.hpp"
 
 
 // Track defined declarations.
@@ -80,8 +81,10 @@ public:
   Expr* elaborate(Index_expr* e);
   Expr* elaborate(Value_conv* e);
   Expr* elaborate(Block_conv* e);
+  Expr* elaborate(Base_conv* e);
   Expr* elaborate(Promote_conv* e);
   Expr* elaborate(Default_init* e);
+  Expr* elaborate(Trivial_init* e);
   Expr* elaborate(Copy_init* e);
   Expr* elaborate(Reference_init* e);
 

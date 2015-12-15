@@ -146,4 +146,3 @@ zero_init(Value& v)
   };
   apply(v, Fn{});
 }
-

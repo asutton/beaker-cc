@@ -94,10 +94,17 @@ struct Generator
   llvm::Value* gen(Index_expr const*);
   llvm::Value* gen(Value_conv const*);
   llvm::Value* gen(Block_conv const*);
+  llvm::Value* gen(Base_conv const*);
   llvm::Value* gen(Promote_conv const*);
   llvm::Value* gen(Default_init const*);
   llvm::Value* gen(Copy_init const*);
   llvm::Value* gen(Reference_init const*);
+
+  void gen_init(llvm::Value*, Expr const*);
+  void gen_init(llvm::Value*, Default_init const*);
+  void gen_init(llvm::Value*, Trivial_init const*);
+  void gen_init(llvm::Value*, Copy_init const*);
+  void gen_init(llvm::Value*, Reference_init const*);
 
   void gen(Stmt const*);
   void gen(Empty_stmt const*);
@@ -126,6 +133,8 @@ struct Generator
 
   llvm::Value* gen_vtable(Record_decl const*);
   llvm::Value* gen_vptr(Expr const*);
+  llvm::Value* gen_vptr(Record_decl const*, llvm::Value*);
+  llvm::Value* gen_vref(Record_decl const*, llvm::Value*);
 
   llvm::LLVMContext cxt;
   llvm::IRBuilder<> build;

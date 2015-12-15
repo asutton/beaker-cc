@@ -93,9 +93,21 @@ convert_to_block(Expr* e)
 }
 
 
+// Try to form 
+Expr*
+convert_to_base(Expr* e)
+{
+  if (Record_type const* r = as<Record_type>(e->type()->nonref())) {
+    return new Base_conv(get_record_type(r->declaration()), e);
+  }
+   else
+    return e;
+}
+
+
 // Find a conversion from e to t. If no such
 // conversion exists, return nullptr. Diagnostics
-// a better handled in the calling context.
+// are better handled in the calling context.
 Expr*
 convert(Expr* e, Type const* t)
 {
@@ -114,18 +126,46 @@ convert(Expr* e, Type const* t)
     c = convert_to_value(e);
     if (c->type() == t)
       return c;
-  }
+  }//bit cast
 
   // Type conversions
 
-  // Determine if we can apply an array-to-chunk
+  // Determine if we can apply an array-to-block
   // conversion. This is the case when we have
   //
   //    A[N] -> B[]
+  // std::cout << *t << "\n";
+  // std::cout << *c << "\n"; // prints out d
   if (is<Block_type>(t)) {
     c = convert_to_block(c);
     if (c->type() == t)
       return c;
+  } 
+
+  // FIXME: Clean this up. 
+  else if (is<Reference_type>(t)) {
+      const Reference_type* v = cast<Reference_type>(t);
+      if(Record_type const* goal = as<Record_type>(v->type())) {
+        if (is_derived(c->type()->nonref(), v->type())) {
+          Base_conv *ret = as<Base_conv>(convert_to_base(c));
+          Record_type const *d = as<Record_type>(c->type()->nonref());
+          // Build path from goal to derived
+          if(goal->declaration() == d->declaration()) {
+            return ret;
+          } else {
+            ret->path_.push_back(0);
+            Record_decl* decl = d->declaration();
+            while(decl && decl != goal->declaration()) {
+              ret->path_.push_back(0);
+              decl = decl->base()->declaration();
+            }
+            return ret;
+          }
+        }
+      }
+
+      if (c->type() == t)
+        return c;
   }
     
   // Try to apply a type promotion
@@ -135,15 +175,13 @@ convert(Expr* e, Type const* t)
         return c;
   }
 
-  // If we've exhaused all possible conversions
-  // without matching the type, then just return
-  // nullptr.
-
+  // If we've exhaused all possible conversions without matching 
+  // the type, then just return nullptr.
   return nullptr;
 }
 
 
-// Convert a seequence of arguments to a corresponding
+// Convert a sequence of arguments to a corresponding
 // parameter type. The conversion is successful only
 // when all individual conversions are successful.
 // This is the case when the result vector contains

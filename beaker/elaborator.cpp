@@ -345,8 +345,10 @@ Elaborator::elaborate(Expr* e)
     Expr* operator()(Index_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Value_conv* e) const { return elab.elaborate(e); }
     Expr* operator()(Block_conv* e) const { return elab.elaborate(e); }
+    Expr* operator()(Base_conv* e) const { return elab.elaborate(e); }
     Expr* operator()(Promote_conv* e) const { return elab.elaborate(e); }
     Expr* operator()(Default_init* e) const { return elab.elaborate(e); }
+    Expr* operator()(Trivial_init* e) const { return elab.elaborate(e); }
     Expr* operator()(Copy_init* e) const { return elab.elaborate(e); }
     Expr* operator()(Reference_init* e) const { return elab.elaborate(e); }
   };
@@ -916,9 +918,13 @@ Elaborator::elaborate(Call_expr* e)
   // If the target is of the form x.m or x.ovl, insert x
   // into the argument list and update the function target.
   if (Dot_expr* dot = as_method(f)) {
-    // Build the "this" argument.
-    Expr* self = dot->container();
-    args.insert(args.begin(), self);
+      // Build the "this" argument.
+      //Method_expr* m = dynamic_cast<Method_expr*>(dot);
+
+      Expr* self = dot->container();
+
+      //Expr* self = m->container();
+      args.insert(args.begin(), self);
 
     // Adjust the function target.
     f = dot->member();
@@ -998,6 +1004,14 @@ get_path(Record_decl* r, Field_decl* f)
   lingo_assert(!p.empty());
   return p;
 }
+
+//Method_path
+//get_path(Record_decl* r, Method_decl* m){
+//  Method_path p;
+//  get_path(r, m, p);
+//  lingo_assert(!p.empty());
+//  return p;
+//}
 
 
 } // namespace
@@ -1157,6 +1171,11 @@ Elaborator::elaborate(Block_conv* e)
   return e;
 }
 
+Expr*
+Elaborator::elaborate(Base_conv* e)
+{
+  return e;
+}
 
 Expr*
 Elaborator::elaborate(Promote_conv* e)
@@ -1168,6 +1187,14 @@ Elaborator::elaborate(Promote_conv* e)
 // TODO: I probably need to elaborate the type.
 Expr*
 Elaborator::elaborate(Default_init* e)
+{
+  e->type_ = elaborate(e->type_);
+  return e;
+}
+
+
+Expr*
+Elaborator::elaborate(Trivial_init* e)
 {
   e->type_ = elaborate(e->type_);
   return e;
@@ -1319,6 +1346,34 @@ Elaborator::elaborate(Parameter_decl* d)
 {
   d->type_ = elaborate_type(d->type_);
   declare(d);
+
+  Function_decl* fn = stack.function();
+
+  // Check for virtual parameters. A parameter can only be
+  // declared virtual if t has polymorphic type (or is a reference
+  // to an object of polymorphic type).
+  if (d->is_virtual()) {
+    Type const* t0 = d->type()->nonref();
+    if (!is<Record_type>(t0))
+      throw Type_error(locate(d), "type of virtual parameter is not a record type");
+    Record_type const* t1 = cast<Record_type>(t0);
+    Record_decl const* rec = t1->declaration();
+    if (!rec->is_polymorphic())
+      throw Type_error(locate(d), "type of virtual parameter is not polymorphic");
+
+    // Mark the function as being virtual.
+    fn->spec_ |= virtual_spec;
+
+    // Save virtual parameter.
+    //
+    // TODO: What are we actually going to do with
+    // this thing?
+    if (!fn->vparms_)
+      fn->vparms_ = new Decl_seq {d};
+    else
+      fn->vparms_->push_back(d);
+  }
+
   return d;
 }
 

@@ -166,6 +166,7 @@ public:
   Token plus();
   Token minus();
   Token star();
+  Token tilde();
   Token slash();
   Token percent();
   Token equal();
@@ -188,7 +189,7 @@ private:
   Token on_token();
   Token on_word();
   Token on_integer();
-  Token on_floating_point();
+  Token on_real();
   Token on_character();
   Token on_string();
 
@@ -382,6 +383,11 @@ Lexer::star()
   return symbol1();
 }
 
+inline Token
+Lexer::tilde(){
+  return symbol1();
+}
+
 
 inline Token
 Lexer::slash()
@@ -485,25 +491,26 @@ Lexer::word()
 }
 
 
-// number ::= digit+ or decimal point
+// number ::= integer | decimal
+// integer ::= digit+
+// decimal ::= digit*.digit+
+//
+// FIXME: Support real decimal formats.
 inline Token
 Lexer::number()
 {
-  bool isFloating = false;
   assert(is_decimal_digit(peek()));
   digit();
-  while (is_decimal_digit(peek()) || peek() == '.') {
-    if(peek() == '.' && isFloating == false)
-      isFloating = true;
-    else
-      throw std::runtime_error("invalid number (multiple decimal points)");
-
+  while (is_decimal_digit(peek()))
     digit();
+  if (peek() == '.') {
+    get();
+    while (is_decimal_digit(peek()))
+      digit();
+    return on_real();
+  } else {
+    return on_integer(); 
   }
-  if(isFloating) 
-    return on_integer();
-  else
-    return on_floating_point();
 }
 
 

@@ -1,0 +1,13 @@
+
+
+// def f1(virtual n : int) -> int // error: not record type
+// {
+//   return 0;
+// }
+
+struct S { }
+
+def f2(virtual s : S) -> int // error: not polymorphic
+{
+  return 0;
+}
