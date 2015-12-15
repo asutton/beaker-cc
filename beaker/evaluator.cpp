@@ -45,13 +45,10 @@ Evaluator::eval(Expr const* e)
     Value operator()(Value_conv const* e) { return ev.eval(e); }
     Value operator()(Block_conv const* e) { return ev.eval(e); }
     Value operator()(Base_conv const* e) { return ev.eval(e); }
+    Value operator()(Promote_conv const* e) { return ev.eval(e); }
     
     // Initializers are not evaluated like normal expressions.
     Value operator()(Init const* e) { lingo_unreachable(); }
-    Value operator()(Promote_conv const* e) { return ev.eval(e); }
-    Value operator()(Default_init const* e) { return ev.eval(e); }
-    Value operator()(Copy_init const* e) { return ev.eval(e); }
-    Value operator()(Reference_init const* e) { return ev.eval(e); }
   };
 
   return apply(e, Fn {*this});
