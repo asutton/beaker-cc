@@ -8,6 +8,65 @@
 
 #include <iostream>
 
+// this determines if a type can be promoted
+// promotion to the same type is not valid
+bool
+can_promote(Expr* e, Type const* t)
+{    
+    // static types
+    static Type const* char_type = get_character_type();
+    static Type const* float_type = get_float_type();
+    static Type const* double_type = get_double_type();
+    
+    // check for type match
+    if (e->type() == t)
+        return false;
+    
+    // nothing can become a char
+    if (t == char_type)
+        return false;
+    
+    // char can become an integer or floating point
+    if (e->type() == char_type)
+            return true;
+    
+    // integer types
+    if (is_integer(e->type())) {
+        // integers can become either floating point type
+        if (t == float_type || t == double_type)
+            return true;
+        
+        // must cast as Integer_type* to allow access to precision and sign
+        const Integer_type* et = dynamic_cast<const Integer_type*>(e->type());
+        const Integer_type* tt = dynamic_cast<const Integer_type*>(t);
+        
+        // integers can become a greater percision
+        if (et->precision() < tt->precision())
+            return true;
+        
+        // integers can move from unsigned to signed
+        if (et->is_signed() < tt->is_signed())
+            return true;
+    }
+    
+    // float can become a double
+    if (e->type() == float_type && t == double_type)
+        return true;
+    
+    // default
+    return false;
+}
+
+// if promotion is not allowed then the origninal
+// expr is returned. This allows for operations 
+// with same types to occur.
+Expr*
+try_promote(Expr* e, Type const* t){
+    if (can_promote(e,t))
+        return new Promote_conv(t,e);
+    else
+        return e;
+}
 
 // If e has reference type T&, return a conversion
 // to the value type T. Otherwise, no conversions
@@ -67,6 +126,13 @@ convert(Expr* e, Type const* t)
     c = convert_to_block(c);
     if (c->type() == t)
       return c;
+  }
+    
+  // Try to apply a type promotion
+  if (is<Integer_type>(t) || is<Float_type>(t) || is<Double_type>(t)) {
+    c = try_promote(e,t);
+    if (c->type() == t)
+        return c;
   }
 
   // If we've exhaused all possible conversions

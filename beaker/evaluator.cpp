@@ -44,6 +44,7 @@ Evaluator::eval(Expr const* e)
     Value operator()(Index_expr const* e) { return ev.eval(e); }
     Value operator()(Value_conv const* e) { return ev.eval(e); }
     Value operator()(Block_conv const* e) { return ev.eval(e); }
+    Value operator()(Promote_conv const* e) { return ev.eval(e); }
     Value operator()(Default_init const* e) { return ev.eval(e); }
     Value operator()(Copy_init const* e) { return ev.eval(e); }
     Value operator()(Reference_init const* e) { return ev.eval(e); }
@@ -351,6 +352,13 @@ Evaluator::eval(Value_conv const* e)
 // to a reference.
 Value
 Evaluator::eval(Block_conv const* e)
+{
+  throw std::runtime_error("not implemented");
+}
+
+// Apply a promotion
+Value
+Evaluator::eval(Promote_conv const* e)
 {
   throw std::runtime_error("not implemented");
 }

@@ -16,6 +16,7 @@ Expr*    convert(Expr*, Type const*);
 Expr_seq convert(Expr_seq const&, Type_seq const&);
 
 Expr* convert_to_value(Expr*);
-
+bool can_promote(Expr*, Type const*);
+Expr* try_promote(Expr*, Type const*);
 
 #endif

@@ -269,6 +269,12 @@ is_string(Type const* t)
     return false;
 }
 
+// Returns true if this is the type of an int
+inline bool
+is_integer(Type const* t)
+{
+  return is<Integer_type>(t);
+}
 
 // -------------------------------------------------------------------------- //
 //                              Generic visitors

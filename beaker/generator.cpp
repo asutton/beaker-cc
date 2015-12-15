@@ -229,6 +229,7 @@ Generator::gen(Expr const* e)
     llvm::Value* operator()(Method_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Index_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Value_conv const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Promote_conv const* e) const { return g.gen(e); }
     llvm::Value* operator()(Block_conv const* e) const { return g.gen(e); }
     llvm::Value* operator()(Default_init const* e) const { return g.gen(e); }
     llvm::Value* operator()(Copy_init const* e) const { return g.gen(e); }
@@ -601,6 +602,12 @@ Generator::gen(Value_conv const* e)
 {
   llvm::Value* v = gen(e->source());
   return build.CreateLoad(v);
+}
+
+llvm::Value*
+Generator::gen(Promote_conv const* e)
+{
+  throw std::runtime_error("not implemented");
 }
 
 
