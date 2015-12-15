@@ -28,7 +28,7 @@ can_promote(Expr* e, Type const* t)
     
     // char can become an integer or floating point
     if (e->type() == char_type)
-            return true;
+        return true;
     
     // integer types
     if (is_integer(e->type())) {
@@ -45,7 +45,7 @@ can_promote(Expr* e, Type const* t)
             return true;
         
         // integers can move from unsigned to signed
-        if (et->is_signed() < tt->is_signed())
+        if ((et->precision() == tt->precision()) && (et->is_signed() < tt->is_signed()))
             return true;
     }
     
@@ -170,9 +170,7 @@ convert(Expr* e, Type const* t)
     
   // Try to apply a type promotion
   if (is<Integer_type>(t) || is<Float_type>(t) || is<Double_type>(t)) {
-    c = try_promote(e,t);
-    if (c->type() == t)
-        return c;
+    return try_promote(e,t);
   }
 
   // If we've exhaused all possible conversions without matching 
