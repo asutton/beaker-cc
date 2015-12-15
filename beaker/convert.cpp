@@ -8,14 +8,23 @@
 
 #include <iostream>
 
-// this determines if a type can be promoted
-// promotion to the same type is not valid
+// This finds the target that both operands should
+// be converted to.  Default int32.
 Type const*
 get_promotion_target(Expr* first, Expr* second)
 {        
     // get type of both expressions
     Type const* first_t = first->type();
     Type const* second_t = second->type();
+    
+    // if both are not scalar, default is int32
+    // if one is not scalar, choose the other type
+    if (!is_scalar(first_t) && !is_scalar(second_t))
+        return get_integer_type();
+    else if (!is_scalar(first_t))
+        return second_t;
+    else if (!is_scalar(second_t))
+        return first_t;
     
     // if the same type use that as the target
     if (first_t == second_t)
@@ -26,6 +35,22 @@ get_promotion_target(Expr* first, Expr* second)
         return first_t;
     else
         return second_t;
+}
+
+// This finds the target that the operand should
+// be converted to. Default int32.
+Type const*
+get_promotion_target(Expr* first)
+{        
+    // get type of expression
+    Type const* first_t = first->type();
+    
+    // if not scalar, default is int32
+    if (!is_scalar(first_t))
+        return get_integer_type();
+    
+    // if it is scalar then type remains
+    return first_t;
 }
 
 // if promotion is not allowed then the origninal

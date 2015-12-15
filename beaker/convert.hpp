@@ -17,6 +17,7 @@ Expr_seq convert(Expr_seq const&, Type_seq const&);
 
 Expr* convert_to_value(Expr*);
 Type const* get_promotion_target(Expr*, Expr*);
+Type const* get_promotion_target(Expr*);
 Expr* promote(Expr*, Type const*);
 
 #endif

@@ -489,13 +489,13 @@ Expr*
 check_unary_arithmetic_expr(Elaborator& elab, T* e)
 {
   // Apply conversions
-  Type const* z = get_integer_type();
-  Expr* c = require_converted(elab, e->first, z);
+  Type const* t = get_promotion_target(e->first);
+  Expr* c = require_converted(elab, e->first, t);
   if (!c)
-    throw Type_error({}, "operand cannot be converted to 'int'");
+    throw Type_error({}, "operand cannot be converted");
 
   // Rebuild the expression with the converted operands.
-  e->type_ = z;
+  e->type_ = t;
   e->first = c;
   return e;
 }
@@ -612,14 +612,14 @@ Expr*
 check_ordering_expr(Elaborator& elab, Binary_expr* e)
 {
   // Apply conversions.
-  Type const* z = get_integer_type();
+  Type const* t = get_promotion_target(e->first, e->second);
   Type const* b = get_boolean_type();
-  Expr* c1 = require_converted(elab, e->first, z);
-  Expr* c2 = require_converted(elab, e->second, z);
+  Expr* c1 = require_converted(elab, e->first, t);
+  Expr* c2 = require_converted(elab, e->second, t);
   if (!c1)
-    throw Type_error({}, "left operand cannot be converted to 'int'");
+    throw Type_error({}, "left operand cannot be converted");
   if (!c2)
-    throw Type_error({}, "right operand cannot be converted to 'int'");
+    throw Type_error({}, "right operand cannot be converted");
 
   // Rebuild the expression with the converted
   // operands.
