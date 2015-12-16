@@ -136,33 +136,25 @@ convert(Expr* e, Type const* t)
     c = convert_to_block(c);
     if (c->type() == t)
       return c;
-  } 
-
-  // FIXME: Clean this up. 
-  else if (is<Reference_type>(t)) {
-      const Reference_type* v = cast<Reference_type>(t);
-      if(Record_type const* goal = as<Record_type>(v->type())) {
-        if (is_derived(c->type()->nonref(), v->type())) {
-          Base_conv *ret = as<Base_conv>(convert_to_base(c));
-          Record_type const *d = as<Record_type>(c->type()->nonref());
-          // Build path from goal to derived
-          if(goal->declaration() == d->declaration()) {
-            return ret;
-          } else {
-            ret->path_.push_back(0);
-            Record_decl* decl = d->declaration();
-            while(decl && decl != goal->declaration()) {
-              ret->path_.push_back(0);
-              decl = decl->base()->declaration();
-            }
-            return ret;
-          }
-        }
-      }
-
-      if (c->type() == t)
-        return c;
   }
+    // FIXME: Clean this up.
+  else if (Record_type const* goal = as<Record_type>(t->nonref())) {
+    if (is_derived(c->type()->nonref(), goal)) {
+      Base_conv *ret = as<Base_conv>(convert_to_base(c));
+      Record_type const *d = as<Record_type>(c->type()->nonref());
+      // Build path from goal to derived
+      Record_decl* decl = d->declaration();
+      do {
+        ret->path_.push_back(0);
+        if (goal->declaration() == decl)
+          return ret;
+        decl = decl->base()->declaration();
+      } while(decl);
+    }
+    if (c->type() == t)
+      return c;
+  }
+
 
   // convert to boolean
   if (is<Boolean_type>(t)) {
