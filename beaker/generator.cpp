@@ -632,7 +632,20 @@ Generator::gen(Value_conv const* e)
 llvm::Value*
 Generator::gen(Promote_conv const* e)
 {
-  throw std::runtime_error("not implemented");
+  llvm::Value* v = gen(e->source());
+  const Type * t = e->target();
+
+  if(is<Integer_type>(t)) {
+    const Integer_type * t2 = dynamic_cast<const Integer_type*>(t);
+    if(t2->is_signed())
+      return build.CreateIntCast(v, get_type(t2), true);
+    else
+      return build.CreateIntCast(v, get_type(t2), false);
+  }
+
+  else
+    return build.CreateIntCast(v, get_type(t), true);
+  
 }
 
 
