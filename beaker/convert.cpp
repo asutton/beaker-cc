@@ -141,15 +141,18 @@ convert(Expr* e, Type const* t)
   else if (Record_type const* goal = as<Record_type>(t->nonref())) {
     if (is_derived(c->type()->nonref(), goal)) {
       Base_conv *ret = as<Base_conv>(convert_to_base(c));
-      Record_type const *d = as<Record_type>(c->type()->nonref());
+      Record_type const *derived = as<Record_type>(c->type()->nonref());
       // Build path from goal to derived
-      Record_decl* decl = d->declaration();
+      Record_decl* derived_decl = derived->declaration();
+      // Build the path from the base to derived.
+      // If multiple inheritance gets implemented you will need to push_back
+      // The offset to the parent class
       do {
         ret->path_.push_back(0);
-        if (goal->declaration() == decl)
+        if (goal->declaration() == derived_decl)
           return ret;
-        decl = decl->base()->declaration();
-      } while(decl);
+        derived_decl = derived_decl->base_declaration();
+      } while(derived_decl);
     }
     if (c->type() == t)
       return c;
