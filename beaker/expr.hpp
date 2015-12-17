@@ -4,10 +4,10 @@
 #ifndef BEAKER_EXPR_HPP
 #define BEAKER_EXPR_HPP
 
-#include "prelude.hpp"
-#include "symbol.hpp"
-#include "overload.hpp"
-#include "value.hpp"
+#include <beaker/prelude.hpp>
+#include <beaker/symbol.hpp>
+#include <beaker/overload.hpp>
+#include <beaker/value.hpp>
 
 
 // The Expr class represents the set of all expressions
@@ -76,7 +76,10 @@ struct Expr::Visitor
   virtual void visit(Index_expr const*) = 0;
   virtual void visit(Value_conv const*) = 0;
   virtual void visit(Block_conv const*) = 0;
+  virtual void visit(Base_conv const*) = 0;
+  virtual void visit(Promote_conv const*) = 0;
   virtual void visit(Default_init const*) = 0;
+  virtual void visit(Trivial_init const*) = 0;
   virtual void visit(Copy_init const*) = 0;
   virtual void visit(Reference_init const*) = 0;
 };
@@ -118,7 +121,10 @@ struct Expr::Mutator
   virtual void visit(Index_expr*) = 0;
   virtual void visit(Value_conv*) = 0;
   virtual void visit(Block_conv*) = 0;
+  virtual void visit(Base_conv*) = 0;
+  virtual void visit(Promote_conv*) = 0;
   virtual void visit(Default_init*) = 0;
+  virtual void visit(Trivial_init*) = 0;
   virtual void visit(Copy_init*) = 0;
   virtual void visit(Reference_init*) = 0;
 };
@@ -469,6 +475,9 @@ struct Dot_expr : Expr
 };
 
 
+using Field_path = std::vector<int>;
+
+
 // An expression of the form e.f where e has record
 // type and f is a field of that type.
 //
@@ -487,8 +496,8 @@ struct Dot_expr : Expr
 // inherit members.
 struct Field_expr : Dot_expr
 {
-  Field_expr(Type const* t, Expr* e1, Expr* e2, Decl* v)
-    : Dot_expr(t, e1, e2), var(v)
+  Field_expr(Type const* t, Expr* e1, Expr* e2, Decl* v, Field_path const& p)
+    : Dot_expr(t, e1, e2), var(v), path_(p)
   { }
 
   void accept(Visitor& v) const { v.visit(this); }
@@ -496,9 +505,10 @@ struct Field_expr : Dot_expr
 
   Record_decl* record() const;
   Field_decl*  field() const;
-  int          index() const;
+  Field_path   path() const { return path_; }
 
-  Decl* var;
+  Decl*      var;
+  Field_path path_;
 };
 
 
@@ -515,7 +525,6 @@ struct Method_expr : Dot_expr
 
   Record_decl* record() const;
   Method_decl* method() const;
-
   Decl* fn;
 };
 
@@ -576,6 +585,28 @@ struct Block_conv : Conv
   void accept(Mutator& v)       { v.visit(this); }
 };
 
+// Represents the conversion of a base class to a derived class
+struct Base_conv : Conv
+{
+  using Method_path = std::vector<int>;
+  using Conv::Conv;
+
+  Method_path path_;
+
+  Method_path path() const {return path_;}
+  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Mutator& v)       { v.visit(this); }
+};
+
+// Represents the promoton of a numeric type
+struct Promote_conv : Conv
+{
+  using Conv::Conv;
+
+  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Mutator& v)       { v.visit(this); }
+};
+
 
 // -------------------------------------------------------------------------- //
 // Initializers
@@ -617,10 +648,18 @@ struct Init : Expr
 // FIXME: Find a constructor of the type:
 //
 //    (ref T) -> void
-//
-// Note that we should also explicitly represent
-// trivial default constructors.
 struct Default_init : Init
+{
+  using Init::Init;
+
+  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Mutator& v)       { v.visit(this); }
+};
+
+
+// Performs trivial initialization of an object
+// of the given type.
+struct Trivial_init : Init
 {
   using Init::Init;
 
@@ -714,7 +753,10 @@ struct Generic_expr_visitor : Expr::Visitor, lingo::Generic_visitor<F, T>
   void visit(Index_expr const* e) { this->invoke(e); }
   void visit(Value_conv const* e) { this->invoke(e); }
   void visit(Block_conv const* e) { this->invoke(e); }
+  void visit(Base_conv const* e) { this->invoke(e); }
+  void visit(Promote_conv const* e) { this->invoke(e); }
   void visit(Default_init const* e) { this->invoke(e); }
+  void visit(Trivial_init const* e) { this->invoke(e); }
   void visit(Copy_init const* e) { this->invoke(e); }
   void visit(Reference_init const* e) { this->invoke(e); }
 };
@@ -772,7 +814,10 @@ struct Generic_expr_mutator : Expr::Mutator, lingo::Generic_mutator<F, T>
   void visit(Index_expr* e) { this->invoke(e); }
   void visit(Value_conv* e) { this->invoke(e); }
   void visit(Block_conv* e) { this->invoke(e); }
+  void visit(Base_conv* e) { this->invoke(e); }
+  void visit(Promote_conv* e) { this->invoke(e); }
   void visit(Default_init* e) { this->invoke(e); }
+  void visit(Trivial_init* e) { this->invoke(e); }
   void visit(Copy_init* e) { this->invoke(e); }
   void visit(Reference_init* e) { this->invoke(e); }
 };

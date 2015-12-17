@@ -1,9 +1,9 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
-#include "expr.hpp"
-#include "type.hpp"
-#include "decl.hpp"
+#include "beaker/expr.hpp"
+#include "beaker/type.hpp"
+#include "beaker/decl.hpp"
 
 #include <iostream>
 
@@ -44,15 +44,6 @@ Field_decl*
 Field_expr::field() const
 {
   return cast<Field_decl>(var);
-}
-
-
-// Returns the index of the field within its
-// record defintition.
-int
-Field_expr::index() const
-{
-  return field()->index();
 }
 
 

@@ -1,10 +1,10 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
-#include "less.hpp"
-#include "type.hpp"
-#include "expr.hpp"
-#include "value.hpp"
+#include "beaker/less.hpp"
+#include "beaker/type.hpp"
+#include "beaker/expr.hpp"
+#include "beaker/value.hpp"
 
 #include <algorithm>
 #include <typeindex>
@@ -99,6 +99,8 @@ is_less(Type const* a, Type const* b)
     bool operator()(Boolean_type const* a) { return false; }
     bool operator()(Character_type const* a) { return false; }
     bool operator()(Integer_type const* a) { return false; }
+    bool operator()(Float_type const* a) { return false; }
+    bool operator()(Double_type const* a) { return false; }
     bool operator()(Function_type const* a) { return is_less(a, cast<Function_type>(b)); }
     bool operator()(Array_type const* a) { return is_less(a, cast<Array_type>(b)); }
     bool operator()(Block_type const* a) { return is_less(a, cast<Block_type>(b)); }
@@ -120,37 +122,80 @@ is_less(Type const* a, Type const* b)
 // Comparison of values
 
 
+bool
+is_less(Error_value const& a, Error_value const& b)
+{ 
+  return false; 
+}
+
+
+bool
+is_less(Integer_value const& a, Integer_value const& b)
+{ 
+  return a < b;
+}
+
+
+bool
+is_less(Float_value const& a, Float_value const& b)
+{ 
+  return a < b; 
+}
+
+
+bool
+is_less(Function_value const& a, Function_value const& b)
+{ 
+  std::less<Function_value> cmp;
+  return cmp(a, b);
+}
+
+
+bool
+is_less(Reference_value const& a, Reference_value const& b)
+{ 
+  std::less<Reference_value> cmp;
+  return cmp(a, b); 
+}
+
+bool
+is_less(Array_value const& a, Array_value const& b)
+{ 
+  auto cmp = [](Value const& x, Value const& y) { return is_less(x, y); };
+  return std::lexicographical_compare(a.data, a.data + a.len,
+                                      b.data, b.data + b.len, cmp);
+}
+
+bool
+is_less(Tuple_value const& a, Tuple_value const& b)
+{ 
+  auto cmp = [](Value const& x, Value const& y) { return is_less(x, y); };
+  return std::lexicographical_compare(a.data, a.data + a.len,
+                                      b.data, b.data + b.len, cmp);
+}
+
 // FIXME: Use a visitor for values. Also, push this into
 // a header file somewhere.
 bool
 is_less(Value const& a, Value const& b)
 {
+  struct Fn
+  {
+    Value const& b;
+    bool operator()(Error_value const& a) const { return is_less(a, b.get_error()); }
+    bool operator()(Integer_value const& a) const  { return is_less(a, b.get_integer()); }
+    bool operator()(Float_value const& a) const { return is_less(a, b.get_float()); }
+    bool operator()(Function_value const& a) const  { return is_less(a, b.get_function()); }
+    bool operator()(Reference_value const& a) const  { return is_less(a, b.get_reference()); }
+    bool operator()(Array_value const& a) const  { return is_less(a, b.get_array()); }
+    bool operator()(Tuple_value const& a) const { return is_less(a, b.get_tuple()); }
+  };
+
   if (a.kind() < b.kind())
     return true;
   if (b.kind() < a.kind())
     return false;
-
-  switch (a.kind()) {
-    case error_value:
-      return false;
-
-    case integer_value:
-      return a.get_integer() < b.get_integer();
-
-    case function_value: {
-      std::less<void const*> cmp;
-      return cmp(a.get_function(), b.get_function());
-    }
-
-    case reference_value:
-      return is_less(*a.get_reference(), *b.get_reference());
-
-    case array_value:
-    case tuple_value:
-      // FIXME: Implement me!
-      return false;
-  }
-  throw std::runtime_error("unhandled value");
+  return apply(a, Fn{b});
 }
 
 
@@ -210,7 +255,10 @@ is_less(Expr const* a, Expr const* b)
     bool operator()(Index_expr const* a) { lingo_unreachable(); }
     bool operator()(Value_conv const* a) { lingo_unreachable(); }
     bool operator()(Block_conv const* a) { lingo_unreachable(); }
+    bool operator()(Base_conv const* a) { lingo_unreachable(); }
+    bool operator()(Promote_conv const* a) { lingo_unreachable(); }
     bool operator()(Default_init const* a) { lingo_unreachable(); }
+    bool operator()(Trivial_init const* a) { lingo_unreachable(); }
     bool operator()(Copy_init const* a) { lingo_unreachable(); }
     bool operator()(Reference_init const* a) { lingo_unreachable(); }
   };

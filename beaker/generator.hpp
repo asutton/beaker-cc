@@ -6,8 +6,8 @@
 
 // The LLVM IR generator.
 
-#include "prelude.hpp"
-#include "environment.hpp"
+#include <beaker/prelude.hpp>
+#include <beaker/environment.hpp>
 
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/IRBuilder.h>
@@ -41,6 +41,11 @@ using Type_env = Environment<Decl const*, llvm::Type*>;
 using String_env = Environment<String, llvm::Value*>;
 
 
+// Associates record declarations with their vtables.
+// VTables are simply global variables with struct type.
+using Vtable_map = std::unordered_map<Decl const*, llvm::GlobalVariable*>;
+
+
 struct Generator
 {
   Generator();
@@ -54,6 +59,8 @@ struct Generator
   llvm::Type* get_type(Boolean_type const*);
   llvm::Type* get_type(Character_type const*);
   llvm::Type* get_type(Integer_type const*);
+  llvm::Type* get_type(Float_type const*);
+  llvm::Type* get_type(Double_type const*);
   llvm::Type* get_type(Function_type const*);
   llvm::Type* get_type(Array_type const*);
   llvm::Type* get_type(Block_type const*);
@@ -87,9 +94,14 @@ struct Generator
   llvm::Value* gen(Index_expr const*);
   llvm::Value* gen(Value_conv const*);
   llvm::Value* gen(Block_conv const*);
-  llvm::Value* gen(Default_init const*);
-  llvm::Value* gen(Copy_init const*);
-  llvm::Value* gen(Reference_init const*);
+  llvm::Value* gen(Base_conv const*);
+  llvm::Value* gen(Promote_conv const*);
+
+  void gen_init(llvm::Value*, Expr const*);
+  void gen_init(llvm::Value*, Default_init const*);
+  void gen_init(llvm::Value*, Trivial_init const*);
+  void gen_init(llvm::Value*, Copy_init const*);
+  void gen_init(llvm::Value*, Reference_init const*);
 
   void gen(Stmt const*);
   void gen(Empty_stmt const*);
@@ -116,11 +128,10 @@ struct Generator
   void gen_local(Variable_decl const*);
   void gen_global(Variable_decl const*);
 
-  // Helper functions for determining where
-  // breaks and continues should go to
-  void make_branch(llvm::BasicBlock*, llvm::BasicBlock*);
-  void resolve_illformed_blocks(llvm::Function*);
-
+  llvm::Value* gen_vtable(Record_decl const*);
+  llvm::Value* gen_vptr(Expr const*);
+  llvm::Value* gen_vptr(Record_decl const*, llvm::Value*);
+  llvm::Value* gen_vref(Record_decl const*, llvm::Value*);
 
   llvm::LLVMContext cxt;
   llvm::IRBuilder<> build;
@@ -136,11 +147,11 @@ struct Generator
   llvm::BasicBlock* top;    // Loop top
   llvm::BasicBlock* bottom; // Loop bottom
 
-
   // Environment.
   Symbol_stack      stack;
   Type_env          types;
   String_env        strings;
+  Vtable_map        vtables;
 
   struct Symbol_sentinel;
   struct Loop_sentinel;
@@ -192,6 +203,5 @@ struct Generator::Loop_sentinel
   llvm::BasicBlock* top;  // Pevious loop top
   llvm::BasicBlock* bot;  // Previos loop bottom
 };
-
 
 #endif

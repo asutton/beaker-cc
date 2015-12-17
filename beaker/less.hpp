@@ -4,11 +4,13 @@
 #ifndef BEAKER_LESS_HPP
 #define BEAKER_LESS_HPP
 
-#include "prelude.hpp"
+#include <beaker/prelude.hpp>
+#include <beaker/value.hpp>
 
 
 bool is_less(Type const*, Type const*);
 bool is_less(Expr const*, Expr const*);
+bool is_less(Value const&, Value const&);
 
 
 // A function object that invokes the is_less function.

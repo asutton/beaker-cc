@@ -1,0 +1,30 @@
+
+
+foreign def puts(char[]) -> int;
+
+
+struct B 
+{
+  virtual def f() -> int 
+  { 
+    puts("called B.f");
+    return 0;
+  }
+}
+
+struct D : B
+{
+  virtual def f() -> int 
+  { 
+    puts("called D.f");
+    return 0; 
+  }
+}
+
+def main() -> int
+{
+  var b : B;
+  var d : D;
+  b.f();
+  d.f();
+}

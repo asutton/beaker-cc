@@ -1,9 +1,9 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
-#include "mangle.hpp"
-#include "type.hpp"
-#include "decl.hpp"
+#include "beaker/mangle.hpp"
+#include "beaker/type.hpp"
+#include "beaker/decl.hpp"
 
 #include <iostream>
 
@@ -12,7 +12,7 @@
 void
 mangle(std::ostream& os, Symbol const* sym)
 {
-  os << sym->spelling();  
+  os << sym->spelling();
 }
 
 
@@ -47,9 +47,20 @@ mangle(std::ostream& os, Character_type const* t)
 void
 mangle(std::ostream& os, Integer_type const* t)
 {
-  os << 'i';
+  os << (t->is_signed()?"":"u") << 'i' << std::to_string(t->precision());
 }
 
+void
+mangle(std::ostream& os, Float_type const* t)
+{
+  os << 'f';
+}
+
+void
+mangle(std::ostream& os, Double_type const* t)
+{
+  os << 'd';
+}
 
 // 'F' p* r
 //
@@ -116,6 +127,8 @@ mangle(std::ostream& os, Type const* t)
     void operator()(Boolean_type const* t) { return mangle(os, t); }
     void operator()(Character_type const* t) { return mangle(os, t); }
     void operator()(Integer_type const* t) { return mangle(os, t); }
+    void operator()(Float_type const* t) { return mangle(os, t); }
+    void operator()(Double_type const* t) { return mangle(os, t); }
     void operator()(Function_type const* t) { return mangle(os, t); }
     void operator()(Array_type const* t) { return mangle(os, t); }
     void operator()(Block_type const* t) { return mangle(os, t); }
@@ -126,7 +139,7 @@ mangle(std::ostream& os, Type const* t)
 }
 
 
-String 
+String
 mangle(Type const* t)
 {
   std::stringstream ss;

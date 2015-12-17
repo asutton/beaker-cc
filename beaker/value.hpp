@@ -9,7 +9,7 @@
 //
 // TODO: Make a visitor for values.
 
-#include "prelude.hpp"
+#include <beaker/prelude.hpp>
 
 
 struct Value;
@@ -19,6 +19,7 @@ enum Value_kind
 {
   error_value,
   integer_value,
+  float_value,
   function_value,
   reference_value,
   array_value,
@@ -30,7 +31,8 @@ enum Value_kind
 struct Error_value { };
 
 
-using Integer_value = int;
+using Integer_value = int64_t;
+using Float_value = double;
 using Function_value = Function_decl const*;
 using Reference_value = Value*;
 
@@ -77,6 +79,7 @@ union Value_rep
 {
   Value_rep() : err_() { }
   Value_rep(Integer_value z) : int_(z) { }
+  Value_rep(Float_value fp) : float_(fp) { }
   Value_rep(Function_value f) : fn_(f) { }
   Value_rep(Reference_value r) : ref_(r) { }
   Value_rep(Array_value a) : arr_(a) { }
@@ -86,6 +89,7 @@ union Value_rep
 
   Error_value     err_;
   Integer_value   int_;
+  Float_value     float_;
   Function_value  fn_;
   Reference_value ref_;
   Array_value     arr_;
@@ -102,9 +106,27 @@ struct Value
   Value()
     : k(error_value), r()
   { }
-
+       
+  // TODO: handle signed and unsigned  
+    
+  // Need this constructor because the conversion from 
+  // int to int64_t or double is ambiguous.
+  Value(int n)
+    : k(integer_value), r((int64_t)n)
+  { }
+    
+  // Need this constructor because the conversion from 
+  // unsigned long to int64_t or double is ambiguous.
+  Value(unsigned long n)
+    : k(integer_value), r((int64_t)n)
+  { }
+    
   Value(Integer_value n)
     : k(integer_value), r(n)
+  { }
+    
+  Value(Float_value fp)
+    : k(float_value), r(fp)
   { }
 
   Value(Function_value f)
@@ -129,12 +151,15 @@ struct Value
   Value_kind kind() const { return k; }
   bool is_error() const;
   bool is_integer() const;
+  bool is_float() const;
   bool is_function() const;
   bool is_reference() const;
   bool is_array() const;
   bool is_tuple() const;
 
+  Error_value get_error() const;
   Integer_value get_integer() const;
+  Float_value get_float() const;
   Function_value get_function() const;
   Reference_value get_reference() const;
   Array_value get_array() const;
@@ -150,6 +175,7 @@ struct Value::Visitor
 {
   virtual void visit(Error_value const&) = 0;
   virtual void visit(Integer_value const&) = 0;
+  virtual void visit(Float_value const&) = 0;
   virtual void visit(Function_value const&) = 0;
   virtual void visit(Reference_value const&) = 0;
   virtual void visit(Array_value const&) = 0;
@@ -162,6 +188,7 @@ struct Value::Mutator
 {
   virtual void visit(Error_value&) = 0;
   virtual void visit(Integer_value&) = 0;
+  virtual void visit(Float_value&) = 0;
   virtual void visit(Function_value&) = 0;
   virtual void visit(Reference_value&) = 0;
   virtual void visit(Array_value&) = 0;
@@ -195,6 +222,12 @@ Value::is_integer() const
   return k == integer_value;
 }
 
+// Returns true if the value is an floating point.
+inline bool
+Value::is_float() const
+{
+  return k == float_value;
+}
 
 // Returns true if the value is a function.
 inline bool
@@ -228,12 +261,30 @@ Value::is_tuple() const
 }
 
 
+// Returns the error value.
+inline Error_value
+Value::get_error() const
+{
+  assert(is_error());
+  return r.err_;
+}
+
+
 // Returns the integer value.
 inline Integer_value
 Value::get_integer() const
 {
   assert(is_integer());
   return r.int_;
+}
+
+
+// Returns the floating point value.
+inline Float_value
+Value::get_float() const
+{
+  assert(is_float());
+  return r.float_;
 }
 
 
@@ -279,6 +330,7 @@ Value::accept(Visitor& v) const
   switch (k) {
     case error_value: return v.visit(r.err_);
     case integer_value: return v.visit(r.int_);
+    case float_value: return v.visit(r.float_);
     case function_value: return v.visit(r.fn_);
     case reference_value: return v.visit(r.ref_);
     case array_value: return v.visit(r.arr_);
@@ -293,6 +345,7 @@ Value::accept(Mutator& v)
   switch (k) {
     case error_value: return v.visit(r.err_);
     case integer_value: return v.visit(r.int_);
+    case float_value: return v.visit(r.float_);
     case function_value: return v.visit(r.fn_);
     case reference_value: return v.visit(r.ref_);
     case array_value: return v.visit(r.arr_);
@@ -313,6 +366,7 @@ struct Generic_value_visitor : Value::Visitor, lingo::Generic_visitor<F, T>
 
   void visit(Error_value const& v) { this->invoke(v); };
   void visit(Integer_value const& v) { this->invoke(v); };
+  void visit(Float_value const& v) { this->invoke(v); };
   void visit(Function_value const& v) { this->invoke(v); };
   void visit(Reference_value const& v) { this->invoke(v); };
   void visit(Array_value const& v) { this->invoke(v); };
@@ -338,6 +392,7 @@ struct Generic_value_mutator : Value::Mutator, lingo::Generic_mutator<F, T>
 
   void visit(Error_value& v) { this->invoke(v); };
   void visit(Integer_value& v) { this->invoke(v); };
+  void visit(Float_value& v) { this->invoke(v); };
   void visit(Function_value& v) { this->invoke(v); };
   void visit(Reference_value& v) { this->invoke(v); };
   void visit(Array_value& v) { this->invoke(v); };

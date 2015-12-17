@@ -4,11 +4,11 @@
 #ifndef BEAKER_LEXER_HPP
 #define BEAKER_LEXER_HPP
 
-#include "prelude.hpp"
-#include "file.hpp"
-#include "line.hpp"
-#include "symbol.hpp"
-#include "token.hpp"
+#include <beaker/prelude.hpp>
+#include <beaker/file.hpp>
+#include <beaker/line.hpp>
+#include <beaker/symbol.hpp>
+#include <beaker/token.hpp>
 
 #include <cassert>
 #include <cctype>
@@ -166,6 +166,7 @@ public:
   Token plus();
   Token minus();
   Token star();
+  Token tilde();
   Token slash();
   Token percent();
   Token equal();
@@ -174,12 +175,8 @@ public:
   Token rangle();
   Token ampersand();
   Token bar();
-
-  //NOTE NOTE NOTE
-  //ADDITIONS FOR LAMBDAS
   Token f_slash();
-
-  Token integer();
+  Token number();
   Token word();
   Token character();
   Token string();
@@ -193,6 +190,7 @@ private:
   Token on_word();
   Token on_f_slash();
   Token on_integer();
+  Token on_real();
   Token on_character();
   Token on_string();
 
@@ -391,6 +389,11 @@ Lexer::star()
   return symbol1();
 }
 
+inline Token
+Lexer::tilde(){
+  return symbol1();
+}
+
 
 inline Token
 Lexer::slash()
@@ -499,15 +502,26 @@ Lexer::word()
 }
 
 
+// number ::= integer | decimal
 // integer ::= digit+
+// decimal ::= digit*.digit+
+//
+// FIXME: Support real decimal formats.
 inline Token
-Lexer::integer()
+Lexer::number()
 {
   assert(is_decimal_digit(peek()));
   digit();
   while (is_decimal_digit(peek()))
     digit();
-  return on_integer();
+  if (peek() == '.') {
+    get();
+    while (is_decimal_digit(peek()))
+      digit();
+    return on_real();
+  } else {
+    return on_integer();
+  }
 }
 
 
@@ -515,7 +529,7 @@ Lexer::integer()
 inline void
 Lexer::digit()
 {
-  assert(is_decimal_digit(peek()));
+  assert(is_decimal_digit(peek()) || peek() == '.');
   get();
 }
 
@@ -568,7 +582,6 @@ Lexer::ignore()
 {
   in_.get();
 }
-
 
 
 #endif

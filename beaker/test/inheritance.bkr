@@ -1,0 +1,29 @@
+struct B 
+{
+  x : int;
+  y : int;
+}
+
+struct D : B
+{
+  p : int;
+  q : int;
+}
+
+var b : B;
+var d : D;
+
+
+def main() -> int 
+{
+  b.x = 0;
+  b.y = 1;
+
+  d.p = 2;
+  d.q = 5;
+
+  d.x = 1;
+  d.y = 2;
+
+  return 0;
+}

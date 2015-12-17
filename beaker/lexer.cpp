@@ -1,7 +1,7 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
-#include "lexer.hpp"
+#include "beaker/lexer.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -73,6 +73,7 @@ Lexer::scan()
       case '+': return plus();
       case '-': return minus();
       case '*': return star();
+      case '~': return tilde();
 
       case '/':
         get();
@@ -94,7 +95,7 @@ Lexer::scan()
 
       case '0': case '1': case '2': case '3': case '4':
       case '5': case '6': case '7': case '8': case '9':
-        return integer();
+        return number();
 
       case 'a': case 'b': case 'c': case 'd': case 'e':
       case 'f': case 'g': case 'h': case 'i': case 'j':
@@ -210,9 +211,19 @@ inline Token
 Lexer::on_integer()
 {
   String str = build_.take();
-  int n = string_to_int<int>(str, 10);
+  int64_t n = string_to_int<int>(str, 10);
   Symbol* sym = syms_.put<Integer_sym>(str, integer_tok, n);
   return Token(loc_, integer_tok, sym);
+}
+
+// Return a new floating point number token.
+inline Token
+Lexer::on_real()
+{
+  String str = build_.take();
+  double n = stod(str, nullptr);
+  Symbol* sym = syms_.put<Floating_sym>(str, floating_tok, n);
+  return Token(loc_, floating_tok, sym);
 }
 
 

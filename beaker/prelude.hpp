@@ -4,13 +4,13 @@
 #ifndef BEAKER_PRELUDE_HPP
 #define BEAKER_PRELUDE_HPP
 
-#include "config.hpp"
+#include <beaker/config.hpp>
 
-#include "lingo/assert.hpp"
-#include "lingo/string.hpp"
-#include "lingo/node.hpp"
-#include "lingo/print.hpp"
-#include "lingo/io.hpp"
+#include <lingo/assert.hpp>
+#include <lingo/string.hpp>
+#include <lingo/node.hpp>
+#include <lingo/print.hpp>
+#include <lingo/io.hpp>
 
 #include <iosfwd>
 #include <vector>
@@ -57,11 +57,16 @@ struct Dot_expr;
 struct Field_expr;
 struct Method_expr;
 struct Index_expr;
+
 struct Conv;
 struct Value_conv;
 struct Block_conv;
+struct Base_conv;
+struct Promote_conv;
+
 struct Init;
 struct Default_init;
+struct Trivial_init;
 struct Copy_init;
 struct Reference_init;
 
@@ -70,6 +75,8 @@ struct Id_type;
 struct Boolean_type;
 struct Character_type;
 struct Integer_type;
+struct Float_type;
+struct Double_type;
 struct Function_type;
 struct Array_type;
 struct Block_type;
@@ -105,7 +112,7 @@ using Decl_seq = std::vector<Decl*>;
 using Stmt_seq = std::vector<Stmt*>;
 
 
-#include "symbol.hpp" // TODO: Do I need this?
-#include "print.hpp"
+#include <beaker/symbol.hpp> // TODO: Do I need this?
+#include <beaker/print.hpp>
 
 #endif

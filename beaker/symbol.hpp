@@ -4,7 +4,7 @@
 #ifndef BEAKER_SYMBOL_HPP
 #define BEAKER_SYMBOL_HPP
 
-#include "prelude.hpp"
+#include <beaker/prelude.hpp>
 
 #include <unordered_map>
 #include <typeinfo>
@@ -72,13 +72,25 @@ struct Boolean_sym : Symbol
 // useful to keep cached.
 struct Integer_sym : Symbol
 {
-  Integer_sym(int k, int n)
+  Integer_sym(int k, int64_t n)
     : Symbol(k), value_(n)
   { }
 
-  int value() const { return value_; }
+  int64_t value() const { return value_; }
 
-  int value_;
+  int64_t value_;
+};
+
+
+// Represents all floating point number symbols.
+struct Floating_sym : Symbol{
+  Floating_sym(int k, double n)
+    : Symbol(k), value_(n)
+  { }
+
+  double value() const { return value_; }
+
+  double value_;
 };
 
 

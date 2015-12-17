@@ -1,10 +1,10 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
-#include "print.hpp"
-#include "expr.hpp"
-#include "decl.hpp"
-#include "type.hpp"
+#include "beaker/print.hpp"
+#include "beaker/expr.hpp"
+#include "beaker/decl.hpp"
+#include "beaker/type.hpp"
 
 #include <iostream>
 
@@ -23,6 +23,8 @@ operator<<(std::ostream& os, Type const& t)
     void operator()(Boolean_type const* t) { os << *t; }
     void operator()(Character_type const* t) { os << *t; }
     void operator()(Integer_type const* t) { os << *t; }
+    void operator()(Float_type const* t) { os << *t; }
+    void operator()(Double_type const* t) { os << *t; }
     void operator()(Function_type const* t) { os << *t; }
     void operator()(Block_type const* t) { os << *t; }
     void operator()(Array_type const* t) { os << *t; }
@@ -55,13 +57,23 @@ operator<<(std::ostream& os, Character_type const&)
   return os << "char";
 }
 
-
 std::ostream&
-operator<<(std::ostream& os, Integer_type const&)
+operator<<(std::ostream& os, Integer_type const& t)
 {
-  return os << "int";
+  return os << (t.is_signed()?"":"u") << "int" << std::to_string(t.precision());
 }
 
+std::ostream&
+operator<<(std::ostream& os, Float_type const&)
+{
+  return os << "float";
+}
+
+std::ostream&
+operator<<(std::ostream& os, Double_type const&)
+{
+  return os << "double";
+}
 
 std::ostream&
 operator<<(std::ostream& os, Function_type const& t)
@@ -145,7 +157,10 @@ operator<<(std::ostream& os, Expr const& e)
     void operator()(Index_expr const* e) { os << *e; }
     void operator()(Value_conv const* e) { os << *e; }
     void operator()(Block_conv const* e) { os << *e; }
+    void operator()(Base_conv const* e) { os << *e; }
+    void operator()(Promote_conv const* e) { os << *e; }
     void operator()(Default_init const* e) { os << *e; }
+    void operator()(Trivial_init const* e) { os << *e; }
     void operator()(Copy_init const* e) { os << *e; }
     void operator()(Reference_init const* e) { os << *e; }
   };
@@ -346,11 +361,34 @@ operator<<(std::ostream& os, Block_conv const& e)
             << *e.target() << ')';
 }
 
+std::ostream&
+operator<<(std::ostream& os, Base_conv const& e)
+{
+  return os << "__to_base("
+         << *e.source() << ','
+         << *e.target() << ')';
+}
+
+std::ostream&
+operator<<(std::ostream& os, Promote_conv const& e)
+{
+  return os << "__promote("
+            << *e.source() << ','
+            << *e.target() << ')';
+}
+
 
 std::ostream&
 operator<<(std::ostream& os, Default_init const& e)
 {
   return os << "__default_init(" << *e.type() << ")";
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Trivial_init const& e)
+{
+  return os << "__trivial_init(" << *e.type() << ")";
 }
 
 
@@ -395,9 +433,7 @@ operator<<(std::ostream& os, Decl const& d)
   */
 
   // Write everything in declared object format.
-  os << *d.name() << " : " << *d.type();
-
-  return os;
+  return os << *d.name() << " : " << *d.type();
 }
 
 

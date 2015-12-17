@@ -1,8 +1,8 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
-#include "scope.hpp"
-#include "decl.hpp"
+#include "beaker/scope.hpp"
+#include "beaker/decl.hpp"
 
 
 // Returns the innermost declaration context.

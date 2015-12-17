@@ -13,12 +13,14 @@
 // errors and continuing elaboration. There may be some
 // cases where elaboration must stop.
 
-#include "prelude.hpp"
-#include "location.hpp"
-#include "scope.hpp"
+#include <beaker/prelude.hpp>
+#include <beaker/location.hpp>
+#include <beaker/scope.hpp>
 
 #include <unordered_set>
 #include <unordered_map>
+#include "expr.hpp"
+
 
 
 // Track defined declarations.
@@ -47,6 +49,8 @@ public:
   Type const* elaborate(Boolean_type const*);
   Type const* elaborate(Character_type const*);
   Type const* elaborate(Integer_type const*);
+  Type const* elaborate(Float_type const*);
+  Type const* elaborate(Double_type const*);
   Type const* elaborate(Function_type const*);
   Type const* elaborate(Array_type const*);
   Type const* elaborate(Block_type const*);
@@ -86,7 +90,10 @@ public:
   Expr* elaborate(Index_expr* e);
   Expr* elaborate(Value_conv* e);
   Expr* elaborate(Block_conv* e);
+  Expr* elaborate(Base_conv* e);
+  Expr* elaborate(Promote_conv* e);
   Expr* elaborate(Default_init* e);
+  Expr* elaborate(Trivial_init* e);
   Expr* elaborate(Copy_init* e);
   Expr* elaborate(Reference_init* e);
 
@@ -140,6 +147,7 @@ public:
 
   Overload* unqualified_lookup(Symbol const*);
   Overload* qualified_lookup(Scope*, Symbol const*);
+  Overload* member_lookup(Record_decl*, Symbol const*);
 
   // Diagnostics
   void on_call_error(Expr_seq const&, Expr_seq const&, Type_seq const&);
@@ -219,6 +227,8 @@ struct Elaborator::Scope_sentinel
 };
 
 
+// An RAII class used to manage a stack of definitions.
+// This helps to prevent loops in recursive elaborations.
 struct Elaborator::Defining_sentinel
 {
   Defining_sentinel(Elaborator& e, Decl* d)

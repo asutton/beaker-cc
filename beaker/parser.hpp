@@ -5,9 +5,10 @@
 #define BEAKER_PARSER_HPP
 
 
-#include "prelude.hpp"
-#include "token.hpp"
-#include "specifier.hpp"
+#include <beaker/prelude.hpp>
+#include <beaker/decl.hpp>
+#include <beaker/specifier.hpp>
+#include <beaker/token.hpp>
 
 
 class Input_buffer;
@@ -88,6 +89,7 @@ private:
   Expr* on_id(Token);
   Expr* on_bool(Token);
   Expr* on_int(Token);
+  Expr* on_float(Token);
   Expr* on_char(Token);
   Expr* on_str(Token);
   Expr* on_add(Expr*, Expr*);
@@ -115,14 +117,19 @@ private:
 
 
   Decl* on_variable(Specifier, Token, Type const*);
+  Decl* on_variable(Specifier, Token, Type const*, Token_kind);
   Decl* on_variable(Specifier, Token, Type const*, Expr*);
   Decl* on_parameter(Specifier, Type const*);
   Decl* on_parameter(Specifier, Token, Type const*);
   Decl* on_function(Specifier, Token, Decl_seq const&, Type const*);
   Decl* on_function(Specifier, Token, Decl_seq const&, Type const*, Stmt*);
-  Decl* on_record(Specifier, Token, Decl_seq const&, Decl_seq const&);
+  Decl* on_record(Specifier, Token, Decl_seq const&, Decl_seq const&, Type const*);
   Decl* on_field(Specifier, Token, Type const*);
   Decl* on_method(Specifier, Token, Decl_seq const&, Type const*, Stmt*);
+  //need to implement below for constructors and destructors
+  //refence on_method for implementation
+  //Decl* on_ctor(Specifier, Token, Decl_seq const&, Type const* Stmt*);
+  //Decl* on_dtor(Specifier, Token, Decl_seq const&, Type const* Stmt*);
   Decl* on_module(Module_decl*, Decl_seq const&);
 
   // FIXME: Remove _stmt from handlers.
@@ -177,7 +184,6 @@ inline
 Parser::Parser(Symbol_table& s, Token_stream& t)
   : syms_(s), ts_(t), locs_(nullptr), errs_(0), term_()
 { }
-
 
 inline
 Parser::Parser(Symbol_table& s, Token_stream& t, Location_map& l)

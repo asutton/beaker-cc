@@ -1,0 +1,22 @@
+
+
+struct B 
+{
+  virtual def f() -> int { return 0; }
+}
+
+struct D : B
+{
+  virtual def f() -> int { return 0; }
+}
+
+
+def foo(virtual b : B&) -> int
+{
+  return 0;
+}
+
+def main() -> int
+{
+  return 0;
+}

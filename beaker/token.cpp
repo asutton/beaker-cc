@@ -1,7 +1,7 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
-#include "token.hpp"
+#include "beaker/token.hpp"
 
 
 // TODO: This could be unified with the token so
@@ -39,11 +39,9 @@ spelling(Token_kind k)
     case not_tok: return "!";
     case amp_tok: return "&";
     case arrow_tok: return "->";
-
-    //NOTE NOTE NOTE NOTE NOTE
-    //ADDITIONS
+    case tilde_tok: return "~";
     case f_slash_tok: return "\\";
-
+    case abstract_kw: return "abstract";
     case bool_kw: return "bool";
     case break_kw: return "break";
     case char_kw: return "char";
@@ -52,12 +50,28 @@ spelling(Token_kind k)
     case else_kw: return "else";
     case foreign_kw: return "else";
     case if_kw: return "if";
-    case int_kw: return "int";
     case return_kw: return "return";
     case struct_kw: return "struct";
     case this_kw: return "this";
+    case trivial_kw: return "trivial";
     case var_kw: return "var";
+    case virtual_kw: return "virtual";
     case while_kw: return "while";
+    case int_kw: return "int";
+    case uint_kw: return "uint";
+    case short_kw: return "short";
+    case ushort_kw: return "ushort";
+    case long_kw: return "long";
+    case ulong_kw: return "ulong";
+    case int16_kw: return "int16";
+    case uint16_kw: return "uint16";
+    case int32_kw: return "int32";
+    case uint32_kw: return "uint32";
+    case int64_kw: return "int64";
+    case uint64_kw: return "uint64";
+    case float_kw: return "float";
+    case double_kw: return "double";
+
 
     default: return "<unspecified>";
   }
@@ -98,12 +112,14 @@ init_symbols(Symbol_table& syms)
   syms.put<Symbol>("!", not_tok);
   syms.put<Symbol>("&", amp_tok);
   syms.put<Symbol>("->", arrow_tok);
+  syms.put<Symbol>("~", tilde_tok);
 
   //NOTE NOTE NOTE NOTE NOTE NOTE
   //ADDITIONS
   syms.put<Symbol>("\\", f_slash_tok);
 
   // Keywords
+  syms.put<Symbol>("abstract", abstract_kw);
   syms.put<Symbol>("bool", bool_kw);
   syms.put<Symbol>("break", break_kw);
   syms.put<Symbol>("char", char_kw);
@@ -112,12 +128,27 @@ init_symbols(Symbol_table& syms)
   syms.put<Symbol>("else", else_kw);
   syms.put<Symbol>("foreign", foreign_kw);
   syms.put<Symbol>("if", if_kw);
-  syms.put<Symbol>("int", int_kw);
-  syms.put<Symbol>("while", while_kw);
   syms.put<Symbol>("return", return_kw);
   syms.put<Symbol>("struct", struct_kw);
   syms.put<Symbol>("this", this_kw);
+  syms.put<Symbol>("trivial", trivial_kw);
   syms.put<Symbol>("var", var_kw);
+  syms.put<Symbol>("int", int_kw);
+  syms.put<Symbol>("uint", uint_kw);
+  syms.put<Symbol>("short", short_kw);
+  syms.put<Symbol>("ushort", ushort_kw);
+  syms.put<Symbol>("long", long_kw);
+  syms.put<Symbol>("ulong", ulong_kw);
+  syms.put<Symbol>("int16", int16_kw);
+  syms.put<Symbol>("uint16", uint16_kw);
+  syms.put<Symbol>("int32", int32_kw);
+  syms.put<Symbol>("uint32", uint32_kw);
+  syms.put<Symbol>("int64", int64_kw);
+  syms.put<Symbol>("uint64", uint64_kw);
+  syms.put<Symbol>("float", float_kw);
+  syms.put<Symbol>("double", double_kw);
+  syms.put<Symbol>("virtual", virtual_kw);
+  syms.put<Symbol>("while", while_kw);
 
   // Reserved names.
   syms.put<Boolean_sym>("true", boolean_tok, true);
@@ -125,4 +156,5 @@ init_symbols(Symbol_table& syms)
 
   // Common identifiers
   syms.put<Symbol>("main", identifier_tok);
+  syms.put<Symbol>("vptr", identifier_tok);
 }

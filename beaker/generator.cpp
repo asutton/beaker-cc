@@ -1,13 +1,13 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
-#include "generator.hpp"
-#include "type.hpp"
-#include "expr.hpp"
-#include "stmt.hpp"
-#include "decl.hpp"
-#include "mangle.hpp"
-#include "evaluator.hpp"
+#include "beaker/generator.hpp"
+#include "beaker/type.hpp"
+#include "beaker/expr.hpp"
+#include "beaker/stmt.hpp"
+#include "beaker/decl.hpp"
+#include "beaker/mangle.hpp"
+#include "beaker/evaluator.hpp"
 
 #include "llvm/IR/Type.h"
 #include "llvm/IR/GlobalVariable.h"
@@ -41,53 +41,6 @@ Generator::get_name(Decl const* d)
 }
 
 
-
-// -------------------------------------------------------------------------- //
-//            Helper functions
-
-
-// Attempt to insert a branch into a block
-// Will not insert anything if the block already
-// has a terminating instruction
-void
-Generator::make_branch(llvm::BasicBlock* srcBB, llvm::BasicBlock* dstBB)
-{
-  if (!srcBB->getTerminator())
-    build.CreateBr(dstBB);
-}
-
-
-// Resolve illformed blocks within an llvm function
-// These are blocks with no termination instructions.
-//
-// This can be caused by short-curcuiting if-then-stmt like:
-//
-// def foo(x : int) -> int {
-//    if (x == 1)
-//      return x;
-// }
-//
-// The block merging back into the control will have no terminators.
-// Resolve them by inserting the terminator instruction 'unreachable'
-//
-void
-Generator::resolve_illformed_blocks(llvm::Function* fn)
-{
-  // maintain the old insert block
-  auto prev = build.GetInsertBlock();
-
-  for (llvm::Function::iterator i = fn->begin(), e = fn->end(); i != e; ++i) {
-    // if no terminator inject an unreachable instruction
-    if (!i->getTerminator()) {
-      build.SetInsertPoint(i);
-      build.CreateUnreachable();
-    }
-  }
-
-  // reset the old insertion block
-  build.SetInsertPoint(prev);
-}
-
 // -------------------------------------------------------------------------- //
 // Mapping of types
 //
@@ -105,6 +58,8 @@ Generator::get_type(Type const* t)
     llvm::Type* operator()(Boolean_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Character_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Integer_type const* t) const { return g.get_type(t); }
+    llvm::Type* operator()(Float_type const* t) const { return g.get_type(t); }
+    llvm::Type* operator()(Double_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Function_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Array_type const* t) const { return g.get_type(t); }
     llvm::Type* operator()(Block_type const* t) const { return g.get_type(t); }
@@ -142,14 +97,36 @@ Generator::get_type(Character_type const*)
   return build.getInt8Ty();
 }
 
-
-// Return the 32 bit integer type.
+// Return the standard integer type.
 llvm::Type*
-Generator::get_type(Integer_type const*)
+Generator::get_type(Integer_type const* t)
 {
-  return build.getInt32Ty();
+  switch (t->precision())
+  {
+      case 32:
+        return build.getInt32Ty();
+      case 16:
+        return build.getInt16Ty();
+      case 64:
+        return build.getInt64Ty();
+      default:
+        throw std::runtime_error("No integer with precision " + std::to_string(t->precision()));
+  }
 }
 
+// Return the float type.
+llvm::Type*
+Generator::get_type(Float_type const*)
+{
+  return build.getFloatTy();
+}
+
+// Return the double type.
+llvm::Type*
+Generator::get_type(Double_type const*)
+{
+  return build.getDoubleTy();
+}
 
 // Return a function type.
 llvm::Type*
@@ -253,13 +230,40 @@ Generator::gen(Expr const* e)
     llvm::Value* operator()(Method_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Index_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Value_conv const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Promote_conv const* e) const { return g.gen(e); }
     llvm::Value* operator()(Block_conv const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Default_init const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Copy_init const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Reference_init const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Base_conv const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Init const* e) const { lingo_unreachable(); }
   };
 
   return apply(e, Fn{*this});
+}
+
+
+namespace
+{
+struct Gen_init_fn
+{
+  Generator& g;
+  llvm::Value* ptr;
+
+  template<typename T>
+  void operator()(T const*) { lingo_unreachable(); }
+  
+  void operator()(Default_init const* e) { g.gen_init(ptr, e); }
+  void operator()(Trivial_init const* e) { g.gen_init(ptr, e); }
+  void operator()(Copy_init const* e) { g.gen_init(ptr, e); }
+  void operator()(Reference_init const* e) { g.gen_init(ptr, e); }
+};
+
+
+} // namespace
+
+
+void
+Generator::gen_init(llvm::Value* ptr, Expr const* e)
+{
+  apply(e, Gen_init_fn{*this, ptr});
 }
 
 
@@ -505,12 +509,63 @@ Generator::gen(Not_expr const* e)
 }
 
 
-// Note that method calls have been explicitly
-// rewritten to free function calls.
+namespace
+{
+
+// Returns a method declaration if e is a virtual call
+// to that method. Otherwise, returns nullptr.
+inline Method_decl const*
+calls_virtual_method(Call_expr const* e)
+{
+  if (Decl_expr const* d = as<Decl_expr>(e->target()))
+    if (Method_decl const* m = as<Method_decl>(d->declaration()))
+      if (m->is_polymorphic())
+        return m;
+  return nullptr;
+}
+
+
+} // namespace
+
+
 llvm::Value*
 Generator::gen(Call_expr const* e)
 {
-  llvm::Value* fn = gen(e->target());
+  // Generate the code for a virtual function call.
+  //
+  //    f(x, args...)
+  //
+  // If x is a polymorphic record type, then we want to
+  // transform that to:
+  //
+  //    x.vptr[m](x, args...);
+  //
+  // where n is the offset of the f in the virtual table
+  // of x's type.
+  //
+  // TODO: Consider representing virtual calls separately
+  // within the AST. That would help simplify the code
+  // generation a bit.
+  //
+  // TODO: If x refers to a variable of non-reference type,
+  // then we can call the method directly, since x's dynamic
+  // type is known.
+  llvm::Value* fn;
+  if (Method_decl const* m = calls_virtual_method(e)) {
+    Expr_seq const& args = e->arguments();
+
+    // Get (and load) the virtual function pointer.
+    llvm::Value* vptr = gen_vptr(args.front());
+    llvm::Value* a[] = {
+      build.getInt32(0),
+      build.getInt32(m->vtable_entry())
+    };
+    llvm::Value* vfpp = build.CreateInBoundsGEP(vptr, a);
+    fn = build.CreateLoad(vfpp);
+  } else {
+    fn = gen(e->target());
+  }
+
   std::vector<llvm::Value*> args;
   for (Expr const* a : e->arguments())
     args.push_back(gen(a));
@@ -533,10 +588,15 @@ llvm::Value*
 Generator::gen(Field_expr const* e)
 {
   llvm::Value* obj = gen(e->container());
-  std::vector<llvm::Value*> args {
-    build.getInt32(0),                  // 0th element from base
-    build.getInt32(e->field()->index()) // nth element in struct
-  };
+
+  // Build the GEP index array.
+  Field_path const& p = e->path();
+  std::vector<llvm::Value*> args(p.size() + 1);
+  args[0] = build.getInt32(0);
+  std::transform(p.begin(), p.end(), ++args.begin(), [&](int n) {
+    return build.getInt32(n);
+  });
+
   return build.CreateGEP(obj, args);
 }
 
@@ -571,6 +631,12 @@ Generator::gen(Value_conv const* e)
   return build.CreateLoad(v);
 }
 
+llvm::Value*
+Generator::gen(Promote_conv const* e)
+{
+  throw std::runtime_error("not implemented");
+}
+
 
 llvm::Value*
 Generator::gen(Block_conv const* e)
@@ -588,41 +654,65 @@ Generator::gen(Block_conv const* e)
 }
 
 
-// TODO: Return the value or store it?
+// Build a GEP to the base class sub-object. Note that
+// for derivation from the first base class, a bit-cast
+// would be appropriate.
 llvm::Value*
-Generator::gen(Default_init const* e)
+Generator::gen(Base_conv const* e)
+{
+  llvm::Value* a = gen(e->source());
+  std::vector<llvm::Value*> args(e->path().size(), build.getInt32(0));
+  return build.CreateGEP(a, args);
+}
+
+// TODO: Return the value or store it?
+void
+Generator::gen_init(llvm::Value* ptr, Default_init const* e)
 {
   Type const* t = e->type();
   llvm::Type* type = get_type(t);
+  llvm::Value* init = nullptr;
 
   // Scalar types should get a 0 value in the
   // appropriate type.
   if (is_scalar(t))
-    return llvm::ConstantInt::get(type, 0);
+    init = llvm::ConstantInt::get(type, 0);
 
   // Aggregate types are zero initialized.
   //
   // NOTE: This isn't actually correct. Aggregate types
   // should be memberwise default initialized.
   if (is_aggregate(t))
-    return llvm::ConstantAggregateZero::get(type);
+    init = llvm::ConstantAggregateZero::get(type);
+
+  if (init != nullptr) {
+    build.CreateStore(init, ptr);
+    return;
+  }
 
   throw std::runtime_error("unhahndled default initializer");
 }
 
+void
+Generator::gen_init(llvm::Value* ptr, Trivial_init const* e)
+{
+  return;
+}
 
 // TODO: Return the value or store it?
-llvm::Value*
-Generator::gen(Copy_init const* e)
+void
+Generator::gen_init(llvm::Value* ptr, Copy_init const* e)
 {
-  return gen(e->value());
+  llvm::Value* init = gen(e->value());
+  build.CreateStore(init, ptr);
 }
 
 
-llvm::Value*
-Generator::gen(Reference_init const* e)
+void
+Generator::gen_init(llvm::Value* ptr, Reference_init const* e)
 {
-  return gen(e->object());
+  llvm::Value* init = gen(e->object());
+  build.CreateStore(init, ptr);
 }
 
 
@@ -858,10 +948,21 @@ Generator::gen_local(Variable_decl const* d)
   stack.top().bind(d, ptr);
 
   // Generate the initializer.
-  llvm::Value* init = gen(d->init());
+  gen_init(ptr, d->init());
 
-  // Store the result in the object.
-  build.CreateStore(init, ptr);
+  // If the variable has polymorphic record type,
+  // initialize its vref to the appropriate table.
+  //
+  // FIXME: This is totally broken if it doesn't
+  // happen before initialization. Also, note that
+  // polymorphic types cannot be zero-initialized.
+  // Only member-wise initialized.
+  if (Record_type const* rt = as<Record_type>(d->type())) {
+    Record_decl const* rec = rt->declaration();
+    llvm::Value* vtbl = vtables.find(rec)->second;
+    llvm::Value* vref = gen_vref(rec, ptr);
+    build.CreateStore(vtbl, vref);
+  }
 }
 
 
@@ -1010,18 +1111,28 @@ Generator::gen(Record_decl const* d)
   if (types.lookup(d))
     return;
 
-  // If the record is empty, generate a struct
-  // with exactly one byte so that we never have
-  // a type with 0 size.
-  //
-  // FIXME: This isn't right because we are currently
-  // mixing methods and fields in the same thing.
-  // They need to be separate.
   std::vector<llvm::Type*> ts;
+  ts.reserve(16);
+
+  // If d is the root of a polymorphic type hierarchy,
+  // then generate a vptr as its first sub-object. This is
+  // represented as an i8* since we haven't generated the
+  // the table yet.
+  if (Decl const* vr = d->vref())
+    ts.push_back(get_type(vr->type()));
+
+  // Add the base class sub-object before fields.
+  //
+  // TODO: Implement the empty base optimization.
+  if (Type const* b = d->base())
+    ts.push_back(get_type(b));
+
+  // Construct the type over only the fields. If the record
+  // is empty, generate a struct with exactly one  byte so that
+  // we never have a type with 0 size.
   if (d->fields().empty()) {
     ts.push_back(build.getInt8Ty());
   } else {
-    // Construct the type over only the fields.
     for (Decl const* f : d->fields())
       ts.push_back(get_type(f->type()));
   }
@@ -1034,6 +1145,10 @@ Generator::gen(Record_decl const* d)
   // Now, generate code for all other members.
   for (Decl const* m : d->members())
     gen(m);
+
+  // Finally, generate the vtable.
+  if (d->is_polymorphic())
+    gen_vtable(d);
 }
 
 
@@ -1075,6 +1190,93 @@ Generator::gen(Module_decl const* d)
 
   // TODO: Make a second pass to generate global
   // constructors for initializers.
+}
+
+
+llvm::Value*
+Generator::gen_vtable(Record_decl const* d)
+{
+  Decl_seq const& vtbl = *d->vtable();
+
+  // Build the vtable type. This is just an array
+  // of character pointers. The call expression re-casts
+  // to the appropriate static type.
+  //
+  // TODO: The type is unnamed. Does this actually matter?
+  std::vector<llvm::Type*> types;
+  std::vector<llvm::Constant*> values;
+  for (Decl const* d : vtbl) {
+    llvm::Type* t = llvm::PointerType::getUnqual(get_type(d->type()));
+    types.push_back(t);
+
+    llvm::Value* v = stack.lookup(d)->second;
+    llvm::Function* f = llvm::cast<llvm::Function>(v);
+    llvm::Constant* p = llvm::ConstantExpr::getBitCast(f, t);
+    values.push_back(p);
+  }
+
+  // Build the type and initializer.
+  String base = mangle(d);
+  String vtn = "_VT_" + base;
+  String vttn = "_VTT_" + base;
+  llvm::StructType* vtt = llvm::StructType::create(cxt, types, vttn);
+  llvm::Constant* vti = llvm::ConstantStruct::get(vtt, values);
+
+  // Generate the vtable global.
+  llvm::GlobalVariable* ret = new llvm::GlobalVariable(
+    *mod,                                  // owning module
+    vtt,                                   // type
+    true,                                  // is constant
+    llvm::GlobalVariable::ExternalLinkage, // linkage,
+    vti,                                   // initializer
+    vtn                                    // name
+  );
+  vtables.emplace(d, ret);
+  return ret;
+}
+
+
+// Generate an expression that accesses the virtual
+// table within the object. Here, expr is the first
+// argument of the function call.
+llvm::Value*
+Generator::gen_vptr(Expr const* e)
+{
+  Decl_expr const* d = cast<Decl_expr>(e);
+  llvm::Value* obj = gen(d);
+
+  Record_type const* t = cast<Record_type>(d->type()->nonref());
+  Record_decl const* r = t->declaration();
+  return gen_vptr(r, obj);
+}
+
+
+// Returns the vtable pointer.
+llvm::Value*
+Generator::gen_vptr(Record_decl const* r, llvm::Value* obj)
+{
+  llvm::Value* ref = gen_vref(r, obj);
+  return build.CreateLoad(ref);
+}
+
+
+// Returns a reference to the vptr that's suitable for
+// storing a value.
+llvm::Value*
+Generator::gen_vref(Record_decl const* r, llvm::Value* obj)
+{
+  std::vector<llvm::Value*> args { build.getInt32(0) };
+  Record_decl const* p = r;
+  while (!p->vref()) {
+    args.push_back(build.getInt32(0));
+    p = p->base_declaration();
+  }
+  args.push_back(build.getInt32(0));
+
+  llvm::Value* ref = build.CreateInBoundsGEP(obj, args);
+  llvm::Value* vtbl = vtables.find(r)->second;
+  llvm::Type* type = llvm::PointerType::getUnqual(vtbl->getType());
+  return build.CreateBitCast(ref, type);
 }
 
 

@@ -1,7 +1,7 @@
+var x : int;
+
 def main() -> int
 {
-  var x : int = 0;
   x = 5;
-  x = 7;
   return x;
 }

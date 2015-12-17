@@ -1,13 +1,13 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
-#include "parser.hpp"
-#include "symbol.hpp"
-#include "type.hpp"
-#include "expr.hpp"
-#include "decl.hpp"
-#include "stmt.hpp"
-#include "error.hpp"
+#include "beaker/parser.hpp"
+#include "beaker/symbol.hpp"
+#include "beaker/type.hpp"
+#include "beaker/expr.hpp"
+#include "beaker/decl.hpp"
+#include "beaker/stmt.hpp"
+#include "beaker/error.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -35,6 +35,10 @@ Parser::primary_expr()
   // integer-literal
   if (Token tok = match_if(integer_tok))
     return on_int(tok);
+    
+  // floating-point-literal
+  if (Token tok = match_if(floating_tok))
+    return on_float(tok);
 
   // character-literal
   if (Token tok = match_if(character_tok))
@@ -356,16 +360,68 @@ Parser::primary_type()
     return on_id_type(tok);
 
   // bool
-  if (match_if(bool_kw))
+  else if (match_if(bool_kw))
     return get_boolean_type();
 
   // char
-  if (match_if(char_kw))
+  else if (match_if(char_kw))
     return get_character_type();
 
   // int
   else if (match_if(int_kw))
     return get_integer_type();
+  
+  // uint
+  else if (match_if(uint_kw))
+    return get_integer_type(false);
+    
+  // short
+  else if (match_if(short_kw))
+    return get_integer_type(16);
+  
+  // ushort
+  else if (match_if(ushort_kw))
+    return get_integer_type(false,16);
+    
+  // long
+  else if (match_if(long_kw))
+    return get_integer_type(64);
+  
+  // ulong
+  else if (match_if(ulong_kw))
+    return get_integer_type(false,64);
+    
+  // int16
+  else if (match_if(int16_kw))
+    return get_integer_type(16);
+  
+  // uint16
+  else if (match_if(uint16_kw))
+    return get_integer_type(false,16);
+    
+  // int32
+  else if (match_if(int32_kw))
+    return get_integer_type();
+  
+  // uint32
+  else if (match_if(uint32_kw))
+    return get_integer_type(false);
+    
+  // int64
+  else if (match_if(int64_kw))
+    return get_integer_type(64);
+  
+  // uint64
+  else if (match_if(uint64_kw))
+    return get_integer_type(false,64);
+    
+  // float
+  else if (match_if(float_kw))
+      return get_float_type();
+    
+  // double
+  else if (match_if(double_kw))
+      return get_double_type();
 
   // function-type
   else if (match_if(lparen_tok)) {
@@ -452,7 +508,7 @@ Parser::type()
 //
 //    variable-decl -> 'var' identifier object-type initializer-clause
 //
-//    initializer-clause -> ';' | '=' expr ';'
+//    initializer-clause -> ';' | '=' 'trivial' ';' | '=' expr ';'
 Decl*
 Parser::variable_decl(Specifier spec)
 {
@@ -469,6 +525,11 @@ Parser::variable_decl(Specifier spec)
 
   // value initialization (var x : T = e;)
   match(equal_tok);
+  if (match_if(trivial_kw)) {
+    match(semicolon_tok);
+    return on_variable(spec, n, t, trivial_kw);
+  }
+
   Expr* e = expr();
   match(semicolon_tok);
   return on_variable(spec, n, t, e);
@@ -562,6 +623,12 @@ Parser::record_decl(Specifier spec)
 {
   require(struct_kw);
   Token n = match(identifier_tok);
+  const Type* t = nullptr;
+  // Determine if it is inheriting from a base class
+  if (match_if(colon_tok)) {
+    // We have a base class
+    t = type();
+  }
 
   // record-body and field-seq
   require(lbrace_tok);
@@ -571,7 +638,7 @@ Parser::record_decl(Specifier spec)
     if (lookahead() == def_kw) {
       Decl* m = method_decl(spec);
       ms.push_back(m);
-    } else if(lookahead() == identifier_tok) {
+    } else if (lookahead() == identifier_tok) {
       Decl* f = field_decl(spec);
       fs.push_back(f);
     } else {
@@ -579,7 +646,9 @@ Parser::record_decl(Specifier spec)
     }
   }
   match(rbrace_tok);
-  return on_record(spec, n, fs, ms);
+
+  // Need to replace nullptr with base record
+  return on_record(spec, n, fs, ms, t);
 }
 
 
@@ -614,14 +683,19 @@ Parser::field_decl(Specifier spec)
 // parameter. Maybe before the return type? Maybe
 // as part of the specifiers?
 //
+// TODO:
+//
 //    struct R {
 //      const def f() -> void { }   // Why not...
-//      virtual def f() -> void { } // Sure...
 Decl*
 Parser::method_decl(Specifier spec)
 {
   require(def_kw);
   Token n = match(identifier_tok);
+
+  //check for a this_kw
+  //do stuff
+  //return on_ctor <- reference on_method
 
   // parameter-clause
   Decl_seq parms;
@@ -658,6 +732,10 @@ Parser::specifier_seq()
   while (true) {
     if (match_if(foreign_kw))
       spec |= foreign_spec;
+    else if (match_if(abstract_kw))
+      spec |= abstract_spec;
+    else if (match_if(virtual_kw))
+      spec |= virtual_spec;
     else
       break;
   }
@@ -1071,11 +1149,18 @@ Parser::on_bool(Token tok)
 Expr*
 Parser::on_int(Token tok)
 {
-  Type const* t = get_integer_type();
-  int v = tok.integer_symbol()->value();
+  Type const* t = get_integer_type(64);
+  int64_t v = tok.integer_symbol()->value();
   return init<Literal_expr>(tok.location(), t, v);
 }
 
+Expr*
+Parser::on_float(Token tok)
+{
+  Type const* t = get_double_type();
+  double v = tok.floating_symbol()->value();
+  return init<Literal_expr>(tok.location(), t, v);
+}
 
 Expr*
 Parser::on_char(Token tok)
@@ -1269,6 +1354,16 @@ Parser::on_variable(Specifier spec, Token tok, Type const* t)
 
 
 Decl*
+Parser::on_variable(Specifier spec, Token tok, Type const* t, Token_kind tk)
+{
+  Expr* init = new Trivial_init(t);
+  Decl* decl = new Variable_decl(spec, tok.symbol(), t, init);
+  locate(decl, tok.location());
+  return decl;
+}
+
+
+Decl*
 Parser::on_variable(Specifier spec, Token tok, Type const* t, Expr* e)
 {
   Expr* init = new Copy_init(t, e);
@@ -1291,7 +1386,7 @@ Parser::on_parameter(Specifier spec, Type const* t)
 Decl*
 Parser::on_parameter(Specifier spec, Token tok, Type const* t)
 {
-  return new Parameter_decl(tok.symbol(), t);
+  return new Parameter_decl(spec, tok.symbol(), t);
 }
 
 
@@ -1301,7 +1396,7 @@ Decl*
 Parser::on_function(Specifier spec, Token tok, Decl_seq const& p, Type const* t)
 {
   Type const* f = get_function_type(p, t);
-  return new Function_decl(tok.symbol(), f, p, nullptr);
+  return new Function_decl(spec, tok.symbol(), f, p, nullptr);
 }
 
 
@@ -1319,9 +1414,9 @@ Parser::on_function(Specifier spec, Token tok, Decl_seq const& p, Type const* t,
 
 
 Decl*
-Parser::on_record(Specifier spec, Token n, Decl_seq const& fs, Decl_seq const& ms)
+Parser::on_record(Specifier spec, Token n, Decl_seq const& fs, Decl_seq const& ms, Type const* base)
 {
-  Decl* decl = new Record_decl(n.symbol(), fs, ms);
+  Decl* decl = new Record_decl(n.symbol(), fs, ms, base);
   locate(decl, n.location());
   return decl;
 }
@@ -1331,7 +1426,7 @@ Decl*
 Parser::on_method(Specifier spec, Token tok, Decl_seq const& p, Type const* t, Stmt* b)
 {
   Type const* f = get_function_type(p, t);
-  Decl* decl = new Method_decl(tok.symbol(), f, p, b);
+  Decl* decl = new Method_decl(spec, tok.symbol(), f, p, b);
   locate(decl, tok.location());
   return decl;
 }

@@ -7,7 +7,7 @@
 // This module supports the mangling of identifers
 // suitable for linking.
 
-#include "prelude.hpp"
+#include <beaker/prelude.hpp>
 
 
 String mangle(Type const*);
@@ -18,12 +18,13 @@ void mangle(std::ostream&, Id_type const*);
 void mangle(std::ostream&, Boolean_type const*);
 void mangle(std::ostream&, Character_type const*);
 void mangle(std::ostream&, Integer_type const*);
+void mangle(std::ostream&, Float_type const*);
+void mangle(std::ostream&, Double_type const*);
 void mangle(std::ostream&, Function_type const*);
 void mangle(std::ostream&, Array_type const*);
 void mangle(std::ostream&, Block_type const*);
 void mangle(std::ostream&, Reference_type const*);
 void mangle(std::ostream&, Record_type const*);
-
 
 void mangle(std::ostream&, Decl const*);
 void mangle(std::ostream&, Variable_decl const*);

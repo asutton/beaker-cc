@@ -4,7 +4,7 @@
 #ifndef BEAKER_PRINT_HPP
 #define BEAKER_PRINT_HPP
 
-#include "prelude.hpp"
+#include <beaker/prelude.hpp>
 
 #include <iosfwd>
 
@@ -13,6 +13,8 @@ std::ostream& operator<<(std::ostream&, Id_type const&);
 std::ostream& operator<<(std::ostream&, Boolean_type const&);
 std::ostream& operator<<(std::ostream&, Character_type const&);
 std::ostream& operator<<(std::ostream&, Integer_type const&);
+std::ostream& operator<<(std::ostream&, Float_type const&);
+std::ostream& operator<<(std::ostream&, Double_type const&);
 std::ostream& operator<<(std::ostream&, Function_type const&);
 std::ostream& operator<<(std::ostream&, Block_type const&);
 std::ostream& operator<<(std::ostream&, Array_type const&);
@@ -47,7 +49,10 @@ std::ostream& operator<<(std::ostream&, Method_expr const&);
 std::ostream& operator<<(std::ostream&, Index_expr const&);
 std::ostream& operator<<(std::ostream&, Value_conv const&);
 std::ostream& operator<<(std::ostream&, Block_conv const&);
+std::ostream& operator<<(std::ostream&, Promote_conv const&);
+std::ostream& operator<<(std::ostream&, Base_conv const&);
 std::ostream& operator<<(std::ostream&, Default_init const&);
+std::ostream& operator<<(std::ostream&, Trivial_init const&);
 std::ostream& operator<<(std::ostream&, Copy_init const&);
 std::ostream& operator<<(std::ostream&, Reference_init const&);
 
@@ -59,6 +64,5 @@ std::ostream& operator<<(std::ostream&, Record_decl const&);
 std::ostream& operator<<(std::ostream&, Field_decl const&);
 std::ostream& operator<<(std::ostream&, Method_decl const&);
 std::ostream& operator<<(std::ostream&, Module_decl const&);
-
 
 #endif

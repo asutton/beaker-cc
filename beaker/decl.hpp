@@ -4,9 +4,10 @@
 #ifndef BEAKER_DECL_HPP
 #define BEAKER_DECL_HPP
 
-#include "prelude.hpp"
-#include "scope.hpp"
-#include "specifier.hpp"
+#include <beaker/prelude.hpp>
+#include <beaker/scope.hpp>
+#include <beaker/specifier.hpp>
+#include <beaker/type.hpp>
 
 
 // Represents the declaration of a named entity.
@@ -40,6 +41,13 @@ struct Decl
   Type const*   type() const { return type_; }
 
   Decl const*   context() const { return cxt_; }
+
+  // Polymorphic declarations. Note that not all
+  // declarations can be polymorphic. These methods
+  // are provided here for convenience.
+  bool is_virtual() const  { return spec_ & virtual_spec; }
+  bool is_abstract() const { return spec_ & abstract_spec; }
+  bool is_polymorphic() const { return is_virtual() || is_abstract(); }
 
   Specifier     spec_;
   Symbol const* name_;
@@ -109,7 +117,9 @@ struct Function_decl : Decl
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
 
-  Decl_seq const&      parameters() const { return parms_; }
+  Decl_seq const& parameters() const         { return parms_; }
+  Decl_seq const* virtual_parameters() const { return vparms_; }
+  Decl_seq*       virtual_parameters()       { return vparms_; }
 
   Function_type const* type() const;
   Type const*          return_type() const;
@@ -117,13 +127,17 @@ struct Function_decl : Decl
   Stmt const* body() const { return body_; }
   Stmt*       body()       { return body_; }
 
-  Decl_seq parms_;
-  Stmt*    body_;
+  Decl_seq  parms_;
+  Stmt*     body_;
+  Decl_seq* vparms_;
 };
 
 
 
 // Represents parameter declarations.
+//
+// TODO: Does a parameter also need to keep track of
+// its index?
 struct Parameter_decl : Decl
 {
   using Decl::Decl;
@@ -135,34 +149,48 @@ struct Parameter_decl : Decl
 
 // Declares a user-defined record type.
 //
-// The record class maintains two sets of declarations:
-// fields, which constitute its actual type, and
-// another set of member declarations (e.g., methods,
-// nested types, templates, constants, etc). These
-// aren't really part of the object, just part of
-// the scope.
+// The record class maintains two sets of declarations: 
+// - fields, which constitute its actual type, and 
+// - another set of member declarations (e.g., methods, nested 
+//   types, templates, constants, etc). These aren't really part 
+//   of the object, just part of the scope.
 //
 // A record declaration defines a scope. Declarations
 // within the record are cached here for use during
 // member lookup.
 struct Record_decl : Decl
 {
-  Record_decl(Symbol const* n, Decl_seq const& f, Decl_seq const& m)
-    : Decl(n, nullptr), fields_(f), members_(m), scope_(this)
+  Record_decl(Symbol const* n, Decl_seq const& f, Decl_seq const& m, Type const* base)
+    : Decl(n, nullptr), scope_(this), fields_(f), members_(m)
+    , base_(base), vref_(nullptr), vtbl_(nullptr)
   { }
 
   void accept(Visitor& v) const { v.visit(this); }
   void accept(Mutator& v)       { v.visit(this); }
 
-  Decl_seq const& fields() const { return fields_; }
+  Record_type const* base() const;
+  Record_decl*       base_declaration() const;
+
+  Decl_seq const& fields() const  { return fields_; }
   Decl_seq const& members() const { return members_; }
 
-  Scope*          scope()       { return &scope_; }
   Scope const*    scope() const { return &scope_; }
+  Scope*          scope()       { return &scope_; }
 
-  Decl_seq fields_;
-  Decl_seq members_;
-  Scope    scope_;
+  Decl const*     vref() const   { return vref_; }
+  Decl*           vref()         { return vref_; }
+
+  Decl_seq const* vtable() const { return vtbl_; }
+  Decl_seq*       vtable()       { return vtbl_; }
+
+  bool is_empty() const;
+
+  Scope          scope_;
+  Decl_seq       fields_;
+  Decl_seq       members_;
+  const Type*    base_;
+  Decl*          vref_;
+  Decl_seq*      vtbl_;
 };
 
 
@@ -193,6 +221,12 @@ struct Method_decl : Function_decl
   void accept(Mutator& v)       { v.visit(this); }
 
   Record_decl const* context() const { return cast<Record_decl>(cxt_); }
+
+  int vtable_entry() const { return vtent_; }
+
+  // If polymorphic, the position of the function
+  // within the classes virtual table.
+  int vtent_ = -1;
 };
 
 
@@ -311,6 +345,5 @@ apply(Decl* d, F fn)
   Generic_decl_mutator<F, T> v = fn;
   return accept(d, v);
 }
-
 
 #endif

@@ -7,11 +7,11 @@
 // Represents jobs that are executed as part of the
 // compilation process.
 
-#include "file.hpp"
+#include <beaker/file.hpp>
 
-#include "lingo/string.hpp"
+#include <lingo/string.hpp>
 
-
+using String_seq =  std::vector<std::string>;
 // A job is a program that is executed to translate an
 // input file into an output file. A job corresponds
 // a subprocess executed by the compiler.

@@ -1,14 +1,14 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
-#include "elaborator.hpp"
-#include "type.hpp"
-#include "expr.hpp"
-#include "decl.hpp"
-#include "stmt.hpp"
-#include "convert.hpp"
-#include "evaluator.hpp"
-#include "error.hpp"
+#include "beaker/elaborator.hpp"
+#include "beaker/type.hpp"
+#include "beaker/expr.hpp"
+#include "beaker/decl.hpp"
+#include "beaker/stmt.hpp"
+#include "beaker/convert.hpp"
+#include "beaker/evaluator.hpp"
+#include "beaker/error.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -98,16 +98,33 @@ Elaborator::unqualified_lookup(Symbol const* sym)
 }
 
 
-// Perform a qualified lookup of a name in the given
-// scope. This searches only that scope for a binding
-// for the identifier.
+// Perform a qualified lookup of a name in the given scope. 
+// This searches only that scope for a binding for the identifier. 
+// If the scope is that of a record, the name may be a member of
+// a base class.
 Overload*
 Elaborator::qualified_lookup(Scope* s, Symbol const* sym)
 {
+  if (Record_decl* d = as<Record_decl>(s->decl))
+    return member_lookup(d, sym);
+  
   if (Scope::Binding* bind = s->lookup(sym))
     return &bind->second;
-  else
-    return nullptr;
+  
+  return nullptr;
+}
+
+
+
+Overload*
+Elaborator::member_lookup(Record_decl* d, Symbol const* sym)
+{
+  do {
+    if (Scope::Binding* bind = d->scope()->lookup(sym))
+      return &bind->second;
+    d = d->base_declaration();
+  } while (d);
+  return nullptr;
 }
 
 
@@ -166,6 +183,8 @@ Elaborator::elaborate(Type const* t)
     Type const* operator()(Boolean_type const* t) { return elab.elaborate(t); }
     Type const* operator()(Character_type const* t) { return elab.elaborate(t); }
     Type const* operator()(Integer_type const* t) { return elab.elaborate(t); }
+    Type const* operator()(Float_type const* t) { return elab.elaborate(t); }
+    Type const* operator()(Double_type const* t) { return elab.elaborate(t); }
     Type const* operator()(Function_type const* t) { return elab.elaborate(t); }
     Type const* operator()(Block_type const* t) { return elab.elaborate(t); }
     Type const* operator()(Array_type const* t) { return elab.elaborate(t); }
@@ -222,13 +241,23 @@ Elaborator::elaborate(Character_type const* t)
   return t;
 }
 
-
 Type const*
 Elaborator::elaborate(Integer_type const* t)
 {
   return t;
 }
 
+Type const*
+Elaborator::elaborate(Float_type const* t)
+{
+  return t;
+}
+
+Type const*
+Elaborator::elaborate(Double_type const* t)
+{
+  return t;
+}
 
 // Elaborate each type in the function type.
 Type const*
@@ -329,7 +358,10 @@ Elaborator::elaborate(Expr* e)
     Expr* operator()(Index_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Value_conv* e) const { return elab.elaborate(e); }
     Expr* operator()(Block_conv* e) const { return elab.elaborate(e); }
+    Expr* operator()(Base_conv* e) const { return elab.elaborate(e); }
+    Expr* operator()(Promote_conv* e) const { return elab.elaborate(e); }
     Expr* operator()(Default_init* e) const { return elab.elaborate(e); }
+    Expr* operator()(Trivial_init* e) const { return elab.elaborate(e); }
     Expr* operator()(Copy_init* e) const { return elab.elaborate(e); }
     Expr* operator()(Reference_init* e) const { return elab.elaborate(e); }
   };
@@ -459,17 +491,17 @@ template<typename T>
 Expr*
 check_binary_arithmetic_expr(Elaborator& elab, T* e)
 {
-  Type const* z = get_integer_type();
-  Expr* c1 = require_converted(elab, e->first, z);
-  Expr* c2 = require_converted(elab, e->second, z);
+  Type const* t = get_promotion_target(e->first, e->second);
+  Expr* c1 = require_converted(elab, e->first, t);
+  Expr* c2 = require_converted(elab, e->second, t);
   if (!c1)
-    throw Type_error({}, "left operand cannot be converted to 'int'");
+    throw Type_error({}, "left operand cannot be converted");
   if (!c2)
-    throw Type_error({}, "right operand cannot be converted to 'int'");
+    throw Type_error({}, "right operand cannot be converted");
 
   // Rebuild the expression with the
   // converted operands.
-  e->type_ = z;
+  e->type_ = t;
   e->first = c1;
   e->second = c2;
   return e;
@@ -485,13 +517,13 @@ Expr*
 check_unary_arithmetic_expr(Elaborator& elab, T* e)
 {
   // Apply conversions
-  Type const* z = get_integer_type();
-  Expr* c = require_converted(elab, e->first, z);
+  Type const* t = get_promotion_target(e->first);
+  Expr* c = require_converted(elab, e->first, t);
   if (!c)
-    throw Type_error({}, "operand cannot be converted to 'int'");
+    throw Type_error({}, "operand cannot be converted");
 
   // Rebuild the expression with the converted operands.
-  e->type_ = z;
+  e->type_ = t;
   e->first = c;
   return e;
 }
@@ -608,14 +640,14 @@ Expr*
 check_ordering_expr(Elaborator& elab, Binary_expr* e)
 {
   // Apply conversions.
-  Type const* z = get_integer_type();
+  Type const* t = get_promotion_target(e->first, e->second);
   Type const* b = get_boolean_type();
-  Expr* c1 = require_converted(elab, e->first, z);
-  Expr* c2 = require_converted(elab, e->second, z);
+  Expr* c1 = require_converted(elab, e->first, t);
+  Expr* c2 = require_converted(elab, e->second, t);
   if (!c1)
-    throw Type_error({}, "left operand cannot be converted to 'int'");
+    throw Type_error({}, "left operand cannot be converted");
   if (!c2)
-    throw Type_error({}, "right operand cannot be converted to 'int'");
+    throw Type_error({}, "right operand cannot be converted");
 
   // Rebuild the expression with the converted
   // operands.
@@ -816,7 +848,7 @@ Elaborator::call(Function_decl* d, Expr_seq const& args)
   // Update the expression with the return type
   // of the named function.
   Expr* ref = new Decl_expr(t, d);
-  return new Call_expr(t->return_type(), ref, args);
+  return new Call_expr(t->return_type(), ref, conv);
 }
 
 
@@ -916,11 +948,15 @@ Elaborator::elaborate(Call_expr* e)
   // into the argument list and update the function target.
   if (Dot_expr* dot = as_method(f)) {
       // Build the "this" argument.
+      //Method_expr* m = dynamic_cast<Method_expr*>(dot);
+
       Expr* self = dot->container();
+
+      //Expr* self = m->container();
       args.insert(args.begin(), self);
 
-      // Adjust the function target.
-      f = dot->member();
+    // Adjust the function target.
+    f = dot->member();
   }
 
   // Handle the case where f is an overload set.
@@ -964,6 +1000,63 @@ Elaborator::elaborate(Call_expr* e)
 }
 
 
+namespace
+{
+
+// Search the base classes for the given field.
+//
+// TODO: Support multiple base classes.
+void
+get_path(Record_decl* r, Field_decl* f, Field_path& p)
+{
+  // Search the record for the given fields.
+  Decl_seq const& fs = r->fields();
+  auto iter = std::find(fs.begin(), fs.end(), f);
+  if (iter != fs.end()) {
+    // Compute the offset adjustment for this member.
+    // A virtual table reference counts as a subobject, and 
+    // so does a base class sub-object.
+    int a = 0;
+    if (r->vref())
+      ++a;
+    if (r->base())
+      ++a;
+    p.push_back(std::distance(fs.begin(), iter) + a);
+    return;
+  }
+
+  // Recursively search the base class.
+  if (r->base()) {
+    p.push_back(0);
+    get_path(r->base()->declaration(), f, p);  
+  }
+}
+
+
+// Construct a sequence of indexes through the record and
+// up to the given field. The resulting path shall be
+// a non-empty sequence of indexes.
+Field_path
+get_path(Record_decl* r, Field_decl* f)
+{
+  Field_path p;
+  get_path(r, f, p);
+  lingo_assert(!p.empty());
+  return p;
+}
+
+//Method_path
+//get_path(Record_decl* r, Method_decl* m){
+//  Method_path p;
+//  get_path(r, m, p);
+//  lingo_assert(!p.empty());
+//  return p;
+//}
+
+
+} // namespace
+
+
 // TODO: Document the semantics of member access.
 Expr*
 Elaborator::elaborate(Dot_expr* e)
@@ -975,14 +1068,18 @@ Elaborator::elaborate(Dot_expr* e)
     throw Type_error({}, ss.str());
   }
 
-  // Get the non-reference type of the outer
-  // object so we can perform lookups.
-  Record_type const* t = as<Record_type>(e1->type()->nonref());
-  if (!t) {
+  // Get the non-reference type of the outer object 
+  // so we can perform qualified lookup.
+  //
+  // TODO: If we support modules, we would need to allow
+  // for different kinds of scopes here.
+  Record_type const* t1 = as<Record_type>(e1->type()->nonref());
+  if (!t1) {
     std::stringstream ss;
     ss << "object does not have record type";
     throw Type_error({}, ss.str());
   }
+  Scope* s = t1->declaration()->scope();
 
   // We expect the member to be an unresolved id expression.
   // If it isn't, there's not much we can do with it.
@@ -999,7 +1096,7 @@ Elaborator::elaborate(Dot_expr* e)
   Id_expr* id = cast<Id_expr>(e2);
 
   // Perform qualified lookup on the member.
-  Overload* ovl = qualified_lookup(t->scope(), id->symbol());
+  Overload* ovl = qualified_lookup(s, id->symbol());
   if (!ovl) {
     String msg = format("no member matching '{}'", *id);
     throw Lookup_error(locate(id), msg);
@@ -1011,8 +1108,9 @@ Elaborator::elaborate(Dot_expr* e)
     Decl*d = ovl->front();
     e2 = new Decl_expr(d->type(), d);
     if (Field_decl* f = as<Field_decl>(d)) {
-      Type const* t = e2->type()->ref();
-      return new Field_expr(t, e1, e2, f);
+      Type const* t2 = e2->type()->ref();
+      Field_path p = get_path(t1->declaration(), f);
+      return new Field_expr(t2, e1, e2, f, p);
     }
     if (Method_decl* m = as<Method_decl>(d)) {
       return new Method_expr(e1, e2, m);
@@ -1113,10 +1211,30 @@ Elaborator::elaborate(Block_conv* e)
   return e;
 }
 
+Expr*
+Elaborator::elaborate(Base_conv* e)
+{
+  return e;
+}
+
+Expr*
+Elaborator::elaborate(Promote_conv* e)
+{
+  return e;
+}
+
 
 // TODO: I probably need to elaborate the type.
 Expr*
 Elaborator::elaborate(Default_init* e)
+{
+  e->type_ = elaborate(e->type_);
+  return e;
+}
+
+
+Expr*
+Elaborator::elaborate(Trivial_init* e)
 {
   e->type_ = elaborate(e->type_);
   return e;
@@ -1277,6 +1395,34 @@ Elaborator::elaborate(Parameter_decl* d)
     d->type_ = d->type_->ref();
 
   declare(d);
+
+  Function_decl* fn = stack.function();
+
+  // Check for virtual parameters. A parameter can only be
+  // declared virtual if t has polymorphic type (or is a reference
+  // to an object of polymorphic type).
+  if (d->is_virtual()) {
+    Type const* t0 = d->type()->nonref();
+    if (!is<Record_type>(t0))
+      throw Type_error(locate(d), "type of virtual parameter is not a record type");
+    Record_type const* t1 = cast<Record_type>(t0);
+    Record_decl const* rec = t1->declaration();
+    if (!rec->is_polymorphic())
+      throw Type_error(locate(d), "type of virtual parameter is not polymorphic");
+
+    // Mark the function as being virtual.
+    fn->spec_ |= virtual_spec;
+
+    // Save virtual parameter.
+    //
+    // TODO: What are we actually going to do with
+    // this thing?
+    if (!fn->vparms_)
+      fn->vparms_ = new Decl_seq {d};
+    else
+      fn->vparms_->push_back(d);
+  }
+
   return d;
 }
 
@@ -1415,18 +1561,82 @@ Elaborator::elaborate_decl(Record_decl* d)
 }
 
 
+namespace
+{
+
+// Returns true if m1 is an override of m2. This is the
+// case when m1 has the same name and type as m2.
+//
+// TODO: Allow for covariant return types.
+//
+// TODO: Consider allowing contravariant argument types?
+bool
+is_override(Method_decl const* m1, Method_decl const* m2)
+{
+  // Different name? Not an overrider.
+  if (m1->name() != m2->name())
+    return false;
+
+  // Different return types? Not an overrider.
+  //
+  // TODO: Support covariant return types here.
+  Function_type const* t1 = m1->type();
+  Function_type const* t2 = m2->type();
+  if (t1->return_type() != t2->return_type())
+    return false;
+
+  // Compare all parameter types except the implicit this
+  // parameter. Those differ by definition (m1's this is
+  // derived from m2's this).
+  Type_seq const& p1 = m1->type()->parameter_types();
+  Type_seq const& p2 = m2->type()->parameter_types();
+  if (p1.size() != p2.size())
+    return false;
+  for (std::size_t i = 1; i < p1.size(); ++i) {
+    // TODO: Support covariant return types here.
+    if (p1[i] != p2[i])
+      return false;
+  }
+  return true;
+}
+
+
+// Find the method in d that m overrides anmd return the
+// offset in the virtual table. If the record is not polymorphic
+// then this cannot be an overrider.
+int
+find_override(Record_decl const* d, Method_decl const* m)
+{
+  Decl_seq const& ms = *d->vtable();
+  auto iter = std::find_if(ms.begin(), ms.end(), [m](Decl const* m2) {
+    return is_override(m, cast<Method_decl>(m2));
+  });
+  if (iter != ms.end())
+    return std::distance(ms.begin(), iter);
+  else
+    return -1;
+}
+
+
+} // namespace
+
+
 // Insert the implicit this parameter and adjust the
 // type of the declaration.
 Decl*
 Elaborator::elaborate_decl(Method_decl* d)
 {
+  Record_decl* rec = stack.record();
+  Decl_seq* vtable = rec->vtable();
+
   // Generate the type of the implicit this parameter.
   //
   // TODO: Handle constant references.
-  Record_decl* rec = stack.record();
   Type const* type = get_reference_type(get_record_type(rec));
 
   // Re-build the function type.
+  //
+  // TODO: Factor this out as an operation on a method.
   Function_type const* ft = cast<Function_type>(elaborate(d->type()));
   Type_seq pt = ft->parameter_types();
   pt.insert(pt.begin(), type);
@@ -1440,6 +1650,46 @@ Elaborator::elaborate_decl(Method_decl* d)
   Parameter_decl* self = new Parameter_decl(name, type);
   d->parms_.insert(d->parms_.begin(), self);
 
+
+  // Propagate virtual/abstract specifiers to the class.
+  // Build a new virtual table as needed.
+  if (d->is_virtual())
+    rec->spec_ |= virtual_spec;
+  if (d->is_abstract())
+    rec->spec_ |= abstract_spec;
+  if (rec->is_polymorphic() && !vtable)
+    rec->vtbl_ = vtable = new Decl_seq();
+
+  // This function may be an override of a previous
+  // virtual function -- even if it wasn't declared as
+  // such. Propagate flags from an overrider if there
+  // was one.
+  if (vtable) {
+    int ent = find_override(rec, d);
+    if (ent >= 0) {
+      // Update the method (and class) with the state
+      // from the overrider.
+      //
+      // TODO: Actually save the overriden function with
+      // the current declaration?
+      //
+      // TODO: Can I declare an abstract overrider?
+      Method_decl const* m = cast<Method_decl>((*vtable)[ent]);
+      if (m->is_polymorphic()) {
+        d->spec_ |= virtual_spec;
+        rec->spec_ |= virtual_spec;
+      }
+
+      // Overwrite the overrider in the vtable.
+      (*vtable)[ent] = d;
+    } else {
+      // Extend the virtual table.
+      ent = vtable->size();
+      vtable->push_back(d);
+    }
+    d->vtent_ = ent;
+  }
+
   // Note that we don't need to elaborate or declare
   // the funciton parameters because they're only visible
   // within the function body (see the def elaborator for
@@ -1447,6 +1697,7 @@ Elaborator::elaborate_decl(Method_decl* d)
 
   // Now declare the method.
   declare(d);
+
   return d;
 }
 
@@ -1572,7 +1823,28 @@ Elaborator::elaborate_def(Record_decl* d)
   }
   Defining_sentinel def(*this, d);
 
-  // Elaborate fields and then method declarations.
+  // Elaborate base class. 
+  if (d->base_)
+    d->base_ = elaborate(d->base_);
+
+  // If the base class is polymorphic, then so is the 
+  // derived class. Propagate the virtual table to this 
+  // class.
+  //
+  // FIXME: A derived class is abstract only if it fails
+  // to provide overriders for each all abstract methods.
+  // Think of a better way for this to work.
+  Record_decl const* base = d->base_declaration();
+  if (base) {
+    if (base->is_virtual())
+      d->spec_ |= virtual_spec;
+    if (base->is_abstract())
+      d->spec_ |= abstract_spec;
+    if (base->is_polymorphic())
+      d->vtbl_ = new Decl_seq(*base->vtable());
+  }
+
+  // Elaborate member declarations, fields first.
   //
   // TODO: What are the lookup rules for default
   // member initializers. If we do this:
@@ -1590,9 +1862,6 @@ Elaborator::elaborate_def(Record_decl* d)
   //      def f() -> int { ... }
   //      // What if f() refers to an uninitialized fiedl?
   //    }
-  //
-  // If we allow the 2nd, then we need to do two
-  // phase elaboration.
   Scope_sentinel scope(*this, d->scope());
   for (Decl*& f : d->fields_)
     f = elaborate_decl(f);
@@ -1603,6 +1872,26 @@ Elaborator::elaborate_def(Record_decl* d)
   // above about handling member defintions.
   for (Decl*& m : d->members_)
     m = elaborate_def(m);
+
+  // Determine if we need a vtable reference. This is the case 
+  // when:
+  //    - there is no base class or
+  //    - the base is not polymorphic
+  //
+  // TODO: We may need to perform this transformation
+  // before elaborating any fields. It depends on whether
+  // or not we allow a member's type to refer to member
+  // variables (a la decltype).
+  //
+  // TODO: For multiple base classes, we probably want
+  // multiple vtable references (one for each base).
+  if (d->is_polymorphic()) {
+    if (!base || !base->is_polymorphic()) {
+      Symbol const* n = syms.get("vref");
+      Type const* p = get_reference_type(get_character_type());
+      d->vref_ = new Field_decl(n, p);
+    }
+  }
 
   defined.insert(d);
   return d;

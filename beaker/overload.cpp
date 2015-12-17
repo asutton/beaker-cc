@@ -1,9 +1,9 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
-#include "overload.hpp"
-#include "type.hpp"
-#include "decl.hpp"
+#include "beaker/overload.hpp"
+#include "beaker/type.hpp"
+#include "beaker/decl.hpp"
 
 #include <algorithm>
 
@@ -58,6 +58,4 @@ can_overload(Decl const* d1, Decl const* d2)
 
   return true;
 }
-
-
 

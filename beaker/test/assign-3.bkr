@@ -1,0 +1,9 @@
+var a : int = 5;
+var x : int& = a;
+
+def main() -> int
+{
+  x = a;
+  // x = 5;
+  return 0;
+}
