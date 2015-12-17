@@ -919,7 +919,7 @@ Generator::gen(Variable_decl const* d)
 void
 Generator::gen(Function_decl const* d)
 {
-  std::cout << *d->type() << '\n';
+
   String name = get_name(d);
   llvm::Type* type = get_type(d->type());
 

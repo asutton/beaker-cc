@@ -236,8 +236,19 @@ Elaborator::elaborate(Function_type const* t)
 {
   Type_seq ts;
   ts.reserve(t->parameter_types().size());
-  for (Type const* t1 : t->parameter_types())
-    ts.push_back(elaborate(t1));
+  for (Type const* t1 : t->parameter_types()){
+
+    // HERE! we are checking function paramters for
+    // function type and elaborating them as references to function types instead
+    if(is<Function_type>(t1)){
+      Type const * tempType = elaborate(t1);
+      ts.push_back(elaborate(tempType->ref()));
+    }
+    else{
+      ts.push_back(elaborate(t1));
+    }
+
+  }
   Type const* r = elaborate(t->return_type());
   return get_function_type(ts, r);
 }
@@ -407,9 +418,9 @@ Elaborator::elaborate(Lambda_expr* e)
   // declare(f_decl);
 
   Decl_expr* d_expr = new Decl_expr(f_decl->type()->ref(), f_decl);
-  // std::cout << *d_expr->type() << '\n';
+
   lambda_decls_[d_expr] = f_decl;
-  // std::cout << typeid(*d).name() << "\n";
+
   return d_expr;
 }
 
@@ -933,10 +944,6 @@ Elaborator::elaborate(Call_expr* e)
       if(auto var = as<Variable_decl>(decl)) {
         auto f_decl = cast<Reference_init>(var->init())->first;
         f = f_decl;
-      } else if(auto param = as<Parameter_decl>(decl)) {
-        lingo_unreachable();
-        //auto f_decl = cast<Reference_init>(param->init())->first;
-        //f = f_decl;
       }
     }
     // Update the expression with the return type
@@ -949,8 +956,8 @@ Elaborator::elaborate(Call_expr* e)
 
   // Guarantee that f is an expression that refers
   // to a declaration.
-  lingo_assert(is<Decl_expr>(f) &&
-                is<Function_decl>(cast<Decl_expr>(f)->declaration()));
+  //lingo_assert(is<Decl_expr>(f) &&
+  //              is<Function_decl>(cast<Decl_expr>(f)->declaration()));
 
   // Update the call expression before returning.
   return e;
@@ -1265,6 +1272,10 @@ Decl*
 Elaborator::elaborate(Parameter_decl* d)
 {
   d->type_ = elaborate_type(d->type_);
+  // Check for function type and set to reference to function type
+  if(is<Function_type>(d->type_))
+    d->type_ = d->type_->ref();
+
   declare(d);
   return d;
 }
@@ -1496,13 +1507,17 @@ Elaborator::elaborate_def(Variable_decl* d)
 Decl*
 Elaborator::elaborate_def(Function_decl* d)
 {
+
   // Enter the function scope and declare all of
   // the parameters (by way of elaboration).
   //
   // Note that this modifies the original parameters.
   Scope_sentinel scope(*this, d);
+
   for (Decl*& p : d->parms_)
+  {
     p = elaborate(p);
+  }
 
   // Check the body of the function, if present.
   if (d->body())
@@ -1513,7 +1528,6 @@ Elaborator::elaborate_def(Function_decl* d)
 
   // TODO: Build a control flow graph and ensure that
   // every branch returns a value.
-
   return d;
 }
 
