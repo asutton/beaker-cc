@@ -12,7 +12,6 @@
 
 #include <algorithm>
 #include <iostream>
-#include <typeinfo>
 
 //
 // -------------------------------------------------------------------------- //
@@ -98,8 +97,8 @@ Elaborator::unqualified_lookup(Symbol const* sym)
 }
 
 
-// Perform a qualified lookup of a name in the given scope. 
-// This searches only that scope for a binding for the identifier. 
+// Perform a qualified lookup of a name in the given scope.
+// This searches only that scope for a binding for the identifier.
 // If the scope is that of a record, the name may be a member of
 // a base class.
 Overload*
@@ -107,10 +106,10 @@ Elaborator::qualified_lookup(Scope* s, Symbol const* sym)
 {
   if (Record_decl* d = as<Record_decl>(s->decl))
     return member_lookup(d, sym);
-  
+
   if (Scope::Binding* bind = s->lookup(sym))
     return &bind->second;
-  
+
   return nullptr;
 }
 
@@ -1014,7 +1013,7 @@ get_path(Record_decl* r, Field_decl* f, Field_path& p)
   auto iter = std::find(fs.begin(), fs.end(), f);
   if (iter != fs.end()) {
     // Compute the offset adjustment for this member.
-    // A virtual table reference counts as a subobject, and 
+    // A virtual table reference counts as a subobject, and
     // so does a base class sub-object.
     int a = 0;
     if (r->vref())
@@ -1028,7 +1027,7 @@ get_path(Record_decl* r, Field_decl* f, Field_path& p)
   // Recursively search the base class.
   if (r->base()) {
     p.push_back(0);
-    get_path(r->base()->declaration(), f, p);  
+    get_path(r->base()->declaration(), f, p);
   }
 }
 
@@ -1068,7 +1067,7 @@ Elaborator::elaborate(Dot_expr* e)
     throw Type_error({}, ss.str());
   }
 
-  // Get the non-reference type of the outer object 
+  // Get the non-reference type of the outer object
   // so we can perform qualified lookup.
   //
   // TODO: If we support modules, we would need to allow
@@ -1823,12 +1822,12 @@ Elaborator::elaborate_def(Record_decl* d)
   }
   Defining_sentinel def(*this, d);
 
-  // Elaborate base class. 
+  // Elaborate base class.
   if (d->base_)
     d->base_ = elaborate(d->base_);
 
-  // If the base class is polymorphic, then so is the 
-  // derived class. Propagate the virtual table to this 
+  // If the base class is polymorphic, then so is the
+  // derived class. Propagate the virtual table to this
   // class.
   //
   // FIXME: A derived class is abstract only if it fails
@@ -1873,7 +1872,7 @@ Elaborator::elaborate_def(Record_decl* d)
   for (Decl*& m : d->members_)
     m = elaborate_def(m);
 
-  // Determine if we need a vtable reference. This is the case 
+  // Determine if we need a vtable reference. This is the case
   // when:
   //    - there is no base class or
   //    - the base is not polymorphic
