@@ -19,6 +19,18 @@ Decl_expr::name() const
   return decl->name();
 }
 
+Function_type const*
+Lambda_expr::type() const
+{
+  return cast<Function_type>(type_);
+}
+
+Type const*
+Lambda_expr::return_type() const
+{
+  std::cout << "In return type" << std::endl;
+  return type()->return_type();
+}
 
 Record_decl*
 Field_expr::record() const

@@ -12,11 +12,11 @@
 // be converted to.  Default int32.
 Type const*
 get_promotion_target(Expr* first, Expr* second)
-{        
+{
     // get type of both expressions
     Type const* first_t = first->type();
     Type const* second_t = second->type();
-    
+
     // if both are not scalar, default is int32
     // if one is not scalar, choose the other type
     if (!is_scalar(first_t) && !is_scalar(second_t))
@@ -25,11 +25,11 @@ get_promotion_target(Expr* first, Expr* second)
         return second_t;
     else if (!is_scalar(second_t))
         return first_t;
-    
+
     // if the same type use that as the target
     if (first_t == second_t)
         return first_t;
-    
+
     // make highest rank the target
     if (get_scalar_rank(first_t) > get_scalar_rank(second_t))
         return first_t;
@@ -41,20 +41,20 @@ get_promotion_target(Expr* first, Expr* second)
 // be converted to. Default int32.
 Type const*
 get_promotion_target(Expr* first)
-{        
+{
     // get type of expression
     Type const* first_t = first->type();
-    
+
     // if not scalar, default is int32
     if (!is_scalar(first_t))
         return get_integer_type();
-    
+
     // if it is scalar then type remains
     return first_t;
 }
 
 // if promotion is not allowed then the origninal
-// expr is returned. This allows for operations 
+// expr is returned. This allows for operations
 // with same types to occur.
 Expr*
 promote(Expr* e, Type const* t){
@@ -89,7 +89,7 @@ convert_to_block(Expr* e)
 }
 
 
-// Try to form 
+// Try to form
 Expr*
 convert_to_base(Expr* e)
 {
@@ -109,12 +109,16 @@ convert(Expr* e, Type const* t)
 {
   // If e has type t, no conversions are needed.
   if (e->type() == t)
+  {
     return e;
+  }
   Expr* c = e;
+
+
 
   // Ojbect/value transformations
 
-  // If t is a non-reference type, try an 
+  // If t is a non-reference type, try an
   // object-to-value conversion:
   //
   //    A& -> B
@@ -123,6 +127,7 @@ convert(Expr* e, Type const* t)
     if (c->type() == t)
       return c;
   }//bit cast
+
 
   // Type conversions
 
@@ -136,35 +141,11 @@ convert(Expr* e, Type const* t)
     c = convert_to_block(c);
     if (c->type() == t)
       return c;
-  } 
-
-  // FIXME: Clean this up. 
-  else if (is<Reference_type>(t)) {
-      const Reference_type* v = cast<Reference_type>(t);
-      if(Record_type const* goal = as<Record_type>(v->type())) {
-        if (is_derived(c->type()->nonref(), v->type())) {
-          Base_conv *ret = as<Base_conv>(convert_to_base(c));
-          Record_type const *d = as<Record_type>(c->type()->nonref());
-          // Build path from goal to derived
-          if(goal->declaration() == d->declaration()) {
-            return ret;
-          } else {
-            ret->path_.push_back(0);
-            Record_decl* decl = d->declaration();
-            while(decl && decl != goal->declaration()) {
-              ret->path_.push_back(0);
-              decl = decl->base()->declaration();
-            }
-            return ret;
-          }
-        }
-      }
-
-      if (c->type() == t)
-        return c;
   }
 
-  // convert to boolean
+  // Try conversion to bool.
+  //
+  // FIXME: Implement me.
   if (is<Boolean_type>(t)) {
       // Need another convert class
       // 0                ->  false
@@ -179,7 +160,33 @@ convert(Expr* e, Type const* t)
         return c;
   }
 
-  // If we've exhaused all possible conversions without matching 
+  // FIXME: Clean this up.
+  else if (Reference_type const* v = as<Reference_type>(t)) {
+    if (Record_type const* goal = as<Record_type>(v->type())) {
+      if (is_derived(c->type()->nonref(), v->type())) {
+        Base_conv *ret = as<Base_conv>(convert_to_base(c));
+        Record_type const *d = as<Record_type>(c->type()->nonref());
+        // Build path from goal to derived
+        if (goal->declaration() == d->declaration()) {
+          return ret;
+        } else {
+          ret->path_.push_back(0);
+          Record_decl* decl = d->declaration();
+          while (decl && decl != goal->declaration()) {
+            ret->path_.push_back(0);
+            decl = decl->base()->declaration();
+          }
+          return ret;
+        }
+      }
+    
+      // FIXME: We never actually get here.
+      if (c->type() == t)
+        return c;
+    }
+  }
+
+  // If we've exhaused all possible conversions without matching
   // the type, then just return nullptr.
   return nullptr;
 }

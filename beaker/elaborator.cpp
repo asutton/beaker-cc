@@ -13,7 +13,7 @@
 #include <algorithm>
 #include <iostream>
 
-
+//
 // -------------------------------------------------------------------------- //
 // Declaration of entities
 
@@ -97,8 +97,8 @@ Elaborator::unqualified_lookup(Symbol const* sym)
 }
 
 
-// Perform a qualified lookup of a name in the given scope. 
-// This searches only that scope for a binding for the identifier. 
+// Perform a qualified lookup of a name in the given scope.
+// This searches only that scope for a binding for the identifier.
 // If the scope is that of a record, the name may be a member of
 // a base class.
 Overload*
@@ -106,10 +106,10 @@ Elaborator::qualified_lookup(Scope* s, Symbol const* sym)
 {
   if (Record_decl* d = as<Record_decl>(s->decl))
     return member_lookup(d, sym);
-  
+
   if (Scope::Binding* bind = s->lookup(sym))
     return &bind->second;
-  
+
   return nullptr;
 }
 
@@ -264,8 +264,19 @@ Elaborator::elaborate(Function_type const* t)
 {
   Type_seq ts;
   ts.reserve(t->parameter_types().size());
-  for (Type const* t1 : t->parameter_types())
-    ts.push_back(elaborate(t1));
+  for (Type const* t1 : t->parameter_types()){
+
+    // HERE! we are checking function paramters for
+    // function type and elaborating them as references to function types instead
+    if(is<Function_type>(t1)){
+      Type const * tempType = elaborate(t1);
+      ts.push_back(elaborate(tempType->ref()));
+    }
+    else{
+      ts.push_back(elaborate(t1));
+    }
+
+  }
   Type const* r = elaborate(t->return_type());
   return get_function_type(ts, r);
 }
@@ -322,6 +333,7 @@ Elaborator::elaborate(Expr* e)
     Expr* operator()(Literal_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Id_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Decl_expr* e) const { return elab.elaborate(e); }
+    Expr* operator()(Lambda_expr * e) const { return elab.elaborate(e); }
     Expr* operator()(Add_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Sub_expr* e) const { return elab.elaborate(e); }
     Expr* operator()(Mul_expr* e) const { return elab.elaborate(e); }
@@ -428,6 +440,21 @@ Elaborator::elaborate(Decl_expr* e)
 }
 
 
+Expr*
+Elaborator::elaborate(Lambda_expr* e)
+{
+  // Create the new lambda expression.
+  Function_decl* f_decl = new Function_decl(e->symbol(), e->type(), e->parameters(), e->body());
+  elaborate_decl(f_decl);
+  elaborate_def(f_decl);
+
+  // Build the new lambda expression.
+  Decl_expr* d_expr = new Decl_expr(f_decl->type()->ref(), f_decl);
+  lambda_decls_[d_expr] = f_decl;
+  return d_expr;
+}
+
+
 namespace
 {
 
@@ -449,9 +476,9 @@ require_value(Elaborator& elab, Expr* e)
 Expr*
 require_converted(Elaborator& elab, Expr* e, Type const* t)
 {
-  e = elab.elaborate(e);
-  e = convert(e, t);
-  return e;
+  Expr* e1 = elab.elaborate(e);
+  Expr* e2 = convert(e1, t);
+  return e2;
 }
 
 
@@ -902,6 +929,7 @@ Elaborator::resolve(Overload_expr* ovl, Expr_seq const& args)
 Expr*
 Elaborator::elaborate(Call_expr* e)
 {
+
   // Apply lvalue to rvalue conversion and ensure that
   // the target (ultimately) has function type.
   Expr* f = require_value(*this, e->target());
@@ -943,6 +971,16 @@ Elaborator::elaborate(Call_expr* e)
     if (std::any_of(conv.begin(), conv.end(), [](Expr const* p) { return !p; }))
       on_call_error(conv, args, parms);
 
+    // Check for value conversion nodes
+    // This is the case for lambda initialized variables and parameters
+    if(is<Value_conv>(f)){
+      f = cast<Value_conv>(f)->first;
+      auto decl = cast<Decl_expr>(f)->declaration();
+      if(auto var = as<Variable_decl>(decl)) {
+        auto f_decl = cast<Reference_init>(var->init())->first;
+        f = f_decl;
+      }
+    }
     // Update the expression with the return type
     // of the named function.
     e->type_ = t->return_type();
@@ -950,10 +988,11 @@ Elaborator::elaborate(Call_expr* e)
     e->second = conv;
   }
 
+
   // Guarantee that f is an expression that refers
   // to a declaration.
-  lingo_assert(is<Decl_expr>(f) &&
-               is<Function_decl>(cast<Decl_expr>(f)->declaration()));
+  //lingo_assert(is<Decl_expr>(f) &&
+  //              is<Function_decl>(cast<Decl_expr>(f)->declaration()));
 
   // Update the call expression before returning.
   return e;
@@ -974,7 +1013,7 @@ get_path(Record_decl* r, Field_decl* f, Field_path& p)
   auto iter = std::find(fs.begin(), fs.end(), f);
   if (iter != fs.end()) {
     // Compute the offset adjustment for this member.
-    // A virtual table reference counts as a subobject, and 
+    // A virtual table reference counts as a subobject, and
     // so does a base class sub-object.
     int a = 0;
     if (r->vref())
@@ -988,7 +1027,7 @@ get_path(Record_decl* r, Field_decl* f, Field_path& p)
   // Recursively search the base class.
   if (r->base()) {
     p.push_back(0);
-    get_path(r->base()->declaration(), f, p);  
+    get_path(r->base()->declaration(), f, p);
   }
 }
 
@@ -1028,7 +1067,7 @@ Elaborator::elaborate(Dot_expr* e)
     throw Type_error({}, ss.str());
   }
 
-  // Get the non-reference type of the outer object 
+  // Get the non-reference type of the outer object
   // so we can perform qualified lookup.
   //
   // TODO: If we support modules, we would need to allow
@@ -1312,6 +1351,11 @@ Elaborator::elaborate(Variable_decl* d)
 {
   d->type_ = elaborate_type(d->type_);
 
+  if(is<Function_type>(d->type_))
+  {
+    d->type_ = d->type_->ref();
+    cast<Init>(d->init_)->type_ = d->type_;
+  }
   // Declare the variable.
   declare(d);
 
@@ -1345,6 +1389,10 @@ Decl*
 Elaborator::elaborate(Parameter_decl* d)
 {
   d->type_ = elaborate_type(d->type_);
+  // Check for function type and set to reference to function type
+  if(is<Function_type>(d->type_))
+    d->type_ = d->type_->ref();
+
   declare(d);
 
   Function_decl* fn = stack.function();
@@ -1412,7 +1460,12 @@ Elaborator::elaborate(Module_decl* m)
     d = elaborate_decl(d);
   for (Decl*& d : m->decls_)
     d = elaborate_def(d);
+
+  for(auto && a : lambda_decls_)
+    m->decls_.insert(m->decls_.begin(), a.second);
+
   return m;
+
 }
 
 
@@ -1448,6 +1501,10 @@ Elaborator::elaborate_decl(Decl* d)
 Decl*
 Elaborator::elaborate_decl(Variable_decl* d)
 {
+  if(is<Function_type>(d->type_))
+  {
+    d->type_ = d->type()->ref();
+  }
   d->type_ = elaborate_type(d->type_);
   declare(d);
   return d;
@@ -1705,8 +1762,11 @@ Elaborator::elaborate_def(Function_decl* d)
   //
   // Note that this modifies the original parameters.
   Scope_sentinel scope(*this, d);
+
   for (Decl*& p : d->parms_)
+  {
     p = elaborate(p);
+  }
 
   // Check the body of the function, if present.
   if (d->body())
@@ -1717,7 +1777,6 @@ Elaborator::elaborate_def(Function_decl* d)
 
   // TODO: Build a control flow graph and ensure that
   // every branch returns a value.
-
   return d;
 }
 
@@ -1763,12 +1822,12 @@ Elaborator::elaborate_def(Record_decl* d)
   }
   Defining_sentinel def(*this, d);
 
-  // Elaborate base class. 
+  // Elaborate base class.
   if (d->base_)
     d->base_ = elaborate(d->base_);
 
-  // If the base class is polymorphic, then so is the 
-  // derived class. Propagate the virtual table to this 
+  // If the base class is polymorphic, then so is the
+  // derived class. Propagate the virtual table to this
   // class.
   //
   // FIXME: A derived class is abstract only if it fails
@@ -1813,7 +1872,7 @@ Elaborator::elaborate_def(Record_decl* d)
   for (Decl*& m : d->members_)
     m = elaborate_def(m);
 
-  // Determine if we need a vtable reference. This is the case 
+  // Determine if we need a vtable reference. This is the case
   // when:
   //    - there is no base class or
   //    - the base is not polymorphic
@@ -2041,6 +2100,7 @@ Elaborator::elaborate(Expression_stmt* s)
 Stmt*
 Elaborator::elaborate(Declaration_stmt* s)
 {
+
   s->first = elaborate(s->declaration());
   return s;
 }

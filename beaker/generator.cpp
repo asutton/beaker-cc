@@ -207,6 +207,7 @@ Generator::gen(Expr const* e)
     llvm::Value* operator()(Literal_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Id_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Decl_expr const* e) const { return g.gen(e); }
+    llvm::Value* operator()(Lambda_expr const* e) const { lingo_unreachable(); }
     llvm::Value* operator()(Add_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Sub_expr const* e) const { return g.gen(e); }
     llvm::Value* operator()(Mul_expr const* e) const { return g.gen(e); }
@@ -324,9 +325,9 @@ Generator::gen(Decl_expr const* e)
 
   // Fetch the value from a reference declaration.
   Decl const* decl = bind->first;
+
   if (is_reference(decl))
     return build.CreateLoad(result);
-
   return result;
 }
 
@@ -625,6 +626,7 @@ Generator::gen(Index_expr const* e)
 llvm::Value*
 Generator::gen(Value_conv const* e)
 {
+
   llvm::Value* v = gen(e->source());
   return build.CreateLoad(v);
 }
@@ -1031,6 +1033,7 @@ Generator::gen(Variable_decl const* d)
 void
 Generator::gen(Function_decl const* d)
 {
+
   String name = get_name(d);
   llvm::Type* type = get_type(d->type());
 
