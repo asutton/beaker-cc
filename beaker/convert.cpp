@@ -173,7 +173,7 @@ convert(Expr* e, Type const* t)
   }
 
   // Try to apply a type promotion
-  if (is_scalar(t)) {
+  if (is_scalar(t) && !is<Boolean_type>(e->type())) {
     c = promote(e,t);
     if (c->type() == t)
         return c;

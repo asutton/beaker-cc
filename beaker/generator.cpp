@@ -637,14 +637,14 @@ Generator::gen(Promote_conv const* e)
 
   if(is<Integer_type>(t)) {
     const Integer_type * t2 = dynamic_cast<const Integer_type*>(t);
-    if(t2->is_signed())
-      return build.CreateIntCast(v, get_type(t2), true);
-    else
-      return build.CreateIntCast(v, get_type(t2), false);
+    return build.CreateIntCast(v, get_type(t2), t2->is_signed());
+  }
+  else if (is<Float_type>(t) || is<Double_type>(t)) {
+    return build.CreateFPCast(v, get_type(t));
   }
 
   else
-    return build.CreateIntCast(v, get_type(t), true);
+    return v;
   
 }
 
