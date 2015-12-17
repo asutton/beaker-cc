@@ -1507,7 +1507,6 @@ Elaborator::elaborate_def(Variable_decl* d)
 Decl*
 Elaborator::elaborate_def(Function_decl* d)
 {
-
   // Enter the function scope and declare all of
   // the parameters (by way of elaboration).
   //
