@@ -53,6 +53,10 @@ enum Token_kind
   arrow_tok,
   tilde_tok,
 
+  //NOTE NOTE NOTE NOTE NOTE
+  //ADDITIONS
+  f_slash_tok,
+
   // Keywords
   abstract_kw,
   bool_kw,

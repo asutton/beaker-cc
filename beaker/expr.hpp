@@ -47,6 +47,11 @@ struct Expr::Visitor
   virtual void visit(Literal_expr const*) = 0;
   virtual void visit(Id_expr const*) = 0;
   virtual void visit(Decl_expr const*) = 0;
+
+  // NOTE NOTE NOTE
+  // ADDITIONS FOR LAMBDAS
+  virtual void visit(Lambda_expr const*) = 0;
+
   virtual void visit(Overload_expr const*) = 0;
   virtual void visit(Add_expr const*) = 0;
   virtual void visit(Sub_expr const*) = 0;
@@ -87,6 +92,11 @@ struct Expr::Mutator
   virtual void visit(Literal_expr*) = 0;
   virtual void visit(Id_expr*) = 0;
   virtual void visit(Decl_expr*) = 0;
+
+  // NOTE NOTE NOTE
+  // ADDITIONS FOR LAMBDAS
+  virtual void visit(Lambda_expr*) = 0;
+
   virtual void visit(Overload_expr*) = 0;
   virtual void visit(Add_expr*) = 0;
   virtual void visit(Sub_expr*) = 0;
@@ -175,6 +185,33 @@ struct Decl_expr : Id_expr
   Decl* decl;
 };
 
+
+struct Lambda_expr : Expr
+{
+  Lambda_expr(Symbol const * s, Decl_seq const& d, Type const * t, Stmt* const& b)
+    : sym_(s), parms_(d), type_(t), body_(b)
+  { }
+
+  Decl_seq const&      parameters() const { return parms_; }
+
+  Function_type const* type() const;
+  Type const*          return_type() const;
+
+  Stmt const* body() const { return body_; }
+  Stmt*       body()       { return body_; }
+
+  Symbol const * symbol() const { return sym_; }
+
+  void accept(Visitor & v) const { v.visit(this); }
+  void accept(Mutator& v)        { v.visit(this);
+  }
+
+  Symbol const * sym_;
+  Decl_seq parms_;
+  Type const * type_;
+  Stmt*    body_;
+
+};
 
 // A reference to an overlaod set. These are
 // produced by the elaboration of id expressions.
@@ -687,6 +724,11 @@ struct Generic_expr_visitor : Expr::Visitor, lingo::Generic_visitor<F, T>
   void visit(Literal_expr const* e) { this->invoke(e); }
   void visit(Id_expr const* e) { this->invoke(e); }
   void visit(Decl_expr const* e) { this->invoke(e); }
+
+  // NOTE NOTE NOTE
+  // ADDITIONS FOR LAMBDAS
+  void visit(Lambda_expr const* e) { this->invoke(e); }
+
   void visit(Overload_expr const* e) { this->invoke(e); }
   void visit(Add_expr const* e) { this->invoke(e); }
   void visit(Sub_expr const* e) { this->invoke(e); }
@@ -743,6 +785,11 @@ struct Generic_expr_mutator : Expr::Mutator, lingo::Generic_mutator<F, T>
   void visit(Literal_expr* e) { this->invoke(e); }
   void visit(Id_expr* e) { this->invoke(e); }
   void visit(Decl_expr* e) { this->invoke(e); }
+
+  // NOTE NOTE NOTE
+  // ADDITIONS FOR LAMBDAS
+  void visit(Lambda_expr* e) { this->invoke(e); }
+
   void visit(Overload_expr* e) { this->invoke(e); }
   void visit(Add_expr* e) { this->invoke(e); }
   void visit(Sub_expr* e) { this->invoke(e); }

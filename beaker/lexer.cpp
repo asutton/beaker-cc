@@ -21,6 +21,7 @@ Input_buffer::Input_buffer(File const& f)
 
 
 
+
 // Returns the current character and advances the
 // stream.
 char
@@ -83,6 +84,7 @@ Lexer::scan()
           return slash();
         }
 
+      case '\\': return f_slash();
       case '%': return percent();
       case '=': return equal();
       case '!': return bang();
@@ -132,6 +134,7 @@ Lexer::character()
 {
   assert(peek() == '\'');
   get(); // '
+
   if (peek() == '\\') // consume an escape.
     get();
   get(); // c
@@ -183,6 +186,25 @@ Lexer::on_word()
   return Token(loc_, sym->token(), sym);
 }
 
+
+Token
+Lexer::on_f_slash(){
+  //Look for lambda identifier in Symbol_table
+  //if it's found mutate the identifier
+  String str = "lambda";
+  long int count = 0;
+  Symbol const* sym = syms_.get(str);
+  while(sym)
+  {
+    str = "lambda";
+    str += "_";
+    str += to_string(count);
+    sym = syms_.get(str);
+    ++count;
+  }
+  sym = syms_.put<Identifier_sym>(str, identifier_tok);
+  return Token(loc_, sym->token(), sym);
+}
 
 // Return a new integer token.
 inline Token

@@ -165,7 +165,7 @@ compiler_main(int argc, char* argv[])
   //
   // FIXME: We should collect a set of output files from
   // parsing since we could potentially pass .ll/.bc/.s/.o
-  // files to the next phase of transdlation.
+  // files to the next phase of translation.
   //
   // FIXME: Clean up temporary files.
   Path ir = to_ir_file(output);

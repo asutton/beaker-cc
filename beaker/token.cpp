@@ -40,7 +40,7 @@ spelling(Token_kind k)
     case amp_tok: return "&";
     case arrow_tok: return "->";
     case tilde_tok: return "~";
-
+    case f_slash_tok: return "\\";
     case abstract_kw: return "abstract";
     case bool_kw: return "bool";
     case break_kw: return "break";
@@ -113,6 +113,10 @@ init_symbols(Symbol_table& syms)
   syms.put<Symbol>("&", amp_tok);
   syms.put<Symbol>("->", arrow_tok);
   syms.put<Symbol>("~", tilde_tok);
+
+  //NOTE NOTE NOTE NOTE NOTE NOTE
+  //ADDITIONS
+  syms.put<Symbol>("\\", f_slash_tok);
 
   // Keywords
   syms.put<Symbol>("abstract", abstract_kw);

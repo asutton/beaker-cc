@@ -231,6 +231,7 @@ is_less(Expr const* a, Expr const* b)
     bool operator()(Literal_expr const* a) { return is_less(a, cast<Literal_expr>(b)); }
     bool operator()(Id_expr const* a) { lingo_unreachable(); }
     bool operator()(Decl_expr const* a) { return is_less(a, cast<Decl_expr>(b));; }
+    bool operator()(Lambda_expr const* a) { lingo_unreachable(); }
     bool operator()(Add_expr const* a) { lingo_unreachable(); }
     bool operator()(Sub_expr const* a) { lingo_unreachable(); }
     bool operator()(Mul_expr const* a) { lingo_unreachable(); }

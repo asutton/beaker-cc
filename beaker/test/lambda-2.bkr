@@ -1,0 +1,4 @@
+def main() -> int{
+  var x : (int) -> int = \(i: int ) -> int { return i; };
+  return x(1);
+}
