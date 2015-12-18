@@ -51,17 +51,20 @@ mangle(std::ostream& os, Integer_type const* t)
   os << (t->is_signed()?"":"u") << 'i' << std::to_string(t->precision());
 }
 
+
 void
 mangle(std::ostream& os, Float_type const* t)
 {
   os << 'f';
 }
 
+
 void
 mangle(std::ostream& os, Double_type const* t)
 {
   os << 'd';
 }
+
 
 // 'F' p* r
 //
@@ -220,7 +223,6 @@ mangle(std::ostream& os, Module_decl const* d)
 void
 mangle(std::ostream& os, Decl const* d)
 {
-
   struct Fn
   {
     std::ostream& os;

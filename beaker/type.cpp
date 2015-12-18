@@ -55,7 +55,6 @@ Record_type::scope() const
 }
 
 
-
 // Returns the size of the array as an
 // integer value.
 int
@@ -218,6 +217,7 @@ get_record_type(Record_decl* r)
   return &*ins.first;
 }
 
+
 // Gets the rank of a type
 int
 get_scalar_rank(Type const* t)
@@ -260,8 +260,10 @@ get_scalar_rank(Type const* t)
     return default_rnk;
 }
 
+
 bool
-is_derived(Type const* derived, Type const* base){
+is_derived(Type const* derived, Type const* base)
+{
   if (Record_type const* d = as<Record_type>(derived))  {
     if (Record_type const* b = as<Record_type>(base)) {
       // If D and B are the same return true

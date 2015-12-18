@@ -264,9 +264,8 @@ Lexer::scan(Token_stream& ts)
     ts.put(tok);
     //FIXME is this ok or is it too hacky?
     //HACK for lambda function identifier injection
-    if(tok.kind() == f_slash_tok){
+    if (tok.kind() == f_slash_tok)
       ts.put(on_f_slash());
-    }
     return true;
   }
   return false;
@@ -389,8 +388,10 @@ Lexer::star()
   return symbol1();
 }
 
+
 inline Token
-Lexer::tilde(){
+Lexer::tilde()
+{
   return symbol1();
 }
 

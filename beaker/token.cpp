@@ -73,7 +73,6 @@ spelling(Token_kind k)
     case float_kw: return "float";
     case double_kw: return "double";
 
-
     default: return "<unspecified>";
   }
 }
@@ -114,9 +113,6 @@ init_symbols(Symbol_table& syms)
   syms.put<Symbol>("&", amp_tok);
   syms.put<Symbol>("->", arrow_tok);
   syms.put<Symbol>("~", tilde_tok);
-
-  //NOTE NOTE NOTE NOTE NOTE NOTE
-  //ADDITIONS
   syms.put<Symbol>("\\", f_slash_tok);
 
   // Keywords
@@ -151,7 +147,7 @@ init_symbols(Symbol_table& syms)
   syms.put<Symbol>("virtual", virtual_kw);
   syms.put<Symbol>("while", while_kw);
 
-  // Reserved names.
+  // Reserved names
   syms.put<Boolean_sym>("true", boolean_tok, true);
   syms.put<Boolean_sym>("false", boolean_tok, false);
 

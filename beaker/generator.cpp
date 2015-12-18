@@ -525,7 +525,6 @@ calls_virtual_method(Call_expr const* e)
   return nullptr;
 }
 
-
 } // namespace
 
 
@@ -632,6 +631,7 @@ Generator::gen(Value_conv const* e)
   return build.CreateLoad(v);
 }
 
+
 llvm::Value*
 Generator::gen(Promote_conv const* e)
 {
@@ -679,6 +679,7 @@ Generator::gen(Base_conv const* e)
   return build.CreateGEP(a, args);
 }
 
+
 // TODO: Return the value or store it?
 void
 Generator::gen_init(llvm::Value* ptr, Default_init const* e)
@@ -707,11 +708,13 @@ Generator::gen_init(llvm::Value* ptr, Default_init const* e)
   throw std::runtime_error("unhahndled default initializer");
 }
 
+
 void
 Generator::gen_init(llvm::Value* ptr, Trivial_init const* e)
 {
   return;
 }
+
 
 // TODO: Return the value or store it?
 void

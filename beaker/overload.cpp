@@ -29,7 +29,6 @@ same_parameters(Function_decl const* f1, Function_decl const* f2)
   return t1->parameter_types() == t2->parameter_types();
 }
 
-
 } // namespace
 
 

@@ -67,8 +67,6 @@ Parser::primary_expr()
 }
 
 
-
-
 // Parse a postfix expression.
 //
 //    postfix-expression -> postfix-expression '(' argument-list ')'
@@ -115,6 +113,7 @@ Parser::postfix_expr()
   }
   return e1;
 }
+
 
 // Parse a unary expression.
 //
@@ -166,7 +165,6 @@ Parser::multiplicative_expr()
   }
   return e1;
 }
-
 
 
 // Parse an additive expression.
@@ -328,7 +326,6 @@ Parser::lambda_expr()
   //return a lambda expression
   return on_lambda(n, parms, t, s);
 }
-
 
 
 Expr*
@@ -498,7 +495,6 @@ Parser::type()
 {
   return postfix_type();
 }
-
 
 
 // -------------------------------------------------------------------------- //
@@ -1155,6 +1151,7 @@ Parser::on_int(Token tok)
   return init<Literal_expr>(tok.location(), t, v);
 }
 
+
 Expr*
 Parser::on_float(Token tok)
 {
@@ -1162,6 +1159,7 @@ Parser::on_float(Token tok)
   double v = tok.floating_symbol()->value();
   return init<Literal_expr>(tok.location(), t, v);
 }
+
 
 Expr*
 Parser::on_char(Token tok)
@@ -1329,6 +1327,7 @@ Parser::on_dot(Expr* e1, Expr* e2)
   return new Dot_expr(e1, e2);
 }
 
+
 // NOTE NOTE NOTE
 // ADDITIONS FOR LAMBDAS
 //Lambda_expr(Symbol * s, Decl_seq const& d, Type const * t, Stmt* const& b)
@@ -1338,6 +1337,7 @@ Parser::on_lambda(Token tok, Decl_seq const& p, Type const* t, Stmt* b)
   Type const* f = get_function_type(p, t);
   return init<Lambda_expr>(tok.location(), tok.symbol(), p, f, b);
 }
+
 
 // TODO: Check declaration specifiers. Not every specifier
 // makes sense in every combination or for every declaration.

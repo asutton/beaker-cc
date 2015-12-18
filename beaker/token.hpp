@@ -52,9 +52,6 @@ enum Token_kind
   amp_tok,
   arrow_tok,
   tilde_tok,
-
-  //NOTE NOTE NOTE NOTE NOTE
-  //ADDITIONS
   f_slash_tok,
 
   // Keywords

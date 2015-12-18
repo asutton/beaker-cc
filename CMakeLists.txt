@@ -38,8 +38,8 @@ find_program(LLVM_IR_COMPILER llc HINTS ${LLVM_TOOLS_BINARY_DIR} NO_DEFAULT_PATH
 #
 # TODO: Actually use the low-level tools and link
 # only against the minimal Beaker runtime.
-set(BEAKER_NATIVE_COMPILER ${CMAKE_C_COMPILER})
-set(BEAKER_NATIVE_ARCHIVER ${CMAKE_AR})
+set(NATIVE_COMPILER ${CMAKE_C_COMPILER})
+set(NATIVE_ARCHIVER ${CMAKE_AR})
 
 # Compiler configuration
 set(CMAKE_CXX_FLAGS "-Wall -std=c++1y")

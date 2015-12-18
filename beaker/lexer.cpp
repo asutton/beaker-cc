@@ -21,8 +21,6 @@ Input_buffer::Input_buffer(File const& f)
 }
 
 
-
-
 // Returns the current character and advances the
 // stream.
 char
@@ -189,7 +187,8 @@ Lexer::on_word()
 
 
 Token
-Lexer::on_f_slash(){
+Lexer::on_f_slash()
+{
   //Look for lambda identifier in Symbol_table
   //if it's found mutate the identifier
   String str = "lambda";
@@ -207,6 +206,7 @@ Lexer::on_f_slash(){
   return Token(loc_, sym->token(), sym);
 }
 
+
 // Return a new integer token.
 inline Token
 Lexer::on_integer()
@@ -216,6 +216,7 @@ Lexer::on_integer()
   Symbol* sym = syms_.put<Integer_sym>(str, integer_tok, n);
   return Token(loc_, integer_tok, sym);
 }
+
 
 // Return a new floating point number token.
 inline Token
