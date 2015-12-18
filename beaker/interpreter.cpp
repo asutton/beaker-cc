@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "config.hpp"
+
 #include "beaker/lexer.hpp"
 #include "beaker/parser.hpp"
 #include "beaker/decl.hpp"

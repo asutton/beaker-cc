@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "config.hpp"
+
 #include "beaker/job.hpp"
 
 #include <cstdlib>

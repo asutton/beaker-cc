@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "config.hpp"
+
 #include "beaker/generator.hpp"
 #include "beaker/type.hpp"
 #include "beaker/expr.hpp"
@@ -98,22 +99,23 @@ Generator::get_type(Character_type const*)
   return build.getInt8Ty();
 }
 
+
 // Return the standard integer type.
 llvm::Type*
 Generator::get_type(Integer_type const* t)
 {
-  switch (t->precision())
-  {
-      case 32:
-        return build.getInt32Ty();
-      case 16:
-        return build.getInt16Ty();
-      case 64:
-        return build.getInt64Ty();
-      default:
-        throw std::runtime_error("No integer with precision " + std::to_string(t->precision()));
+  switch (t->precision()) {
+    case 32:
+      return build.getInt32Ty();
+    case 16:
+      return build.getInt16Ty();
+    case 64:
+      return build.getInt64Ty();
+    default:
+      throw std::runtime_error("No integer with precision " + std::to_string(t->precision()));
   }
 }
+
 
 // Return the float type.
 llvm::Type*
@@ -122,12 +124,14 @@ Generator::get_type(Float_type const*)
   return build.getFloatTy();
 }
 
+
 // Return the double type.
 llvm::Type*
 Generator::get_type(Double_type const*)
 {
   return build.getDoubleTy();
 }
+
 
 // Return a function type.
 llvm::Type*
@@ -243,6 +247,7 @@ Generator::gen(Expr const* e)
 
 namespace
 {
+
 struct Gen_init_fn
 {
   Generator& g;
@@ -256,7 +261,6 @@ struct Gen_init_fn
   void operator()(Copy_init const* e) { g.gen_init(ptr, e); }
   void operator()(Reference_init const* e) { g.gen_init(ptr, e); }
 };
-
 
 } // namespace
 
@@ -638,7 +642,7 @@ Generator::gen(Promote_conv const* e)
   llvm::Value* v = gen(e->source());
   const Type * t = e->target();
 
-  if(is<Integer_type>(t)) {
+  if (is<Integer_type>(t)) {
     const Integer_type * t2 = dynamic_cast<const Integer_type*>(t);
     return build.CreateIntCast(v, get_type(t2), t2->is_signed());
   }
@@ -646,9 +650,7 @@ Generator::gen(Promote_conv const* e)
     return build.CreateFPCast(v, get_type(t));
   }
 
-  else
-    return v;
-
+  return v;
 }
 
 
@@ -712,7 +714,7 @@ Generator::gen_init(llvm::Value* ptr, Default_init const* e)
 void
 Generator::gen_init(llvm::Value* ptr, Trivial_init const* e)
 {
-  return;
+  // Do nothing.
 }
 
 

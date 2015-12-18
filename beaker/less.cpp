@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "config.hpp"
+
 #include "beaker/less.hpp"
 #include "beaker/type.hpp"
 #include "beaker/expr.hpp"

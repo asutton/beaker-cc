@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "config.hpp"
+
 #include "beaker/value.hpp"
 #include "beaker/decl.hpp"
 

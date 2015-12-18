@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "config.hpp"
+
 #include "beaker/type.hpp"
 #include "beaker/decl.hpp"
 #include "beaker/less.hpp"
@@ -112,36 +113,36 @@ Type const*
 get_integer_type(bool is_signed, int precision)
 {
   static Integer_type st16(16);
-  static Integer_type ut16(false,16);
+  static Integer_type ut16(false, 16);
   static Integer_type st32(32);
   static Integer_type ut32(false);
   static Integer_type st64(64);
-  static Integer_type ut64(false,64);
+  static Integer_type ut64(false, 64);
 
-  if (is_signed)
-    switch (precision)
-    {
-        case 32:
-            return &st32;
-        case 16:
-            return &st16;
-        case 64:
-            return &st64;
-        default:
-            throw std::runtime_error("No integer with precision " + std::to_string(precision));
+  if (is_signed) {
+    switch (precision) {
+      case 32:
+        return &st32;
+      case 16:
+        return &st16;
+      case 64:
+        return &st64;
+      default:
+        throw std::runtime_error("No integer with precision " + std::to_string(precision));
     }
-  else
-    switch (precision)
-    {
-        case 32:
-            return &ut32;
-        case 16:
-            return &ut16;
-        case 64:
-            return &ut64;
-        default:
-            throw std::runtime_error("No integer with precision " + std::to_string(precision));
+  }
+  else {
+    switch (precision) {
+      case 32:
+        return &ut32;
+      case 16:
+        return &ut16;
+      case 64:
+        return &ut64;
+      default:
+        throw std::runtime_error("No integer with precision " + std::to_string(precision));
     }
+  }
 }
 
 
@@ -222,42 +223,42 @@ get_record_type(Record_decl* r)
 int
 get_scalar_rank(Type const* t)
 {
-    // static types
-    static Type const* b = get_boolean_type();
-    static Type const* c = get_character_type();
-    static Type const* ui16 = get_integer_type(false,16);
-    static Type const* i16 = get_integer_type(16);
-    static Type const* ui32 = get_integer_type(false);
-    static Type const* i32 = get_integer_type();
-    static Type const* ui64 = get_integer_type(false,64);
-    static Type const* i64 = get_integer_type(64);
-    static Type const* f = get_float_type();
-    static Type const* d = get_double_type();
+  // static types
+  static Type const* b = get_boolean_type();
+  static Type const* c = get_character_type();
+  static Type const* ui16 = get_integer_type(false, 16);
+  static Type const* i16 = get_integer_type(16);
+  static Type const* ui32 = get_integer_type(false);
+  static Type const* i32 = get_integer_type();
+  static Type const* ui64 = get_integer_type(false, 64);
+  static Type const* i64 = get_integer_type(64);
+  static Type const* f = get_float_type();
+  static Type const* d = get_double_type();
 
-    // return rank
-    if (t == b)
-        return bool_rnk;
-    if (t == c)
-        return char_rnk;
-    if (t == ui16)
-        return uint16_rnk;
-    if (t == i16)
-        return int16_rnk;
-    if (t == ui32)
-        return uint32_rnk;
-    if (t == i32)
-        return int32_rnk;
-    if (t == ui64)
-        return uint64_rnk;
-    if (t == i64)
-        return int64_rnk;
-    if (t == f)
-        return float_rnk;
-    if (t == d)
-        return double_rnk;
+  // return rank
+  if (t == b)
+    return bool_rnk;
+  if (t == c)
+    return char_rnk;
+  if (t == ui16)
+    return uint16_rnk;
+  if (t == i16)
+    return int16_rnk;
+  if (t == ui32)
+    return uint32_rnk;
+  if (t == i32)
+    return int32_rnk;
+  if (t == ui64)
+    return uint64_rnk;
+  if (t == i64)
+    return int64_rnk;
+  if (t == f)
+    return float_rnk;
+  if (t == d)
+    return double_rnk;
 
-    // default case
-    return default_rnk;
+  // default case
+  return default_rnk;
 }
 
 

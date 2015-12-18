@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "config.hpp"
+
 #include "beaker/options.hpp"
 #include "beaker/job.hpp"
 #include "beaker/lexer.hpp"
@@ -105,7 +106,7 @@ compiler_main(int argc, char* argv[])
         .run(),
       vm);
     po::notify(vm);
-  } catch(std::exception& err) {
+  } catch (std::exception& err) {
     std::cerr << "error: " << err.what() << "\n\n";
     usage(std::cerr, all_opts);
     return -1;

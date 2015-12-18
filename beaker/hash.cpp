@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "config.hpp"
+
 #include "beaker/hash.hpp"
 #include "beaker/type.hpp"
 

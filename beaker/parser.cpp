@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "config.hpp"
+
 #include "beaker/parser.hpp"
 #include "beaker/symbol.hpp"
 #include "beaker/type.hpp"
@@ -379,7 +380,7 @@ Parser::primary_type()
 
   // ushort
   else if (match_if(ushort_kw))
-    return get_integer_type(false,16);
+    return get_integer_type(false, 16);
 
   // long
   else if (match_if(long_kw))
@@ -387,7 +388,7 @@ Parser::primary_type()
 
   // ulong
   else if (match_if(ulong_kw))
-    return get_integer_type(false,64);
+    return get_integer_type(false, 64);
 
   // int16
   else if (match_if(int16_kw))
@@ -395,7 +396,7 @@ Parser::primary_type()
 
   // uint16
   else if (match_if(uint16_kw))
-    return get_integer_type(false,16);
+    return get_integer_type(false, 16);
 
   // int32
   else if (match_if(int32_kw))
@@ -411,7 +412,7 @@ Parser::primary_type()
 
   // uint64
   else if (match_if(uint64_kw))
-    return get_integer_type(false,64);
+    return get_integer_type(false, 64);
 
   // float
   else if (match_if(float_kw))

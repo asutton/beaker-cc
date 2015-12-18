@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "config.hpp"
+
 #include "beaker/lexer.hpp"
 
 #include <iostream>
@@ -194,7 +195,7 @@ Lexer::on_bslash()
   String str = "lambda";
   long int count = 0;
   Symbol const* sym = syms_.get(str);
-  while(sym)
+  while (sym)
   {
     str = "lambda";
     str += "_";

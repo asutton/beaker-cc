@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "config.hpp"
+
 #include "beaker/elaborator.hpp"
 #include "beaker/type.hpp"
 #include "beaker/expr.hpp"
@@ -976,7 +977,7 @@ Elaborator::elaborate(Call_expr* e)
     if (is<Value_conv>(f)) {
       f = cast<Value_conv>(f)->first;
       auto decl = cast<Decl_expr>(f)->declaration();
-      if(auto var = as<Variable_decl>(decl)) {
+      if (auto var = as<Variable_decl>(decl)) {
         auto f_decl = cast<Reference_init>(var->init())->first;
         f = f_decl;
       }
@@ -1351,7 +1352,7 @@ Elaborator::elaborate(Variable_decl* d)
 {
   d->type_ = elaborate_type(d->type_);
 
-  if(is<Function_type>(d->type_))
+  if (is<Function_type>(d->type_))
   {
     d->type_ = d->type_->ref();
     cast<Init>(d->init_)->type_ = d->type_;
@@ -1390,7 +1391,7 @@ Elaborator::elaborate(Parameter_decl* d)
 {
   d->type_ = elaborate_type(d->type_);
   // Check for function type and set to reference to function type
-  if(is<Function_type>(d->type_))
+  if (is<Function_type>(d->type_))
     d->type_ = d->type_->ref();
 
   declare(d);
@@ -1461,7 +1462,7 @@ Elaborator::elaborate(Module_decl* m)
   for (Decl*& d : m->decls_)
     d = elaborate_def(d);
 
-  for(auto && a : lambda_decls_)
+  for (auto && a : lambda_decls_)
     m->decls_.insert(m->decls_.begin(), a.second);
 
   return m;
@@ -1501,7 +1502,7 @@ Elaborator::elaborate_decl(Decl* d)
 Decl*
 Elaborator::elaborate_decl(Variable_decl* d)
 {
-  if(is<Function_type>(d->type_))
+  if (is<Function_type>(d->type_))
   {
     d->type_ = d->type()->ref();
   }

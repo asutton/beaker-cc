@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "config.hpp"
+
 #include "beaker/convert.hpp"
 #include "beaker/type.hpp"
 #include "beaker/expr.hpp"
@@ -64,7 +65,7 @@ Expr*
 promote(Expr* e, Type const* t)
 {
   if (get_scalar_rank(t) > get_scalar_rank(e->type()))
-    return new Promote_conv(t,e);
+    return new Promote_conv(t, e);
   else
     return e;
 }
@@ -99,10 +100,9 @@ convert_to_block(Expr* e)
 Expr*
 convert_to_base(Expr* e)
 {
-  if (Record_type const* r = as<Record_type>(e->type()->nonref())) {
+  if (Record_type const* r = as<Record_type>(e->type()->nonref()))
     return new Base_conv(get_record_type(r->declaration()), e);
-  }
-   else
+  else
     return e;
 }
 
@@ -158,7 +158,7 @@ convert(Expr* e, Type const* t)
 
   // Try to apply a type promotion
   if (is_scalar(t) && !is<Boolean_type>(e->type())) {
-    c = promote(e,t);
+    c = promote(e, t);
     if (c->type() == t)
       return c;
   }

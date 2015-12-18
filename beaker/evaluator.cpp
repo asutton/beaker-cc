@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "config.hpp"
+
 #include "beaker/evaluator.hpp"
 #include "beaker/type.hpp"
 #include "beaker/expr.hpp"
@@ -397,18 +398,18 @@ Evaluator::eval(Promote_conv const* e)
   const Type * t = e->target();
   Value v = eval(e->source());
 
-  if(is<Float_type>(t)) {
-    if(v.is_integer())
+  if (is<Float_type>(t)) {
+    if (v.is_integer())
     {
       return new Value((float)(v.get_integer()));
     }
   }
-  else if(is<Double_type>(t)) {
-    if(v.is_integer())
+  else if (is<Double_type>(t)) {
+    if (v.is_integer())
     {
       return new Value((double)(v.get_integer()));
     }
-    if(v.is_float())
+    if (v.is_float())
     {
       return new Value((double)(v.get_float()));
     }
