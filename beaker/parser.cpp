@@ -1,6 +1,7 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
+#include "config.hpp"
 #include "beaker/parser.hpp"
 #include "beaker/symbol.hpp"
 #include "beaker/type.hpp"
@@ -35,7 +36,7 @@ Parser::primary_expr()
   // integer-literal
   if (Token tok = match_if(integer_tok))
     return on_int(tok);
-    
+
   // floating-point-literal
   if (Token tok = match_if(floating_tok))
     return on_float(tok);
@@ -370,55 +371,55 @@ Parser::primary_type()
   // int
   else if (match_if(int_kw))
     return get_integer_type();
-  
+
   // uint
   else if (match_if(uint_kw))
     return get_integer_type(false);
-    
+
   // short
   else if (match_if(short_kw))
     return get_integer_type(16);
-  
+
   // ushort
   else if (match_if(ushort_kw))
     return get_integer_type(false,16);
-    
+
   // long
   else if (match_if(long_kw))
     return get_integer_type(64);
-  
+
   // ulong
   else if (match_if(ulong_kw))
     return get_integer_type(false,64);
-    
+
   // int16
   else if (match_if(int16_kw))
     return get_integer_type(16);
-  
+
   // uint16
   else if (match_if(uint16_kw))
     return get_integer_type(false,16);
-    
+
   // int32
   else if (match_if(int32_kw))
     return get_integer_type();
-  
+
   // uint32
   else if (match_if(uint32_kw))
     return get_integer_type(false);
-    
+
   // int64
   else if (match_if(int64_kw))
     return get_integer_type(64);
-  
+
   // uint64
   else if (match_if(uint64_kw))
     return get_integer_type(false,64);
-    
+
   // float
   else if (match_if(float_kw))
       return get_float_type();
-    
+
   // double
   else if (match_if(double_kw))
       return get_double_type();

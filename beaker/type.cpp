@@ -1,6 +1,7 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
+#include "config.hpp"
 #include "beaker/type.hpp"
 #include "beaker/decl.hpp"
 #include "beaker/less.hpp"
@@ -117,7 +118,7 @@ get_integer_type(bool is_signed, int precision)
   static Integer_type ut32(false);
   static Integer_type st64(64);
   static Integer_type ut64(false,64);
-  
+
   if (is_signed)
     switch (precision)
     {
@@ -232,7 +233,7 @@ get_scalar_rank(Type const* t)
     static Type const* i64 = get_integer_type(64);
     static Type const* f = get_float_type();
     static Type const* d = get_double_type();
-    
+
     // return rank
     if (t == b)
         return bool_rnk;
@@ -254,7 +255,7 @@ get_scalar_rank(Type const* t)
         return float_rnk;
     if (t == d)
         return double_rnk;
-    
+
     // default case
     return default_rnk;
 }

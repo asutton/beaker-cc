@@ -1,6 +1,7 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
+#include "config.hpp"
 #include "beaker/options.hpp"
 #include "beaker/job.hpp"
 #include "beaker/lexer.hpp"
@@ -116,7 +117,7 @@ compiler_main(int argc, char* argv[])
     return 0;
   }
   if (vm["version"].as<bool>()) {
-    std::cout << BEAKER_PACKAGE_STRING << '\n';
+    std::cout << PACKAGE_STRING << '\n';
     return 0;
   }
 

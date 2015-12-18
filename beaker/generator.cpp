@@ -1,6 +1,7 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
+#include "config.hpp"
 #include "beaker/generator.hpp"
 #include "beaker/type.hpp"
 #include "beaker/expr.hpp"
@@ -249,7 +250,7 @@ struct Gen_init_fn
 
   template<typename T>
   void operator()(T const*) { lingo_unreachable(); }
-  
+
   void operator()(Default_init const* e) { g.gen_init(ptr, e); }
   void operator()(Trivial_init const* e) { g.gen_init(ptr, e); }
   void operator()(Copy_init const* e) { g.gen_init(ptr, e); }
@@ -647,7 +648,7 @@ Generator::gen(Promote_conv const* e)
 
   else
     return v;
-  
+
 }
 
 

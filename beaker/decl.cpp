@@ -1,6 +1,7 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
+#include "config.hpp"
 #include "beaker/decl.hpp"
 
 
@@ -62,7 +63,7 @@ Record_decl::is_empty() const
   if (Record_decl const* b = base_declaration())
     if (b->is_empty())
       return false;
-  
+
   // An empty base class has no fields.
   return fields_.empty();
 }

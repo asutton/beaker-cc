@@ -1,6 +1,7 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
+#include "config.hpp"
 #include "beaker/convert.hpp"
 #include "beaker/type.hpp"
 #include "beaker/expr.hpp"
@@ -179,7 +180,7 @@ convert(Expr* e, Type const* t)
           return ret;
         }
       }
-    
+
       // FIXME: We never actually get here.
       if (c->type() == t)
         return c;

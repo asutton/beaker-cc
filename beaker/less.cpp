@@ -1,6 +1,7 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
+#include "config.hpp"
 #include "beaker/less.hpp"
 #include "beaker/type.hpp"
 #include "beaker/expr.hpp"
@@ -124,28 +125,28 @@ is_less(Type const* a, Type const* b)
 
 bool
 is_less(Error_value const& a, Error_value const& b)
-{ 
-  return false; 
+{
+  return false;
 }
 
 
 bool
 is_less(Integer_value const& a, Integer_value const& b)
-{ 
+{
   return a < b;
 }
 
 
 bool
 is_less(Float_value const& a, Float_value const& b)
-{ 
-  return a < b; 
+{
+  return a < b;
 }
 
 
 bool
 is_less(Function_value const& a, Function_value const& b)
-{ 
+{
   std::less<Function_value> cmp;
   return cmp(a, b);
 }
@@ -153,14 +154,14 @@ is_less(Function_value const& a, Function_value const& b)
 
 bool
 is_less(Reference_value const& a, Reference_value const& b)
-{ 
+{
   std::less<Reference_value> cmp;
-  return cmp(a, b); 
+  return cmp(a, b);
 }
 
 bool
 is_less(Array_value const& a, Array_value const& b)
-{ 
+{
   auto cmp = [](Value const& x, Value const& y) { return is_less(x, y); };
   return std::lexicographical_compare(a.data, a.data + a.len,
                                       b.data, b.data + b.len, cmp);
@@ -168,7 +169,7 @@ is_less(Array_value const& a, Array_value const& b)
 
 bool
 is_less(Tuple_value const& a, Tuple_value const& b)
-{ 
+{
   auto cmp = [](Value const& x, Value const& y) { return is_less(x, y); };
   return std::lexicographical_compare(a.data, a.data + a.len,
                                       b.data, b.data + b.len, cmp);
