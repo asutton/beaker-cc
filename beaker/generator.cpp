@@ -387,9 +387,8 @@ Generator::gen(Rem_expr const* e)
 llvm::Value*
 Generator::gen(Neg_expr const* e)
 {
-  llvm::Value* zero = build.getInt32(0);
-  llvm::Value* val = gen(e->operand());
-  return build.CreateSub(zero, val);
+  llvm::Value* operand = gen(e->operand());
+  return build.CreateNeg(operand);
 }
 
 
@@ -502,15 +501,11 @@ Generator::gen(Or_expr const* e)
 }
 
 
-// Logical not is a simple XOR with the value true
-// 1 xor 1 = 0
-// 0 xor 1 = 1
 llvm::Value*
 Generator::gen(Not_expr const* e)
 {
-  llvm::Value* one = build.getTrue();
   llvm::Value* operand = gen(e->operand());
-  return build.CreateXor(one, operand);
+  return build.CreateNot(operand);
 }
 
 
