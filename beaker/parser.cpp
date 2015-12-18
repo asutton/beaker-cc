@@ -1,6 +1,8 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
+#include "config.hpp"
+
 #include "beaker/parser.hpp"
 #include "beaker/symbol.hpp"
 #include "beaker/type.hpp"
@@ -35,7 +37,7 @@ Parser::primary_expr()
   // integer-literal
   if (Token tok = match_if(integer_tok))
     return on_int(tok);
-    
+
   // floating-point-literal
   if (Token tok = match_if(floating_tok))
     return on_float(tok);
@@ -50,7 +52,7 @@ Parser::primary_expr()
 
   // NOTE NOTE NOTE
   // Lambda additions
-  if (lookahead() == f_slash_tok)
+  if (lookahead() == bslash_tok)
     return lambda_expr();
 
   // paren-expr
@@ -64,8 +66,6 @@ Parser::primary_expr()
   // actually return nullptr and continue?
   error("expected primary expression");
 }
-
-
 
 
 // Parse a postfix expression.
@@ -114,6 +114,7 @@ Parser::postfix_expr()
   }
   return e1;
 }
+
 
 // Parse a unary expression.
 //
@@ -165,7 +166,6 @@ Parser::multiplicative_expr()
   }
   return e1;
 }
-
 
 
 // Parse an additive expression.
@@ -296,7 +296,7 @@ Parser::logical_or_expr()
 Expr*
 Parser::lambda_expr()
 {
-  require(f_slash_tok);
+  require(bslash_tok);
 
   //Match the identifier inserted earlier
   Token n = match(identifier_tok);
@@ -327,7 +327,6 @@ Parser::lambda_expr()
   //return a lambda expression
   return on_lambda(n, parms, t, s);
 }
-
 
 
 Expr*
@@ -370,55 +369,55 @@ Parser::primary_type()
   // int
   else if (match_if(int_kw))
     return get_integer_type();
-  
+
   // uint
   else if (match_if(uint_kw))
     return get_integer_type(false);
-    
+
   // short
   else if (match_if(short_kw))
     return get_integer_type(16);
-  
+
   // ushort
   else if (match_if(ushort_kw))
-    return get_integer_type(false,16);
-    
+    return get_integer_type(false, 16);
+
   // long
   else if (match_if(long_kw))
     return get_integer_type(64);
-  
+
   // ulong
   else if (match_if(ulong_kw))
-    return get_integer_type(false,64);
-    
+    return get_integer_type(false, 64);
+
   // int16
   else if (match_if(int16_kw))
     return get_integer_type(16);
-  
+
   // uint16
   else if (match_if(uint16_kw))
-    return get_integer_type(false,16);
-    
+    return get_integer_type(false, 16);
+
   // int32
   else if (match_if(int32_kw))
     return get_integer_type();
-  
+
   // uint32
   else if (match_if(uint32_kw))
     return get_integer_type(false);
-    
+
   // int64
   else if (match_if(int64_kw))
     return get_integer_type(64);
-  
+
   // uint64
   else if (match_if(uint64_kw))
-    return get_integer_type(false,64);
-    
+    return get_integer_type(false, 64);
+
   // float
   else if (match_if(float_kw))
       return get_float_type();
-    
+
   // double
   else if (match_if(double_kw))
       return get_double_type();
@@ -497,7 +496,6 @@ Parser::type()
 {
   return postfix_type();
 }
-
 
 
 // -------------------------------------------------------------------------- //
@@ -760,7 +758,7 @@ Parser::decl()
       return variable_decl(spec);
     case def_kw:
       return function_decl(spec);
-    case f_slash_tok:
+    case bslash_tok:
       //
     case struct_kw:
       return record_decl(spec);
@@ -957,7 +955,7 @@ Parser::stmt()
     case var_kw:
     case def_kw:
     case foreign_kw:
-    case f_slash_tok:
+    case bslash_tok:
       return declaration_stmt();
 
     default:
@@ -1154,6 +1152,7 @@ Parser::on_int(Token tok)
   return init<Literal_expr>(tok.location(), t, v);
 }
 
+
 Expr*
 Parser::on_float(Token tok)
 {
@@ -1161,6 +1160,7 @@ Parser::on_float(Token tok)
   double v = tok.floating_symbol()->value();
   return init<Literal_expr>(tok.location(), t, v);
 }
+
 
 Expr*
 Parser::on_char(Token tok)
@@ -1328,6 +1328,7 @@ Parser::on_dot(Expr* e1, Expr* e2)
   return new Dot_expr(e1, e2);
 }
 
+
 // NOTE NOTE NOTE
 // ADDITIONS FOR LAMBDAS
 //Lambda_expr(Symbol * s, Decl_seq const& d, Type const * t, Stmt* const& b)
@@ -1337,6 +1338,7 @@ Parser::on_lambda(Token tok, Decl_seq const& p, Type const* t, Stmt* b)
   Type const* f = get_function_type(p, t);
   return init<Lambda_expr>(tok.location(), tok.symbol(), p, f, b);
 }
+
 
 // TODO: Check declaration specifiers. Not every specifier
 // makes sense in every combination or for every declaration.

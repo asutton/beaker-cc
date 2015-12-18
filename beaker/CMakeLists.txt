@@ -1,9 +1,6 @@
 # Copyright (c) 2015 Andrew Sutton
 # All rights reserved
 
-# Generate the configuration header.
-configure_file(config.hpp.in config.hpp)
-
 # Add the core Beaker library.
 add_library(beaker
   file.cpp

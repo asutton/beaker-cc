@@ -1,0 +1,113 @@
+// Copyright (c) 2015 Andrew Sutton
+// All rights reserved
+
+/* config.hpp. Generated from config.hpp.in by cmake. */
+
+#ifndef BEAKER_CONFIG_HPP
+#define BEAKER_CONFIG_HPP
+
+/* Name of package. */
+#define PACKAGE "@PACKAGE_NAME@"
+
+/* Define to the full name of this package. */
+#define PACKAGE_NAME "@PACKAGE_NAME@"
+
+/* Define to the one symbol short name of this package. */
+#define PACKAGE_TARNAME "@PACKAGE_TARNAME@"
+
+/* Define to the version of this package. */
+#define PACKAGE_VERSION "@PACKAGE_VERSION@"
+
+/* Define to the full name and version of this package. */
+#define PACKAGE_STRING "@PACKAGE_STRING@"
+
+/* Define to the address where bug reports for this package should be sent. */
+#define PACKAGE_BUGREPORT "@PACKAGE_BUGREPORT@"
+
+/* Define to the home page for this package. */
+#define PACKAGE_URL "@PACKAGE_URL@"
+
+/* Version number of package. */
+#define VERSION "@PACKAGE_VERSION@"
+
+
+// Tools
+#define LLVM_IR_COMPILER    "@LLVM_IR_COMPILER@"
+#define NATIVE_C_COMPILER   "@CMAKE_C_COMPILER@"
+#define NATIVE_AS           "@CMAKE_C_COMPILER@"
+#define NATIVE_LD           "@CMAKE_C_COMPILER@"
+#define NATIVE_AR           "@CMAKE_AR@"
+
+// File properties
+#define OBJECT_SUFFIX       "@CMAKE_C_OUTPUT_EXTENSION@"
+#define EXECUTABLE_SUFFIX   "@CMAKE_EXECUTABLE_SUFFIX@"
+#define LIBRARY_PREFIX      "@CMAKE_SHARED_LIBRARY_PREFIX@"
+#define LIBRARY_SUFFIX      "@CMAKE_SHARED_LIBRARY_SUFFIX@"
+#define ARCHIVE_PREFIX      "@CMAKE_STATIC_LIBRARY_PREFIX@"
+#define ARCHIVE_SUFFIX      "@CMAKE_STATIC_LIBRARY_SUFFIX@"
+
+
+inline char const*
+llvm_compiler()
+{
+  return LLVM_IR_COMPILER;
+}
+
+
+inline char const*
+native_c_compiler()
+{
+  return NATIVE_C_COMPILER;
+}
+
+
+inline char const*
+native_assembler()
+{
+  return NATIVE_AS;
+}
+
+
+inline char const*
+native_archiver()
+{
+  return NATIVE_AR;
+}
+
+
+inline char const*
+native_linker()
+{
+  return NATIVE_LD;
+}
+
+
+inline char const*
+object_extension()
+{
+  return OBJECT_SUFFIX;
+}
+
+
+inline char const*
+executable_extension()
+{
+  return EXECUTABLE_SUFFIX;
+}
+
+
+inline char const*
+library_extension()
+{
+  return LIBRARY_SUFFIX;
+}
+
+
+inline char const*
+archive_extension()
+{
+  return ARCHIVE_SUFFIX;
+}
+
+
+#endif

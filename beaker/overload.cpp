@@ -1,6 +1,8 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
+#include "config.hpp"
+
 #include "beaker/overload.hpp"
 #include "beaker/type.hpp"
 #include "beaker/decl.hpp"
@@ -27,7 +29,6 @@ same_parameters(Function_decl const* f1, Function_decl const* f2)
   Function_type const* t2 = f2->type();
   return t1->parameter_types() == t2->parameter_types();
 }
-
 
 } // namespace
 

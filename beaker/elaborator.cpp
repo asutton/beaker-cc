@@ -1,6 +1,8 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
+#include "config.hpp"
+
 #include "beaker/elaborator.hpp"
 #include "beaker/type.hpp"
 #include "beaker/expr.hpp"
@@ -114,7 +116,6 @@ Elaborator::qualified_lookup(Scope* s, Symbol const* sym)
 }
 
 
-
 Overload*
 Elaborator::member_lookup(Record_decl* d, Symbol const* sym)
 {
@@ -168,7 +169,6 @@ Elaborator::elaborate_def(Type const* t)
   }
   lingo_unreachable();
 }
-
 
 
 Type const*
@@ -240,11 +240,13 @@ Elaborator::elaborate(Character_type const* t)
   return t;
 }
 
+
 Type const*
 Elaborator::elaborate(Integer_type const* t)
 {
   return t;
 }
+
 
 Type const*
 Elaborator::elaborate(Float_type const* t)
@@ -252,11 +254,13 @@ Elaborator::elaborate(Float_type const* t)
   return t;
 }
 
+
 Type const*
 Elaborator::elaborate(Double_type const* t)
 {
   return t;
 }
+
 
 // Elaborate each type in the function type.
 Type const*
@@ -264,11 +268,11 @@ Elaborator::elaborate(Function_type const* t)
 {
   Type_seq ts;
   ts.reserve(t->parameter_types().size());
-  for (Type const* t1 : t->parameter_types()){
+  for (Type const* t1 : t->parameter_types()) {
 
     // HERE! we are checking function paramters for
     // function type and elaborating them as references to function types instead
-    if(is<Function_type>(t1)){
+    if (is<Function_type>(t1)) {
       Type const * tempType = elaborate(t1);
       ts.push_back(elaborate(tempType->ref()));
     }
@@ -292,6 +296,7 @@ Elaborator::elaborate(Array_type const* t)
     throw Type_error({}, "non-constant array extent");
   return get_array_type(t1, n);
 }
+
 
 Type const*
 Elaborator::elaborate(Block_type const* t)
@@ -566,7 +571,6 @@ Elaborator::elaborate(Rem_expr* e)
 }
 
 
-//
 Expr*
 Elaborator::elaborate(Neg_expr* e)
 {
@@ -623,7 +627,6 @@ Elaborator::elaborate(Ne_expr* e)
 {
   return check_equality_expr(*this, e);
 }
-
 
 
 namespace
@@ -690,7 +693,6 @@ Elaborator::elaborate(Ge_expr* e)
 
 namespace
 {
-
 
 // TODO: Document me!
 Expr*
@@ -886,7 +888,6 @@ Elaborator::resolve(Overload_expr* ovl, Expr_seq const& args)
 }
 
 
-
 // Resolve a function call. The target of a function
 // may be one of the following:
 //
@@ -973,10 +974,10 @@ Elaborator::elaborate(Call_expr* e)
 
     // Check for value conversion nodes
     // This is the case for lambda initialized variables and parameters
-    if(is<Value_conv>(f)){
+    if (is<Value_conv>(f)) {
       f = cast<Value_conv>(f)->first;
       auto decl = cast<Decl_expr>(f)->declaration();
-      if(auto var = as<Variable_decl>(decl)) {
+      if (auto var = as<Variable_decl>(decl)) {
         auto f_decl = cast<Reference_init>(var->init())->first;
         f = f_decl;
       }
@@ -1045,7 +1046,7 @@ get_path(Record_decl* r, Field_decl* f)
 }
 
 //Method_path
-//get_path(Record_decl* r, Method_decl* m){
+//get_path(Record_decl* r, Method_decl* m) {
 //  Method_path p;
 //  get_path(r, m, p);
 //  lingo_assert(!p.empty());
@@ -1351,7 +1352,7 @@ Elaborator::elaborate(Variable_decl* d)
 {
   d->type_ = elaborate_type(d->type_);
 
-  if(is<Function_type>(d->type_))
+  if (is<Function_type>(d->type_))
   {
     d->type_ = d->type_->ref();
     cast<Init>(d->init_)->type_ = d->type_;
@@ -1390,7 +1391,7 @@ Elaborator::elaborate(Parameter_decl* d)
 {
   d->type_ = elaborate_type(d->type_);
   // Check for function type and set to reference to function type
-  if(is<Function_type>(d->type_))
+  if (is<Function_type>(d->type_))
     d->type_ = d->type_->ref();
 
   declare(d);
@@ -1461,7 +1462,7 @@ Elaborator::elaborate(Module_decl* m)
   for (Decl*& d : m->decls_)
     d = elaborate_def(d);
 
-  for(auto && a : lambda_decls_)
+  for (auto && a : lambda_decls_)
     m->decls_.insert(m->decls_.begin(), a.second);
 
   return m;
@@ -1501,7 +1502,7 @@ Elaborator::elaborate_decl(Decl* d)
 Decl*
 Elaborator::elaborate_decl(Variable_decl* d)
 {
-  if(is<Function_type>(d->type_))
+  if (is<Function_type>(d->type_))
   {
     d->type_ = d->type()->ref();
   }
@@ -1616,7 +1617,6 @@ find_override(Record_decl const* d, Method_decl const* m)
     return -1;
 }
 
-
 } // namespace
 
 
@@ -1727,7 +1727,6 @@ struct Elab_def_fn
   Decl* operator()(Method_decl* d) const { return elab.elaborate_def(d); }
   Decl* operator()(Module_decl* d) const { return elab.elaborate_def(d); }
 };
-
 
 } // namespace
 

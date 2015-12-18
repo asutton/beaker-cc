@@ -4,8 +4,6 @@
 #ifndef BEAKER_PRELUDE_HPP
 #define BEAKER_PRELUDE_HPP
 
-#include <beaker/config.hpp>
-
 #include <lingo/assert.hpp>
 #include <lingo/string.hpp>
 #include <lingo/node.hpp>

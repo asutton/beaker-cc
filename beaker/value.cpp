@@ -1,6 +1,8 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
+#include "config.hpp"
+
 #include "beaker/value.hpp"
 #include "beaker/decl.hpp"
 
@@ -91,6 +93,7 @@ zero_init(Integer_value& v)
   v = 0;
 }
 
+
 // Set to 0.
 inline void
 zero_init(Float_value& v)
@@ -130,6 +133,7 @@ zero_init(Aggregate_value& v)
   for (std::size_t i = 0; i < v.len; ++i)
     zero_init(v.data[i]);
 }
+
 
 // Zero initialzie the value.
 void

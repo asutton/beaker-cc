@@ -1,6 +1,8 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
+#include "config.hpp"
+
 #include "beaker/print.hpp"
 #include "beaker/expr.hpp"
 #include "beaker/decl.hpp"

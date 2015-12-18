@@ -1,6 +1,8 @@
 // Copyright (c) 2015 Andrew Sutton
 // All rights reserved
 
+#include "config.hpp"
+
 #include "beaker/evaluator.hpp"
 #include "beaker/type.hpp"
 #include "beaker/expr.hpp"
@@ -47,7 +49,7 @@ Evaluator::eval(Expr const* e)
     Value operator()(Block_conv const* e) { return ev.eval(e); }
     Value operator()(Base_conv const* e) { return ev.eval(e); }
     Value operator()(Promote_conv const* e) { return ev.eval(e); }
-    
+
     // Initializers are not evaluated like normal expressions.
     Value operator()(Init const* e) { lingo_unreachable(); }
   };
@@ -78,7 +80,7 @@ struct Eval_init_fn
 
 
 void
-Evaluator::eval_init(Expr const* e, Value& v) 
+Evaluator::eval_init(Expr const* e, Value& v)
 {
   apply(e, Eval_init_fn {*this, v});
 }
@@ -396,18 +398,18 @@ Evaluator::eval(Promote_conv const* e)
   const Type * t = e->target();
   Value v = eval(e->source());
 
-  if(is<Float_type>(t)) {
-    if(v.is_integer()) 
+  if (is<Float_type>(t)) {
+    if (v.is_integer())
     {
       return new Value((float)(v.get_integer()));
     }
   }
-  else if(is<Double_type>(t)) {
-    if(v.is_integer()) 
+  else if (is<Double_type>(t)) {
+    if (v.is_integer())
     {
       return new Value((double)(v.get_integer()));
     }
-    if(v.is_float())
+    if (v.is_float())
     {
       return new Value((double)(v.get_float()));
     }
