@@ -175,7 +175,7 @@ public:
   Token rangle();
   Token ampersand();
   Token bar();
-  Token f_slash();
+  Token bslash();
   Token number();
   Token word();
   Token character();
@@ -188,7 +188,7 @@ private:
   // Semantic actions
   Token on_token();
   Token on_word();
-  Token on_f_slash();
+  Token on_bslash();
   Token on_integer();
   Token on_real();
   Token on_character();
@@ -264,8 +264,8 @@ Lexer::scan(Token_stream& ts)
     ts.put(tok);
     //FIXME is this ok or is it too hacky?
     //HACK for lambda function identifier injection
-    if (tok.kind() == f_slash_tok)
-      ts.put(on_f_slash());
+    if (tok.kind() == bslash_tok)
+      ts.put(on_bslash());
     return true;
   }
   return false;
@@ -485,7 +485,7 @@ Lexer::bar()
 }
 
 inline Token
-Lexer::f_slash()
+Lexer::bslash()
 {
   return symbol1();
 }

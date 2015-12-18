@@ -83,7 +83,7 @@ Lexer::scan()
           return slash();
         }
 
-      case '\\': return f_slash();
+      case '\\': return bslash();
       case '%': return percent();
       case '=': return equal();
       case '!': return bang();
@@ -187,7 +187,7 @@ Lexer::on_word()
 
 
 Token
-Lexer::on_f_slash()
+Lexer::on_bslash()
 {
   //Look for lambda identifier in Symbol_table
   //if it's found mutate the identifier

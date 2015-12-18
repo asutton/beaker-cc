@@ -51,7 +51,7 @@ Parser::primary_expr()
 
   // NOTE NOTE NOTE
   // Lambda additions
-  if (lookahead() == f_slash_tok)
+  if (lookahead() == bslash_tok)
     return lambda_expr();
 
   // paren-expr
@@ -295,7 +295,7 @@ Parser::logical_or_expr()
 Expr*
 Parser::lambda_expr()
 {
-  require(f_slash_tok);
+  require(bslash_tok);
 
   //Match the identifier inserted earlier
   Token n = match(identifier_tok);
@@ -757,7 +757,7 @@ Parser::decl()
       return variable_decl(spec);
     case def_kw:
       return function_decl(spec);
-    case f_slash_tok:
+    case bslash_tok:
       //
     case struct_kw:
       return record_decl(spec);
@@ -954,7 +954,7 @@ Parser::stmt()
     case var_kw:
     case def_kw:
     case foreign_kw:
-    case f_slash_tok:
+    case bslash_tok:
       return declaration_stmt();
 
     default:
